@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "type": "command",
+        "bash": "./commands/logging-hook.sh sessionStart",
+        "powershell": "./commands/logging-hook.ps1 -Event sessionStart"
+      }
+    ],
+    "userPromptSubmitted": [
+      {
+        "type": "command",
+        "bash": "./commands/logging-hook.sh userPromptSubmitted",
+        "powershell": "./commands/logging-hook.ps1 -Event userPromptSubmitted"
+      }
+    ],
+    "preToolUse": [
+      {
+        "type": "command",
+        "bash": "./commands/logging-hook.sh preToolUse",
+        "powershell": "./commands/logging-hook.ps1 -Event preToolUse"
+      }
+    ],
+    "postToolUse": [
+      {
+        "type": "command",
+        "bash": "./commands/logging-hook.sh postToolUse",
+        "powershell": "./commands/logging-hook.ps1 -Event postToolUse"
+      }
+    ],
+    "agentStop": [
+      {
+        "type": "command",
+        "bash": "./commands/logging-hook.sh agentStop",
+        "powershell": "./commands/logging-hook.ps1 -Event agentStop"
+      }
+    ],
+    "sessionEnd": [
+      {
+        "type": "command",
+        "bash": "./commands/logging-hook.sh sessionEnd",
+        "powershell": "./commands/logging-hook.ps1 -Event sessionEnd"
+      }
+    ]
+  }
+}
