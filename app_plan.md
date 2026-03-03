@@ -58,7 +58,7 @@ The initial idea for this project was to create a simple URL shortener applicati
 **Session Management Strategy:**
 
 - All authenticated requests use JWT tokens in `Authorization: Bearer <token>` header
-- JWT tokens include `user_id`, `subject`, `issued_at`, `expiration`
+- JWT tokens include `user_id`, `user_name`, `subject`, `issued_at`, `expiration`
 - No server-side session storage (stateless, scalable)
 - Refresh tokens handled client-side with token rotation
 
@@ -71,9 +71,23 @@ The initial idea for this project was to create a simple URL shortener applicati
 5. Provider redirects back to `/auth/callback` with authorization code
 6. Backend exchanges code for ID token and user info
 7. Backend checks if user exists in `UserProviders` table:
-   - **Existing user:** Return JWT token
-   - **New user:** Create user in `Users` table with username from provider, create entry in `UserProviders`, return JWT token
-8. Frontend stores JWT token and redirects to dashboard
+   - **Existing user:** Return JWT token with `user_id` and `user_name`
+   - **New user:** Redirect to frontend registration form with provider info pre-filled
+8. Frontend registration form (for new users):
+   - Display suggested username from provider (optional: allow user to customize)
+   - User can optionally enter/modify username or use provider default
+   - Submit to backend `/auth/register` endpoint with chosen username
+9. Backend creates user:
+   - Create user in `Users` table with provided (or default) username
+   - Create entry in `UserProviders` with provider credentials
+   - Return JWT token with `user_id` and `user_name`
+10. Frontend stores JWT token and redirects to dashboard
+
+**Username Handling:**
+
+- If user provides custom username during registration: Use provided username (must be unique in `Users` table)
+- If user skips custom username: Use username from OAuth provider (e.g., email prefix, display name)
+- Username can be changed later from user settings/profile page
 
 **Future Extension:**
 New providers (GitHub, Apple, LinkedIn, etc.) can be added by:
@@ -126,7 +140,17 @@ New providers (GitHub, Apple, LinkedIn, etc.) can be added by:
 ## 3. Frontend (Vue.js): User Interface
 
 - **Framework:** Vue.js
-- **UI Library:** Vue Material, Vuetify
+- **UI Library:** shadcn/vue with Tailwind CSS
+  - Copy-paste component library (Headless UI + Radix UI foundations)
+  - 100% Tailwind CSS compatible (utility-first approach)
+  - Fully customizable, no vendor lock-in
+  - Minimal bundle size (~20KB), lightweight styling
+  - Modern, accessible component patterns
+- **CSS Framework:** Tailwind CSS
+  - Utility-first CSS for rapid UI development
+  - Minimal production bundle with PurgeCSS
+  - Easy dark mode support
+  - Responsive design utilities
 - **Type-Safe API Client:** `openapi-typescript-codegen`
   - Auto-generate TypeScript types from OpenAPI spec
   - Auto-generate typed API client with all HTTP methods
@@ -155,6 +179,7 @@ DB_CONN_MAX_LIFETIME=3600        # seconds (1 hour)
 DB_CONN_MAX_IDLE_TIME=600        # seconds (10 minutes)
 
 # HTTP Server
+GIN_MODE=release                 # release or debug
 REQUEST_TIMEOUT_SECONDS=30
 MAX_CONCURRENT_REQUESTS=100
 
@@ -188,8 +213,13 @@ sqlDB.SetConnMaxIdleTime(time.Duration(os.Getenv("DB_CONN_MAX_IDLE_TIME")) * tim
 ### Gin Configuration
 
 ```go
-// Production mode to disable debug logging overhead
-gin.SetMode(gin.ReleaseMode)
+// Set Gin mode from environment (default: release for production)
+// Possible values: "release" (production), "debug" (development)
+ginMode := os.Getenv("GIN_MODE")  // default: release
+if ginMode == "" {
+    ginMode = "release"
+}
+gin.SetMode(ginMode)
 
 // Create Gin engine with pooled writers
 engine := gin.New()
@@ -516,301 +546,11 @@ export default defineConfig({
 });
 ```
 
-## 7. Deployment Strategy (MVP - Single Docker Container)
-
-### Architecture: All-in-One Container
-
-**Single Docker image containing:**
-
-- PostgreSQL database
-- Go backend API (compiled binary)
-- Vue.js frontend (built/dist folder)
-- Nginx reverse proxy (frontend + API routing)
-- Database migrations (golang-migrate)
-
-**Advantages for MVP:**
-
-- Simple, single deployment unit
-- Everything runs on one 4GB DigitalOcean droplet
-- Easy to version the entire stack
-- Straightforward rollback (just restart container)
-
-### Build Process & Dockerfile
-
-**Multi-stage Dockerfile** (optimized for 4GB RAM):
-
-```dockerfile
-# Stage 1: Build Go backend
-FROM golang:1.21-alpine AS backend-builder
-WORKDIR /build
-COPY go.mod go.sum ./
-RUN go mod download
-COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o api ./cmd/api
-
-# Stage 2: Build Vue.js frontend
-FROM node:20-alpine AS frontend-builder
-WORKDIR /build
-COPY frontend/package.json frontend/package-lock.json ./
-RUN npm ci
-COPY frontend/ .
-RUN npm run build
-
-# Stage 3: Runtime image
-FROM postgres:16-alpine
-RUN apk add --no-cache nginx curl
-
-# Copy PostgreSQL config (tuned for 4GB RAM)
-COPY deployment/postgresql.conf /etc/postgresql/postgresql.conf
-
-# Copy Go API binary
-COPY --from=backend-builder /build/api /usr/local/bin/api
-
-# Copy compiled frontend
-COPY --from=frontend-builder /build/dist /var/www/html
-
-# Copy Nginx configuration
-COPY deployment/nginx.conf /etc/nginx/nginx.conf
-
-# Copy migrations
-COPY migrations/ /migrations/
-
-# Copy startup script
-COPY deployment/start.sh /start.sh
-RUN chmod +x /start.sh
-
-# Expose ports
-EXPOSE 80 443 5432
-
-ENTRYPOINT ["/start.sh"]
-```
-
-### Docker Compose (Local Development Reference)
-
-```yaml
-# docker-compose.yml
-version: "3.9"
-
-services:
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "80:80"
-      - "5432:5432"
-    environment:
-      - DB_HOST=localhost
-      - DB_PORT=5432
-      - DB_USER=postgres
-      - DB_PASSWORD=postgres
-      - DB_NAME=linkshortener
-      - MONTHLY_QUOTA_CLICKS=1000
-      - RATE_LIMIT_PER_MINUTE=100
-      - SUSPENSION_TIMEOUT_MINUTES=60
-      - JWT_SECRET=dev-secret-change-in-production
-      - OAUTH_GOOGLE_CLIENT_ID=${OAUTH_GOOGLE_CLIENT_ID}
-      - OAUTH_GOOGLE_CLIENT_SECRET=${OAUTH_GOOGLE_CLIENT_SECRET}
-      - OAUTH_MICROSOFT_CLIENT_ID=${OAUTH_MICROSOFT_CLIENT_ID}
-      - OAUTH_MICROSOFT_CLIENT_SECRET=${OAUTH_MICROSOFT_CLIENT_SECRET}
-      - OAUTH_FACEBOOK_CLIENT_ID=${OAUTH_FACEBOOK_CLIENT_ID}
-      - OAUTH_FACEBOOK_CLIENT_SECRET=${OAUTH_FACEBOOK_CLIENT_SECRET}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-volumes:
-  postgres_data:
-```
-
-### Startup Script (start.sh)
-
-```bash
-#!/bin/bash
-set -e
-
-# Start PostgreSQL
-echo "Starting PostgreSQL..."
-postgres -D /var/lib/postgresql/data &
-sleep 5
-
-# Wait for PostgreSQL to be ready
-until psql -U postgres -c '\q'; do
-  echo "Postgres is unavailable, sleeping..."
-  sleep 2
-done
-
-# Create database if not exists
-createdb -U postgres linkshortener || true
-
-# Run migrations
-/usr/local/bin/migrate -path /migrations -database \
-  "postgres://postgres:${DB_PASSWORD}@localhost:5432/linkshortener?sslmode=disable" up
-
-# Start Nginx (reverse proxy)
-echo "Starting Nginx..."
-nginx -g 'daemon off;' &
-
-# Start Go API
-echo "Starting Go API..."
-API_HOST=0.0.0.0 API_PORT=8080 /usr/local/bin/api
-
-wait
-```
-
-### Nginx Configuration (nginx.conf)
-
-```nginx
-events {
-    worker_connections 100;
-}
-
-http {
-    # Serve frontend static files
-    server {
-        listen 80 default_server;
-        server_name _;
-
-        # Frontend static assets
-        location / {
-            root /var/www/html;
-            try_files $uri $uri/ /index.html;
-            expires 1d;
-            add_header Cache-Control "public, immutable";
-        }
-
-        # API proxy
-        location /api/ {
-            proxy_pass http://localhost:8080/api/;
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-            proxy_read_timeout 30s;
-        }
-
-        # Short redirect endpoint (public, no rate limiting by auth)
-        location /r/ {
-            proxy_pass http://localhost:8080/r/;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_read_timeout 10s;
-        }
-
-        # Swagger UI (if enabled)
-        location /swagger/ {
-            proxy_pass http://localhost:8080/swagger/;
-        }
-    }
-}
-```
-
-### Environment Configuration
-
-**Production Environment Variables (.env):**
-
-```bash
-# Database
-DB_HOST=localhost
-DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=<secure-password>
-DB_NAME=linkshortener
-
-# API
-API_HOST=0.0.0.0
-API_PORT=8080
-JWT_SECRET=<generate-secure-secret>
-
-# Rate Limiting & Quotas
-MONTHLY_QUOTA_CLICKS=1000
-RATE_LIMIT_PER_MINUTE=100
-SUSPENSION_TIMEOUT_MINUTES=60
-
-# OAuth2/OIDC Credentials (from provider dashboards)
-OAUTH_GOOGLE_CLIENT_ID=<your-google-client-id>
-OAUTH_GOOGLE_CLIENT_SECRET=<your-google-secret>
-OAUTH_MICROSOFT_CLIENT_ID=<your-microsoft-client-id>
-OAUTH_MICROSOFT_CLIENT_SECRET=<your-microsoft-secret>
-OAUTH_FACEBOOK_CLIENT_ID=<your-facebook-app-id>
-OAUTH_FACEBOOK_CLIENT_SECRET=<your-facebook-secret>
-
-# Resource Limits
-DB_MAX_OPEN_CONNS=25
-DB_MAX_IDLE_CONNS=5
-MAX_CONCURRENT_REQUESTS=100
-REQUEST_TIMEOUT_SECONDS=30
-```
-
-### Deployment Steps on DigitalOcean Droplet
-
-1. **Create DigitalOcean Droplet:**
-   - Select Ubuntu 22.04 LTS, 4GB RAM, SSD storage
-   - Configure firewall: Allow ports 22 (SSH), 80 (HTTP), 443 (HTTPS)
-
-2. **Initial Server Setup:**
-
-   ```bash
-   ssh root@<droplet-ip>
-   apt update && apt upgrade -y
-   apt install -y docker.io docker-compose
-   usermod -aG docker $USER
-   ```
-
-3. **Deploy Application:**
-
-   ```bash
-   # Clone repository
-   git clone <repo-url> /opt/linkshortener
-   cd /opt/linkshortener
-
-   # Create .env file with production secrets
-   nano .env
-
-   # Build image
-   docker build -t linkshortener:latest .
-
-   # Run container
-   docker run -d \
-     --name linkshortener \
-     --restart always \
-     --env-file .env \
-     -p 80:80 \
-     -p 443:443 \
-     -v linkshortener_db:/var/lib/postgresql/data \
-     linkshortener:latest
-   ```
-
-4. **Setup SSL (Let's Encrypt):**
-
-   ```bash
-   # Install Certbot
-   apt install -y certbot python3-certbot-nginx
-
-   # Generate certificate
-   certbot certonly --standalone -d <your-domain>
-
-   # Update Nginx config to use SSL
-   # (Update nginx.conf with SSL certificates)
-   ```
-
-5. **Monitor & Maintain:**
-
-   ```bash
-   # View logs
-   docker logs -f linkshortener
-
-   # Check resource usage
-   docker stats linkshortener
-
-   # Backup database
-   docker exec linkshortener pg_dump -U postgres linkshortener > backup.sql
-   ```
-
-### 8. Logging & Monitoring Strategy (Lightweight for 4GB RAM)
+## 7. Logging & Monitoring Strategy (Lightweight for 4GB RAM)
 
 **Philosophy:** Minimal overhead, maximum observability within memory constraints.
 
-#### Backend Logging
+### Backend Logging
 
 **Logging Framework:**
 
@@ -842,7 +582,7 @@ docker logs linkshortener | tail -100     # Last 100 entries
 docker logs linkshortener > app.log       # Save to file for analysis
 ```
 
-#### Metrics Collection (In-Memory)
+### Metrics Collection (In-Memory)
 
 **Lightweight Metrics Struct:**
 
@@ -920,7 +660,7 @@ fi
 echo "$(date '+%Y-%m-%d %H:%M:%S'): $METRICS" >> /opt/linkshortener/metrics.log
 ```
 
-#### Alternative: DigitalOcean Native Monitoring
+### Alternative: DigitalOcean Native Monitoring
 
 Use DigitalOcean's built-in droplet monitoring dashboard (no agent needed):
 
@@ -929,7 +669,7 @@ Use DigitalOcean's built-in droplet monitoring dashboard (no agent needed):
 - **Disk I/O:** Monitor for spikes
 - **Bandwidth:** Track traffic patterns
 
-#### Alerts Configuration
+### Alerts Configuration
 
 **Email Alerts (via `ssmtp`):**
 
@@ -954,14 +694,14 @@ UseSTARTTLS=YES
 - Memory usage > 3.5GB: Alert
 - Disk usage > 80%: Alert
 
-#### Memory Footprint
+### Memory Footprint
 
 - **slog logging:** <1MB
 - **In-memory metrics:** ~2-5MB (minimal data retention)
 - **Cron monitoring:** Negligible
 - **Total overhead:** <10MB (well within 4GB budget)
 
-#### Future Upgrades
+### Future Upgrades
 
 When app grows beyond MVP:
 
