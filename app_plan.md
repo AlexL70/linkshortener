@@ -17,22 +17,21 @@ The initial idea for this project was to create a simple URL shortener applicati
 ## 1. Backend (Go): API and Logic
 
 - **Framework:** `Gin`
-- **ORM:** `GORM` (github.com/go-gorm/gorm) with PostgreSQL driver (github.com/go-gorm/postgres)
-  - Code-first approach: Define models as Go structs with GORM tags
-  - Auto-migration support for development
-  - Connection pooling and query optimization built-in
-  - Support for future read/write splitting and sharding
-- **Migrations:** `golang-migrate` (github.com/golang-migrate/migrate)
-  - Version-controlled SQL migrations for production
-  - Up/Down migration support
-  - CLI tool for migration management
-- **OpenAPI Specification:** `Swag` (github.com/swaggo/swag) with `gin-swagger` (github.com/swaggo/gin-swagger)
-  - Auto-generate OpenAPI 3.0 spec from Go code comments
-  - Interactive API documentation (Swagger UI)
-  - Single source of truth for API contracts
+- **ORM:** `Bun` (github.com/uptrace/bun) with PostgreSQL driver (github.com/uptrace/bun/driver/pgdriver)
+  - Code-first approach: Define models as Go structs with `bun` tags
+  - Built-in `bun/migrate` package — Go-based migration functions, no external tool needed
+  - Migration state tracked in `bun_migrations` table automatically
+  - Thin wrapper over `database/sql` — excellent performance, minimal reflection overhead
+  - Connection pooling via standard `*sql.DB` obtained from `db.DB()`
+- **OpenAPI Specification:** `Huma v2` (github.com/danielgtaylor/huma/v2) with `humagin` adapter
+  - Code-first: OpenAPI 3.1 spec auto-generated from Go types — no comment drift
+  - Built-in request/response validation against declared types
+  - Spec served at `/openapi.json`, Swagger UI at `/docs`
+  - `humagin` is a thin adapter bridge between Huma and Gin's router
 - **Authentication & Session Management:**
-  - `go-oidc` (github.com/coreos/go-oidc) for OIDC authentication
-  - JWT tokens (`github.com/golang-jwt/jwt`) for session management
+  - `goth` (github.com/markbates/goth) + `gothic` sub-package for OAuth2/OIDC provider management
+  - `gorilla/sessions` with signed cookie store for transient OAuth state (redirect → callback only; all post-auth state is stateless JWT)
+  - JWT tokens (`github.com/golang-jwt/jwt/v5`) for session management
   - Supported OAuth2/OIDC Providers (MVP):
     - Google (via google.com)
     - Microsoft (via login.microsoftonline.com)
@@ -66,7 +65,7 @@ The initial idea for this project was to create a simple URL shortener applicati
 
 1. Frontend user selects provider (Google, Microsoft, or Facebook)
 2. Frontend redirects to backend `/auth/login/{provider}`
-3. Backend initiates OIDC flow using `go-oidc`
+3. Backend initiates OAuth2 flow using `gothic.BeginAuthHandler` (goth)
 4. Provider redirects user to login/consent screen
 5. Provider redirects back to `/auth/callback` with authorization code
 6. Backend exchanges code for ID token and user info
@@ -191,23 +190,20 @@ CLICK_BATCH_TIMEOUT_SECONDS=5
 DEFAULT_PAGE_SIZE=20
 ```
 
-### GORM Configuration
+### Bun Configuration
 
 ```go
-// Connection pool tuned for 4GB RAM
-db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
-    // Disable prepared statement caching to save memory
-    PrepareStmt: false,
-    // Use single connection for read operations where possible
-    NowFunc: func() time.Time { return time.Now().UTC() },
-})
+// Open underlying sql.DB with pgdriver
+sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn)))
 
-// Set connection pool limits from environment
-sqlDB, _ := db.DB()
-sqlDB.SetMaxOpenConns(os.Getenv("DB_MAX_OPEN_CONNS"))        // default: 25
-sqlDB.SetMaxIdleConns(os.Getenv("DB_MAX_IDLE_CONNS"))        // default: 5
-sqlDB.SetConnMaxLifetime(time.Duration(os.Getenv("DB_CONN_MAX_LIFETIME")) * time.Second)   // default: 1 hour
-sqlDB.SetConnMaxIdleTime(time.Duration(os.Getenv("DB_CONN_MAX_IDLE_TIME")) * time.Second)  // default: 10 min
+// Set connection pool limits from environment (same env vars as before)
+sqldb.SetMaxOpenConns(maxOpenConns)        // default: 25
+sqldb.SetMaxIdleConns(maxIdleConns)        // default: 5
+sqldb.SetConnMaxLifetime(connMaxLifetime)  // default: 1 hour
+sqldb.SetConnMaxIdleTime(connMaxIdleTime)  // default: 10 min
+
+// Wrap in bun.DB
+db := bun.NewDB(sqldb, pgdialect.New())
 ```
 
 ### Gin Configuration
@@ -274,7 +270,7 @@ autovacuum_min_maint_tuples = 50
 - **Batch URL Clicks:** Write clicks to in-memory buffer, flush every `$CLICK_BATCH_TIMEOUT_SECONDS` seconds or `$CLICK_BATCH_SIZE` records (defaults: 5 seconds or 1000 records)
 - **Pagination:** All list endpoints default to page size `$DEFAULT_PAGE_SIZE` (default: 20)
 - **Query Optimization:** Always use specific columns in SELECT, never `SELECT *`
-- **Connection Pooling:** GORM handles this; monitor with `/debug/pprof`
+- **Connection Pooling:** Bun delegates to `*sql.DB` — configure via `SetMaxOpenConns` / `SetMaxIdleConns`; monitor with `/debug/pprof`
 - **Goroutine Limits:** Middleware caps concurrent requests at `$MAX_CONCURRENT_REQUESTS` (default: 100)
 - **Request Timeouts:** All handlers have `$REQUEST_TIMEOUT_SECONDS` timeout to prevent hanging connections (default: 30 seconds)
 
@@ -407,7 +403,7 @@ func TestRateLimit_ExceededQuota(t *testing.T) {
 - **Authentication:** JWT validation, provider OIDC flows, token refresh
 - **URL Operations:** Creation, retrieval, deletion, expiration logic
 - **Rate Limiting:** Monthly quota enforcement, per-minute DDoS detection
-- **Database Layer:** GORM interactions, error handling
+- **Database Layer:** Bun interactions, error handling
 - **Input Validation:** URL/shortcode validation, SSRF prevention
 - **Error Handling:** All HTTP error responses
 
