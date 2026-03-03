@@ -1,6 +1,8 @@
 # Agent Instructions — Link Shortener Project
 
 This file contains coding standards, conventions, and constraints that all AI agents must follow when contributing to this project. Read it in full before making any changes. More granular, topic-specific guidelines live in the `/ai-instructions/` directory as separate markdown files. When a rule in `/ai-instructions/` conflicts with a rule here, the more specific file wins but you must report the contradiction as soon as you found it.
+!!!CRITICAL "Important"!!!
+**All agents must adhere to these instructions without exception.** Whenever you do any development of new features, bug fixes, refactoring, or any other code changes, you MUST check .md files in the `/ai-instructions/` directory for any relevant guidelines. If you find there any rules relevant to the task you are doing, you MUST follow them as well as the general rules in this file. If you find any contradictions between different instruction files, you MUST report them immediately and start a discussion about how to handle the situation. If you are unsure about any rule or how to apply it, you MUST ask for clarification before proceeding.
 
 ---
 
