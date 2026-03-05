@@ -125,7 +125,7 @@ Never introduce a dependency that replaces any item listed above without explici
 
 ### 4.8 No Hardcoded Configuration
 
-- All environment-sensitive values (DB connection strings, JWT secret, OAuth client IDs/secrets, quota limits, rate limits, etc.) must be read from environment variables at startup. Provide sensible defaults using the values documented in `app_plan.md`. Never commit secrets. All secrets must be held either in .env.<env_name> or just .env files or in the OS environment variables. env.<env_name> files override .env files if <env_name> environment variable is defined on the OS level. OS environment variables override ones defined in .env* files. It is essential that you DO NOT READ OR OTHERWISE USE any .env* files except initially creating them when you are explicitly instructed to do so. There is NO EXCEPTION to this rule. DO NOT TOUCH any existing files whose names start with .env whatsoever.
+- All environment-sensitive values (DB connection strings, JWT secret, OAuth client IDs/secrets, quota limits, rate limits, etc.) must be read from environment variables at startup. Provide sensible defaults using the values documented in `app_plan.md`. Never commit secrets. All secrets must be held either in .env.<env_name> or just .env files or in the OS environment variables. env.<env_name> files override .env files if LINKSHORTENER_ENV environment variable is defined on the OS level ad <env_name>. OS environment variables override ones defined in .env* files. It is essential that you DO NOT READ OR OTHERWISE USE any .env* files except initially creating them when you are explicitly instructed to do so. There is NO EXCEPTION to this rule. DO NOT TOUCH any existing files whose names start with .env whatsoever.
 
 ---
 
