@@ -988,3 +988,753 @@ COPILOT PAYLOAD:
 
 ===============================================================================
 
+
+===============================================================================
+COPILOT EVENT: SESSIONSTART
+===============================================================================
+Timestamp: 2026-03-05 13:27:04.823769000
+Date: 2026-03-05 13:27:04
+Hostname: ZmacMini.local
+User: alexl70
+PID: 22062
+Shell: /bin/zsh
+Working Directory: /Users/alexl70/src/pet/linkshortener
+System Info: Darwin ZmacMini.local 25.3.0 Darwin Kernel Version 25.3.0: Wed Jan 28 20:49:24 PST 2026; root:xnu-12377.81.4~5/RELEASE_ARM64_T8132 arm64
+
+AGENT INFORMATION:
+  CI Platform: None
+  Build ID: N/A
+  Job ID: N/A
+  Agent Name: N/A
+  Container: N/A
+
+GIT INFORMATION:
+  Branch: main
+  Commit: 1c5cad3
+  Status: 
+
+COPILOT PAYLOAD:
+{"timestamp":"2026-03-05T11:27:04.755Z","hookEventName":"SessionStart","sessionId":"08759084-6d18-42c0-b93b-0fd1a2c4a581","transcript_path":"/Users/alexl70/Library/Application Support/Code/User/workspaceStorage/b21d2b2c4133de2eb22354a8d6c6e00a/GitHub.copilot-chat/transcripts/08759084-6d18-42c0-b93b-0fd1a2c4a581.jsonl","source":"new","cwd":"/Volumes/transcend/src/pet/linkshortener"}
+
+===============================================================================
+
+
+===============================================================================
+COPILOT EVENT: USERPROMPTSUBMITTED
+===============================================================================
+Timestamp: 2026-03-05 13:27:04.909812000
+Date: 2026-03-05 13:27:04
+Hostname: ZmacMini.local
+User: alexl70
+PID: 22092
+Shell: /bin/zsh
+Working Directory: /Users/alexl70/src/pet/linkshortener
+System Info: Darwin ZmacMini.local 25.3.0 Darwin Kernel Version 25.3.0: Wed Jan 28 20:49:24 PST 2026; root:xnu-12377.81.4~5/RELEASE_ARM64_T8132 arm64
+
+AGENT INFORMATION:
+  CI Platform: None
+  Build ID: N/A
+  Job ID: N/A
+  Agent Name: N/A
+  Container: N/A
+
+GIT INFORMATION:
+  Branch: main
+  Commit: 1c5cad3
+  Status:  M logs/2026-03-05-conversations.jsonl  M logs/2026-03-05.log 
+
+COPILOT PAYLOAD:
+{"timestamp":"2026-03-05T11:27:04.893Z","hookEventName":"UserPromptSubmit","sessionId":"08759084-6d18-42c0-b93b-0fd1a2c4a581","transcript_path":"/Users/alexl70/Library/Application Support/Code/User/workspaceStorage/b21d2b2c4133de2eb22354a8d6c6e00a/GitHub.copilot-chat/transcripts/08759084-6d18-42c0-b93b-0fd1a2c4a581.jsonl","prompt":"Follow instructions in [create-instructions.prompt.md](file:///Volumes/transcend/src/pet/linkshortener/.github/prompts/create-instructions.prompt.md).\n--frontend --filename frontend-components ALL UI ELEMENTS in this app use shadcn ui. DO NOT CREATE any custom components unless you are EXPLICITLY instructed by the user to do so. ALWAYS use shadcn ui components.","cwd":"/Volumes/transcend/src/pet/linkshortener"}
+
+===============================================================================
+
+
+===============================================================================
+COPILOT EVENT: PRETOOLUSE
+===============================================================================
+Timestamp: 2026-03-05 13:27:09.102060000
+Date: 2026-03-05 13:27:09
+Hostname: ZmacMini.local
+User: alexl70
+PID: 22132
+Shell: /bin/zsh
+Working Directory: /Users/alexl70/src/pet/linkshortener
+System Info: Darwin ZmacMini.local 25.3.0 Darwin Kernel Version 25.3.0: Wed Jan 28 20:49:24 PST 2026; root:xnu-12377.81.4~5/RELEASE_ARM64_T8132 arm64
+
+AGENT INFORMATION:
+  CI Platform: None
+  Build ID: N/A
+  Job ID: N/A
+  Agent Name: N/A
+  Container: N/A
+
+GIT INFORMATION:
+  Branch: main
+  Commit: 1c5cad3
+  Status:  M logs/2026-03-05-conversations.jsonl  M logs/2026-03-05.log 
+
+COPILOT PAYLOAD:
+{"timestamp":"2026-03-05T11:27:09.080Z","hookEventName":"PreToolUse","sessionId":"08759084-6d18-42c0-b93b-0fd1a2c4a581","transcript_path":"/Users/alexl70/Library/Application Support/Code/User/workspaceStorage/b21d2b2c4133de2eb22354a8d6c6e00a/GitHub.copilot-chat/transcripts/08759084-6d18-42c0-b93b-0fd1a2c4a581.jsonl","tool_name":"list_dir","tool_input":{"path":"/Volumes/transcend/src/pet/linkshortener/ai-instructions"},"tool_use_id":"toolu_bdrk_01BjX1kowvskXNa98cFpYpDa__vscode-1772706677411","cwd":"/Volumes/transcend/src/pet/linkshortener"}
+
+===============================================================================
+
+
+===============================================================================
+COPILOT EVENT: POSTTOOLUSE
+===============================================================================
+Timestamp: 2026-03-05 13:27:09.207535000
+Date: 2026-03-05 13:27:09
+Hostname: ZmacMini.local
+User: alexl70
+PID: 22158
+Shell: /bin/zsh
+Working Directory: /Users/alexl70/src/pet/linkshortener
+System Info: Darwin ZmacMini.local 25.3.0 Darwin Kernel Version 25.3.0: Wed Jan 28 20:49:24 PST 2026; root:xnu-12377.81.4~5/RELEASE_ARM64_T8132 arm64
+
+AGENT INFORMATION:
+  CI Platform: None
+  Build ID: N/A
+  Job ID: N/A
+  Agent Name: N/A
+  Container: N/A
+
+GIT INFORMATION:
+  Branch: main
+  Commit: 1c5cad3
+  Status:  M logs/2026-03-05-conversations.jsonl  M logs/2026-03-05.log 
+
+COPILOT PAYLOAD:
+{"timestamp":"2026-03-05T11:27:09.188Z","hookEventName":"PostToolUse","sessionId":"08759084-6d18-42c0-b93b-0fd1a2c4a581","transcript_path":"/Users/alexl70/Library/Application Support/Code/User/workspaceStorage/b21d2b2c4133de2eb22354a8d6c6e00a/GitHub.copilot-chat/transcripts/08759084-6d18-42c0-b93b-0fd1a2c4a581.jsonl","tool_name":"list_dir","tool_input":{"path":"/Volumes/transcend/src/pet/linkshortener/ai-instructions"},"tool_response":"","tool_use_id":"toolu_bdrk_01BjX1kowvskXNa98cFpYpDa__vscode-1772706677411","cwd":"/Volumes/transcend/src/pet/linkshortener"}
+
+===============================================================================
+
+
+===============================================================================
+COPILOT EVENT: PRETOOLUSE
+===============================================================================
+Timestamp: 2026-03-05 13:27:15.503767000
+Date: 2026-03-05 13:27:15
+Hostname: ZmacMini.local
+User: alexl70
+PID: 22206
+Shell: /bin/zsh
+Working Directory: /Users/alexl70/src/pet/linkshortener
+System Info: Darwin ZmacMini.local 25.3.0 Darwin Kernel Version 25.3.0: Wed Jan 28 20:49:24 PST 2026; root:xnu-12377.81.4~5/RELEASE_ARM64_T8132 arm64
+
+AGENT INFORMATION:
+  CI Platform: None
+  Build ID: N/A
+  Job ID: N/A
+  Agent Name: N/A
+  Container: N/A
+
+GIT INFORMATION:
+  Branch: main
+  Commit: 1c5cad3
+  Status:  M logs/2026-03-05-conversations.jsonl  M logs/2026-03-05.log 
+
+COPILOT PAYLOAD:
+{"timestamp":"2026-03-05T11:27:15.476Z","hookEventName":"PreToolUse","sessionId":"08759084-6d18-42c0-b93b-0fd1a2c4a581","transcript_path":"/Users/alexl70/Library/Application Support/Code/User/workspaceStorage/b21d2b2c4133de2eb22354a8d6c6e00a/GitHub.copilot-chat/transcripts/08759084-6d18-42c0-b93b-0fd1a2c4a581.jsonl","tool_name":"read_file","tool_input":{"filePath":"/Volumes/transcend/src/pet/linkshortener/ai-instructions/app-auth.md","startLine":1,"endLine":80},"tool_use_id":"toolu_bdrk_01EVXLZwKYWkDoZ95mRnd47e__vscode-1772706677412","cwd":"/Volumes/transcend/src/pet/linkshortener"}
+
+===============================================================================
+
+
+===============================================================================
+COPILOT EVENT: PRETOOLUSE
+===============================================================================
+Timestamp: 2026-03-05 13:27:15.636407000
+Date: 2026-03-05 13:27:15
+Hostname: ZmacMini.local
+User: alexl70
+PID: 22233
+Shell: /bin/zsh
+Working Directory: /Users/alexl70/src/pet/linkshortener
+System Info: Darwin ZmacMini.local 25.3.0 Darwin Kernel Version 25.3.0: Wed Jan 28 20:49:24 PST 2026; root:xnu-12377.81.4~5/RELEASE_ARM64_T8132 arm64
+
+AGENT INFORMATION:
+  CI Platform: None
+  Build ID: N/A
+  Job ID: N/A
+  Agent Name: N/A
+  Container: N/A
+
+GIT INFORMATION:
+  Branch: main
+  Commit: 1c5cad3
+  Status:  M logs/2026-03-05-conversations.jsonl  M logs/2026-03-05.log 
+
+COPILOT PAYLOAD:
+{"timestamp":"2026-03-05T11:27:15.607Z","hookEventName":"PreToolUse","sessionId":"08759084-6d18-42c0-b93b-0fd1a2c4a581","transcript_path":"/Users/alexl70/Library/Application Support/Code/User/workspaceStorage/b21d2b2c4133de2eb22354a8d6c6e00a/GitHub.copilot-chat/transcripts/08759084-6d18-42c0-b93b-0fd1a2c4a581.jsonl","tool_name":"grep_search","tool_input":{"maxResults":20,"query":"shadcn|components|frontend-components","isRegexp":false,"includePattern":"**/AGENTS.md"},"tool_use_id":"toolu_bdrk_01GtxESPe5LHeax4HcXskPev__vscode-1772706677413","cwd":"/Volumes/transcend/src/pet/linkshortener"}
+
+===============================================================================
+
+
+===============================================================================
+COPILOT EVENT: POSTTOOLUSE
+===============================================================================
+Timestamp: 2026-03-05 13:27:15.636456000
+Date: 2026-03-05 13:27:15
+Hostname: ZmacMini.local
+User: alexl70
+PID: 22232
+Shell: /bin/zsh
+Working Directory: /Users/alexl70/src/pet/linkshortener
+System Info: Darwin ZmacMini.local 25.3.0 Darwin Kernel Version 25.3.0: Wed Jan 28 20:49:24 PST 2026; root:xnu-12377.81.4~5/RELEASE_ARM64_T8132 arm64
+
+AGENT INFORMATION:
+  CI Platform: None
+  Build ID: N/A
+  Job ID: N/A
+  Agent Name: N/A
+  Container: N/A
+
+GIT INFORMATION:
+  Branch: main
+  Commit: 1c5cad3
+  Status:  M logs/2026-03-05-conversations.jsonl  M logs/2026-03-05.log 
+
+COPILOT PAYLOAD:
+{"timestamp":"2026-03-05T11:27:15.606Z","hookEventName":"PostToolUse","sessionId":"08759084-6d18-42c0-b93b-0fd1a2c4a581","transcript_path":"/Users/alexl70/Library/Application Support/Code/User/workspaceStorage/b21d2b2c4133de2eb22354a8d6c6e00a/GitHub.copilot-chat/transcripts/08759084-6d18-42c0-b93b-0fd1a2c4a581.jsonl","tool_name":"read_file","tool_input":{"filePath":"/Volumes/transcend/src/pet/linkshortener/ai-instructions/app-auth.md","startLine":1,"endLine":80},"tool_response":"","tool_use_id":"toolu_bdrk_01EVXLZwKYWkDoZ95mRnd47e__vscode-1772706677412","cwd":"/Volumes/transcend/src/pet/linkshortener"}
+
+===============================================================================
+
+
+===============================================================================
+COPILOT EVENT: POSTTOOLUSE
+===============================================================================
+Timestamp: 2026-03-05 13:27:15.768313000
+Date: 2026-03-05 13:27:15
+Hostname: ZmacMini.local
+User: alexl70
+PID: 22286
+Shell: /bin/zsh
+Working Directory: /Users/alexl70/src/pet/linkshortener
+System Info: Darwin ZmacMini.local 25.3.0 Darwin Kernel Version 25.3.0: Wed Jan 28 20:49:24 PST 2026; root:xnu-12377.81.4~5/RELEASE_ARM64_T8132 arm64
+
+AGENT INFORMATION:
+  CI Platform: None
+  Build ID: N/A
+  Job ID: N/A
+  Agent Name: N/A
+  Container: N/A
+
+GIT INFORMATION:
+  Branch: main
+  Commit: 1c5cad3
+  Status:  M logs/2026-03-05-conversations.jsonl  M logs/2026-03-05.log 
+
+COPILOT PAYLOAD:
+{"timestamp":"2026-03-05T11:27:15.750Z","hookEventName":"PostToolUse","sessionId":"08759084-6d18-42c0-b93b-0fd1a2c4a581","transcript_path":"/Users/alexl70/Library/Application Support/Code/User/workspaceStorage/b21d2b2c4133de2eb22354a8d6c6e00a/GitHub.copilot-chat/transcripts/08759084-6d18-42c0-b93b-0fd1a2c4a581.jsonl","tool_name":"grep_search","tool_input":{"maxResults":20,"query":"shadcn|components|frontend-components","isRegexp":false,"includePattern":"**/AGENTS.md"},"tool_response":"","tool_use_id":"toolu_bdrk_01GtxESPe5LHeax4HcXskPev__vscode-1772706677413","cwd":"/Volumes/transcend/src/pet/linkshortener"}
+
+===============================================================================
+
+
+===============================================================================
+COPILOT EVENT: PRETOOLUSE
+===============================================================================
+Timestamp: 2026-03-05 13:27:26.630622000
+Date: 2026-03-05 13:27:26
+Hostname: ZmacMini.local
+User: alexl70
+PID: 22350
+Shell: /bin/zsh
+Working Directory: /Users/alexl70/src/pet/linkshortener
+System Info: Darwin ZmacMini.local 25.3.0 Darwin Kernel Version 25.3.0: Wed Jan 28 20:49:24 PST 2026; root:xnu-12377.81.4~5/RELEASE_ARM64_T8132 arm64
+
+AGENT INFORMATION:
+  CI Platform: None
+  Build ID: N/A
+  Job ID: N/A
+  Agent Name: N/A
+  Container: N/A
+
+GIT INFORMATION:
+  Branch: main
+  Commit: 1c5cad3
+  Status:  M logs/2026-03-05-conversations.jsonl  M logs/2026-03-05.log 
+
+COPILOT PAYLOAD:
+{"timestamp":"2026-03-05T11:27:26.601Z","hookEventName":"PreToolUse","sessionId":"08759084-6d18-42c0-b93b-0fd1a2c4a581","transcript_path":"/Users/alexl70/Library/Application Support/Code/User/workspaceStorage/b21d2b2c4133de2eb22354a8d6c6e00a/GitHub.copilot-chat/transcripts/08759084-6d18-42c0-b93b-0fd1a2c4a581.jsonl","tool_name":"grep_search","tool_input":{"maxResults":20,"query":"Topic-specific instruction files|ai-instructions","isRegexp":false,"includePattern":"**/AGENTS.md"},"tool_use_id":"toolu_bdrk_01ErNw1A3RiATvZD3e5d3nJf__vscode-1772706677414","cwd":"/Volumes/transcend/src/pet/linkshortener"}
+
+===============================================================================
+
+
+===============================================================================
+COPILOT EVENT: POSTTOOLUSE
+===============================================================================
+Timestamp: 2026-03-05 13:27:26.756856000
+Date: 2026-03-05 13:27:26
+Hostname: ZmacMini.local
+User: alexl70
+PID: 22378
+Shell: /bin/zsh
+Working Directory: /Users/alexl70/src/pet/linkshortener
+System Info: Darwin ZmacMini.local 25.3.0 Darwin Kernel Version 25.3.0: Wed Jan 28 20:49:24 PST 2026; root:xnu-12377.81.4~5/RELEASE_ARM64_T8132 arm64
+
+AGENT INFORMATION:
+  CI Platform: None
+  Build ID: N/A
+  Job ID: N/A
+  Agent Name: N/A
+  Container: N/A
+
+GIT INFORMATION:
+  Branch: main
+  Commit: 1c5cad3
+  Status:  M logs/2026-03-05-conversations.jsonl  M logs/2026-03-05.log 
+
+COPILOT PAYLOAD:
+{"timestamp":"2026-03-05T11:27:26.740Z","hookEventName":"PostToolUse","sessionId":"08759084-6d18-42c0-b93b-0fd1a2c4a581","transcript_path":"/Users/alexl70/Library/Application Support/Code/User/workspaceStorage/b21d2b2c4133de2eb22354a8d6c6e00a/GitHub.copilot-chat/transcripts/08759084-6d18-42c0-b93b-0fd1a2c4a581.jsonl","tool_name":"grep_search","tool_input":{"maxResults":20,"query":"Topic-specific instruction files|ai-instructions","isRegexp":false,"includePattern":"**/AGENTS.md"},"tool_response":"","tool_use_id":"toolu_bdrk_01ErNw1A3RiATvZD3e5d3nJf__vscode-1772706677414","cwd":"/Volumes/transcend/src/pet/linkshortener"}
+
+===============================================================================
+
+
+===============================================================================
+COPILOT EVENT: PRETOOLUSE
+===============================================================================
+Timestamp: 2026-03-05 13:27:52.477045000
+Date: 2026-03-05 13:27:52
+Hostname: ZmacMini.local
+User: alexl70
+PID: 22468
+Shell: /bin/zsh
+Working Directory: /Users/alexl70/src/pet/linkshortener
+System Info: Darwin ZmacMini.local 25.3.0 Darwin Kernel Version 25.3.0: Wed Jan 28 20:49:24 PST 2026; root:xnu-12377.81.4~5/RELEASE_ARM64_T8132 arm64
+
+AGENT INFORMATION:
+  CI Platform: None
+  Build ID: N/A
+  Job ID: N/A
+  Agent Name: N/A
+  Container: N/A
+
+GIT INFORMATION:
+  Branch: main
+  Commit: 1c5cad3
+  Status:  M logs/2026-03-05-conversations.jsonl  M logs/2026-03-05.log 
+
+COPILOT PAYLOAD:
+{"timestamp":"2026-03-05T11:27:52.458Z","hookEventName":"PreToolUse","sessionId":"08759084-6d18-42c0-b93b-0fd1a2c4a581","transcript_path":"/Users/alexl70/Library/Application Support/Code/User/workspaceStorage/b21d2b2c4133de2eb22354a8d6c6e00a/GitHub.copilot-chat/transcripts/08759084-6d18-42c0-b93b-0fd1a2c4a581.jsonl","tool_name":"create_file","tool_input":{"filePath":"/Volumes/transcend/src/pet/linkshortener/ai-instructions/frontend-components.md","content":"# Frontend Components — Agent Instructions\n\n> **Scope:** Frontend\n> These coding standards and conventions **must be strictly followed** whenever you work on any frontend UI code, regardless of the nature of the work (new features, bug fixes, refactoring, or any other changes). If you find any contradiction between the rules in this file and those in any other instruction file (including `AGENTS.md`), **report it immediately and start a discussion** before making any changes.\n\n---\n\n## 1. Core Rule — shadcn/vue Is the Only UI Component Library\n\n**Every UI element in this application must use a shadcn/vue component.** There are no exceptions unless the user explicitly instructs you to create a custom component for a specific, named use case.\n\n- **Never create custom UI components on your own initiative.** If a task appears to require a UI element not yet available as a shadcn/vue component, first check whether it can be composed from existing shadcn/vue components before concluding a custom component is necessary.\n- **If and only if** the user explicitly instructs you to create a custom component, place it in `src/custom-components/` — **never** in `src/components/`, which is reserved exclusively for shadcn/vue components installed via the CLI.\n- Do not wrap, subclass, or otherwise extend shadcn/vue components into new components without explicit user approval.\n\n---\n\n## 2. Installing shadcn/vue Components\n\n- Add components using the shadcn/vue CLI (`npx shadcn-vue@latest add <component>`). Do not copy component source manually.\n- Do not modify the source of installed shadcn/vue components in `src/components/`. They are used **as-is**. If a styling or behaviour change seems necessary, check whether it can be achieved through props, slots, or Tailwind utility classes in the consuming template first.\n- If you encounter a situation where the \"as-is\" constraint causes significant code duplication or complexity, **report it immediately** and start a discussion before modifying any shadcn/vue component source.\n\n---\n\n## 3. Composing UI from shadcn/vue Primitives\n\n- Prefer composing multiple shadcn/vue primitives (e.g., `Dialog`, `DropdownMenu`, `Card`, `Button`) directly in view or parent components rather than wrapping them in new single-purpose wrapper components.\n- Page layout and spacing should be achieved with Tailwind CSS utility classes applied directly in `<template>`, not with additional wrapper components.\n- Use shadcn/vue's slot-based API to inject custom content into components (e.g., `DialogContent`, `CardHeader`) rather than duplicating template structure in separate files.\n\n---\n\n## 4. Directory Conventions\n\n| Path                      | Purpose                                                                      |\n| ------------------------- | ---------------------------------------------------------------------------- |\n| `src/components/`         | shadcn/vue components installed via CLI — **no custom code**                |\n| `src/custom-components/`  | Custom components created **only** on explicit user instruction              |\n| `src/views/`              | Page-level components (one per route); may use both of the above             |\n\n---\n\n## 5. What Agents Must Not Do\n\n- Do not create any new file under `src/components/` manually; only the shadcn/vue CLI may place files there.\n- Do not build custom form inputs, buttons, modals, tables, tooltips, badges, or any other UI primitive from scratch when a shadcn/vue equivalent exists.\n- Do not introduce any additional UI component library (e.g., Vuetify, PrimeVue, Element Plus, Headless UI) — shadcn/vue and Tailwind CSS are the only permitted UI tools.\n- Do not use inline `style` attributes for static values; express all styling through Tailwind CSS utility classes.\n"},"tool_use_id":"toolu_bdrk_01VPHmLBw3DHP8saAFDxNmKu__vscode-1772706677415","cwd":"/Volumes/transcend/src/pet/linkshortener"}
+
+===============================================================================
+
+
+===============================================================================
+COPILOT EVENT: POSTTOOLUSE
+===============================================================================
+Timestamp: 2026-03-05 13:27:52.577422000
+Date: 2026-03-05 13:27:52
+Hostname: ZmacMini.local
+User: alexl70
+PID: 22494
+Shell: /bin/zsh
+Working Directory: /Users/alexl70/src/pet/linkshortener
+System Info: Darwin ZmacMini.local 25.3.0 Darwin Kernel Version 25.3.0: Wed Jan 28 20:49:24 PST 2026; root:xnu-12377.81.4~5/RELEASE_ARM64_T8132 arm64
+
+AGENT INFORMATION:
+  CI Platform: None
+  Build ID: N/A
+  Job ID: N/A
+  Agent Name: N/A
+  Container: N/A
+
+GIT INFORMATION:
+  Branch: main
+  Commit: 1c5cad3
+  Status:  M logs/2026-03-05-conversations.jsonl  M logs/2026-03-05.log ?? ai-instructions/frontend-components.md 
+
+COPILOT PAYLOAD:
+{"timestamp":"2026-03-05T11:27:52.557Z","hookEventName":"PostToolUse","sessionId":"08759084-6d18-42c0-b93b-0fd1a2c4a581","transcript_path":"/Users/alexl70/Library/Application Support/Code/User/workspaceStorage/b21d2b2c4133de2eb22354a8d6c6e00a/GitHub.copilot-chat/transcripts/08759084-6d18-42c0-b93b-0fd1a2c4a581.jsonl","tool_name":"create_file","tool_input":{"filePath":"/Volumes/transcend/src/pet/linkshortener/ai-instructions/frontend-components.md","content":"# Frontend Components — Agent Instructions\n\n> **Scope:** Frontend\n> These coding standards and conventions **must be strictly followed** whenever you work on any frontend UI code, regardless of the nature of the work (new features, bug fixes, refactoring, or any other changes). If you find any contradiction between the rules in this file and those in any other instruction file (including `AGENTS.md`), **report it immediately and start a discussion** before making any changes.\n\n---\n\n## 1. Core Rule — shadcn/vue Is the Only UI Component Library\n\n**Every UI element in this application must use a shadcn/vue component.** There are no exceptions unless the user explicitly instructs you to create a custom component for a specific, named use case.\n\n- **Never create custom UI components on your own initiative.** If a task appears to require a UI element not yet available as a shadcn/vue component, first check whether it can be composed from existing shadcn/vue components before concluding a custom component is necessary.\n- **If and only if** the user explicitly instructs you to create a custom component, place it in `src/custom-components/` — **never** in `src/components/`, which is reserved exclusively for shadcn/vue components installed via the CLI.\n- Do not wrap, subclass, or otherwise extend shadcn/vue components into new components without explicit user approval.\n\n---\n\n## 2. Installing shadcn/vue Components\n\n- Add components using the shadcn/vue CLI (`npx shadcn-vue@latest add <component>`). Do not copy component source manually.\n- Do not modify the source of installed shadcn/vue components in `src/components/`. They are used **as-is**. If a styling or behaviour change seems necessary, check whether it can be achieved through props, slots, or Tailwind utility classes in the consuming template first.\n- If you encounter a situation where the \"as-is\" constraint causes significant code duplication or complexity, **report it immediately** and start a discussion before modifying any shadcn/vue component source.\n\n---\n\n## 3. Composing UI from shadcn/vue Primitives\n\n- Prefer composing multiple shadcn/vue primitives (e.g., `Dialog`, `DropdownMenu`, `Card`, `Button`) directly in view or parent components rather than wrapping them in new single-purpose wrapper components.\n- Page layout and spacing should be achieved with Tailwind CSS utility classes applied directly in `<template>`, not with additional wrapper components.\n- Use shadcn/vue's slot-based API to inject custom content into components (e.g., `DialogContent`, `CardHeader`) rather than duplicating template structure in separate files.\n\n---\n\n## 4. Directory Conventions\n\n| Path                      | Purpose                                                                      |\n| ------------------------- | ---------------------------------------------------------------------------- |\n| `src/components/`         | shadcn/vue components installed via CLI — **no custom code**                |\n| `src/custom-components/`  | Custom components created **only** on explicit user instruction              |\n| `src/views/`              | Page-level components (one per route); may use both of the above             |\n\n---\n\n## 5. What Agents Must Not Do\n\n- Do not create any new file under `src/components/` manually; only the shadcn/vue CLI may place files there.\n- Do not build custom form inputs, buttons, modals, tables, tooltips, badges, or any other UI primitive from scratch when a shadcn/vue equivalent exists.\n- Do not introduce any additional UI component library (e.g., Vuetify, PrimeVue, Element Plus, Headless UI) — shadcn/vue and Tailwind CSS are the only permitted UI tools.\n- Do not use inline `style` attributes for static values; express all styling through Tailwind CSS utility classes.\n"},"tool_response":"","tool_use_id":"toolu_bdrk_01VPHmLBw3DHP8saAFDxNmKu__vscode-1772706677415","cwd":"/Volumes/transcend/src/pet/linkshortener"}
+
+===============================================================================
+
+
+===============================================================================
+COPILOT EVENT: PRETOOLUSE
+===============================================================================
+Timestamp: 2026-03-05 13:27:57.246767000
+Date: 2026-03-05 13:27:57
+Hostname: ZmacMini.local
+User: alexl70
+PID: 22542
+Shell: /bin/zsh
+Working Directory: /Users/alexl70/src/pet/linkshortener
+System Info: Darwin ZmacMini.local 25.3.0 Darwin Kernel Version 25.3.0: Wed Jan 28 20:49:24 PST 2026; root:xnu-12377.81.4~5/RELEASE_ARM64_T8132 arm64
+
+AGENT INFORMATION:
+  CI Platform: None
+  Build ID: N/A
+  Job ID: N/A
+  Agent Name: N/A
+  Container: N/A
+
+GIT INFORMATION:
+  Branch: main
+  Commit: 1c5cad3
+  Status:  M logs/2026-03-05-conversations.jsonl  M logs/2026-03-05.log ?? ai-instructions/frontend-components.md 
+
+COPILOT PAYLOAD:
+{"timestamp":"2026-03-05T11:27:57.229Z","hookEventName":"PreToolUse","sessionId":"08759084-6d18-42c0-b93b-0fd1a2c4a581","transcript_path":"/Users/alexl70/Library/Application Support/Code/User/workspaceStorage/b21d2b2c4133de2eb22354a8d6c6e00a/GitHub.copilot-chat/transcripts/08759084-6d18-42c0-b93b-0fd1a2c4a581.jsonl","tool_name":"replace_string_in_file","tool_input":{"filePath":"/Volumes/transcend/src/pet/linkshortener/AGENTS.md","oldString":"| [ai-instructions/app-auth.md](ai-instructions/app-auth.md) | Full-stack | Authentication: OAuth2/OIDC providers, JWT, route guards, sign-in modal UX |","newString":"| [ai-instructions/app-auth.md](ai-instructions/app-auth.md) | Full-stack | Authentication: OAuth2/OIDC providers, JWT, route guards, sign-in modal UX |\n| [ai-instructions/frontend-components.md](ai-instructions/frontend-components.md) | Frontend | UI components: shadcn/vue-only policy, no custom components without explicit instruction |"},"tool_use_id":"toolu_bdrk_011eGkFktV8Aw9RCFTb4vzyG__vscode-1772706677416","cwd":"/Volumes/transcend/src/pet/linkshortener"}
+
+===============================================================================
+
+
+===============================================================================
+COPILOT EVENT: POSTTOOLUSE
+===============================================================================
+Timestamp: 2026-03-05 13:27:57.346838000
+Date: 2026-03-05 13:27:57
+Hostname: ZmacMini.local
+User: alexl70
+PID: 22568
+Shell: /bin/zsh
+Working Directory: /Users/alexl70/src/pet/linkshortener
+System Info: Darwin ZmacMini.local 25.3.0 Darwin Kernel Version 25.3.0: Wed Jan 28 20:49:24 PST 2026; root:xnu-12377.81.4~5/RELEASE_ARM64_T8132 arm64
+
+AGENT INFORMATION:
+  CI Platform: None
+  Build ID: N/A
+  Job ID: N/A
+  Agent Name: N/A
+  Container: N/A
+
+GIT INFORMATION:
+  Branch: main
+  Commit: 1c5cad3
+  Status:  M logs/2026-03-05-conversations.jsonl  M logs/2026-03-05.log ?? ai-instructions/frontend-components.md 
+
+COPILOT PAYLOAD:
+{"timestamp":"2026-03-05T11:27:57.327Z","hookEventName":"PostToolUse","sessionId":"08759084-6d18-42c0-b93b-0fd1a2c4a581","transcript_path":"/Users/alexl70/Library/Application Support/Code/User/workspaceStorage/b21d2b2c4133de2eb22354a8d6c6e00a/GitHub.copilot-chat/transcripts/08759084-6d18-42c0-b93b-0fd1a2c4a581.jsonl","tool_name":"replace_string_in_file","tool_input":{"filePath":"/Volumes/transcend/src/pet/linkshortener/AGENTS.md","oldString":"| [ai-instructions/app-auth.md](ai-instructions/app-auth.md) | Full-stack | Authentication: OAuth2/OIDC providers, JWT, route guards, sign-in modal UX |","newString":"| [ai-instructions/app-auth.md](ai-instructions/app-auth.md) | Full-stack | Authentication: OAuth2/OIDC providers, JWT, route guards, sign-in modal UX |\n| [ai-instructions/frontend-components.md](ai-instructions/frontend-components.md) | Frontend | UI components: shadcn/vue-only policy, no custom components without explicit instruction |"},"tool_response":"","tool_use_id":"toolu_bdrk_011eGkFktV8Aw9RCFTb4vzyG__vscode-1772706677416","cwd":"/Volumes/transcend/src/pet/linkshortener"}
+
+===============================================================================
+
+
+===============================================================================
+COPILOT EVENT: USERPROMPTSUBMITTED
+===============================================================================
+Timestamp: 2026-03-05 15:36:59.441411000
+Date: 2026-03-05 15:36:59
+Hostname: ZmacMini.local
+User: alexl70
+PID: 43179
+Shell: /bin/zsh
+Working Directory: /Users/alexl70/src/pet/linkshortener
+System Info: Darwin ZmacMini.local 25.3.0 Darwin Kernel Version 25.3.0: Wed Jan 28 20:49:24 PST 2026; root:xnu-12377.81.4~5/RELEASE_ARM64_T8132 arm64
+
+AGENT INFORMATION:
+  CI Platform: None
+  Build ID: N/A
+  Job ID: N/A
+  Agent Name: N/A
+  Container: N/A
+
+GIT INFORMATION:
+  Branch: main
+  Commit: 1c5cad3
+  Status: M  AGENTS.md A  ai-instructions/frontend-components.md M  logs/2026-03-05-conversations.jsonl M  logs/2026-03-05.log 
+
+COPILOT PAYLOAD:
+{"timestamp":"2026-03-05T13:36:59.401Z","hookEventName":"UserPromptSubmit","sessionId":"08759084-6d18-42c0-b93b-0fd1a2c4a581","transcript_path":"/Users/alexl70/Library/Application Support/Code/User/workspaceStorage/b21d2b2c4133de2eb22354a8d6c6e00a/GitHub.copilot-chat/transcripts/08759084-6d18-42c0-b93b-0fd1a2c4a581.jsonl","prompt":"Analyze thoroughly #file:frontend-components.md  instructions and compare it with #file:AGENTS.md . I want you to do next with both files:\n\n1. Any information in #file:AGENTS.md  that concerns frontend components except directories structure and merely duplicates #file:frontend-components.md  content must be removed.\n2. Any information in #file:AGENTS.md  that concerns frontend components and is not similar to any part of #file:frontend-components.md content, must be moved there into appropriate section or new section must be created if there is no appropriate one.\n\"Topic-specific instruction files\" section in #file:AGENTS.md file must remain untouched regardles of two previous instructions.\nIf you have any questions, ask.","cwd":"/Volumes/transcend/src/pet/linkshortener"}
+
+===============================================================================
+
+
+===============================================================================
+COPILOT EVENT: PRETOOLUSE
+===============================================================================
+Timestamp: 2026-03-05 15:38:26.203910000
+Date: 2026-03-05 15:38:26
+Hostname: ZmacMini.local
+User: alexl70
+PID: 43427
+Shell: /bin/zsh
+Working Directory: /Users/alexl70/src/pet/linkshortener
+System Info: Darwin ZmacMini.local 25.3.0 Darwin Kernel Version 25.3.0: Wed Jan 28 20:49:24 PST 2026; root:xnu-12377.81.4~5/RELEASE_ARM64_T8132 arm64
+
+AGENT INFORMATION:
+  CI Platform: None
+  Build ID: N/A
+  Job ID: N/A
+  Agent Name: N/A
+  Container: N/A
+
+GIT INFORMATION:
+  Branch: main
+  Commit: 1c5cad3
+  Status: M  AGENTS.md A  ai-instructions/frontend-components.md MM logs/2026-03-05-conversations.jsonl MM logs/2026-03-05.log 
+
+COPILOT PAYLOAD:
+{"timestamp":"2026-03-05T13:38:26.172Z","hookEventName":"PreToolUse","sessionId":"08759084-6d18-42c0-b93b-0fd1a2c4a581","transcript_path":"/Users/alexl70/Library/Application Support/Code/User/workspaceStorage/b21d2b2c4133de2eb22354a8d6c6e00a/GitHub.copilot-chat/transcripts/08759084-6d18-42c0-b93b-0fd1a2c4a581.jsonl","tool_name":"read_file","tool_input":{"filePath":"/Volumes/transcend/src/pet/linkshortener/AGENTS.md","startLine":1,"endLine":280},"tool_use_id":"toolu_bdrk_01DPKHSTyiqcVsnUzXK4zjvq__vscode-1772706677417","cwd":"/Volumes/transcend/src/pet/linkshortener"}
+
+===============================================================================
+
+
+===============================================================================
+COPILOT EVENT: POSTTOOLUSE
+===============================================================================
+Timestamp: 2026-03-05 15:38:26.339900000
+Date: 2026-03-05 15:38:26
+Hostname: ZmacMini.local
+User: alexl70
+PID: 43453
+Shell: /bin/zsh
+Working Directory: /Users/alexl70/src/pet/linkshortener
+System Info: Darwin ZmacMini.local 25.3.0 Darwin Kernel Version 25.3.0: Wed Jan 28 20:49:24 PST 2026; root:xnu-12377.81.4~5/RELEASE_ARM64_T8132 arm64
+
+AGENT INFORMATION:
+  CI Platform: None
+  Build ID: N/A
+  Job ID: N/A
+  Agent Name: N/A
+  Container: N/A
+
+GIT INFORMATION:
+  Branch: main
+  Commit: 1c5cad3
+  Status: M  AGENTS.md A  ai-instructions/frontend-components.md MM logs/2026-03-05-conversations.jsonl MM logs/2026-03-05.log 
+
+
+===============================================================================
+COPILOT PAYLOAD:
+COPILOT EVENT: PRETOOLUSE
+{"timestamp":"2026-03-05T13:38:26.319Z","hookEventName":"PostToolUse","sessionId":"08759084-6d18-42c0-b93b-0fd1a2c4a581","transcript_path":"/Users/alexl70/Library/Application Support/Code/User/workspaceStorage/b21d2b2c4133de2eb22354a8d6c6e00a/GitHub.copilot-chat/transcripts/08759084-6d18-42c0-b93b-0fd1a2c4a581.jsonl","tool_name":"read_file","tool_input":{"filePath":"/Volumes/transcend/src/pet/linkshortener/AGENTS.md","startLine":1,"endLine":280},"tool_response":"","tool_use_id":"toolu_bdrk_01DPKHSTyiqcVsnUzXK4zjvq__vscode-1772706677417","cwd":"/Volumes/transcend/src/pet/linkshortener"}
+===============================================================================
+
+Timestamp: 2026-03-05 15:38:26.340621000
+===============================================================================
+Date: 2026-03-05 15:38:26
+
+Hostname: ZmacMini.local
+User: alexl70
+PID: 43454
+Shell: /bin/zsh
+Working Directory: /Users/alexl70/src/pet/linkshortener
+System Info: Darwin ZmacMini.local 25.3.0 Darwin Kernel Version 25.3.0: Wed Jan 28 20:49:24 PST 2026; root:xnu-12377.81.4~5/RELEASE_ARM64_T8132 arm64
+
+AGENT INFORMATION:
+  CI Platform: None
+  Build ID: N/A
+  Job ID: N/A
+  Agent Name: N/A
+  Container: N/A
+
+GIT INFORMATION:
+  Branch: main
+  Commit: 1c5cad3
+  Status: M  AGENTS.md A  ai-instructions/frontend-components.md MM logs/2026-03-05-conversations.jsonl MM logs/2026-03-05.log 
+
+COPILOT PAYLOAD:
+{"timestamp":"2026-03-05T13:38:26.320Z","hookEventName":"PreToolUse","sessionId":"08759084-6d18-42c0-b93b-0fd1a2c4a581","transcript_path":"/Users/alexl70/Library/Application Support/Code/User/workspaceStorage/b21d2b2c4133de2eb22354a8d6c6e00a/GitHub.copilot-chat/transcripts/08759084-6d18-42c0-b93b-0fd1a2c4a581.jsonl","tool_name":"read_file","tool_input":{"filePath":"/Volumes/transcend/src/pet/linkshortener/ai-instructions/frontend-components.md","startLine":1,"endLine":70},"tool_use_id":"toolu_bdrk_01G5siRuqxi7eU8iMAz5FPfR__vscode-1772706677418","cwd":"/Volumes/transcend/src/pet/linkshortener"}
+
+===============================================================================
+
+
+===============================================================================
+COPILOT EVENT: POSTTOOLUSE
+===============================================================================
+Timestamp: 2026-03-05 15:38:26.440109000
+Date: 2026-03-05 15:38:26
+Hostname: ZmacMini.local
+User: alexl70
+PID: 43505
+Shell: /bin/zsh
+Working Directory: /Users/alexl70/src/pet/linkshortener
+System Info: Darwin ZmacMini.local 25.3.0 Darwin Kernel Version 25.3.0: Wed Jan 28 20:49:24 PST 2026; root:xnu-12377.81.4~5/RELEASE_ARM64_T8132 arm64
+
+AGENT INFORMATION:
+  CI Platform: None
+  Build ID: N/A
+  Job ID: N/A
+  Agent Name: N/A
+  Container: N/A
+
+GIT INFORMATION:
+  Branch: main
+  Commit: 1c5cad3
+  Status: M  AGENTS.md A  ai-instructions/frontend-components.md MM logs/2026-03-05-conversations.jsonl MM logs/2026-03-05.log 
+
+COPILOT PAYLOAD:
+{"timestamp":"2026-03-05T13:38:26.423Z","hookEventName":"PostToolUse","sessionId":"08759084-6d18-42c0-b93b-0fd1a2c4a581","transcript_path":"/Users/alexl70/Library/Application Support/Code/User/workspaceStorage/b21d2b2c4133de2eb22354a8d6c6e00a/GitHub.copilot-chat/transcripts/08759084-6d18-42c0-b93b-0fd1a2c4a581.jsonl","tool_name":"read_file","tool_input":{"filePath":"/Volumes/transcend/src/pet/linkshortener/ai-instructions/frontend-components.md","startLine":1,"endLine":70},"tool_response":"","tool_use_id":"toolu_bdrk_01G5siRuqxi7eU8iMAz5FPfR__vscode-1772706677418","cwd":"/Volumes/transcend/src/pet/linkshortener"}
+
+===============================================================================
+
+
+===============================================================================
+COPILOT EVENT: PRETOOLUSE
+===============================================================================
+Timestamp: 2026-03-05 15:39:19.902510000
+Date: 2026-03-05 15:39:19
+Hostname: ZmacMini.local
+User: alexl70
+PID: 43671
+Shell: /bin/zsh
+Working Directory: /Users/alexl70/src/pet/linkshortener
+System Info: Darwin ZmacMini.local 25.3.0 Darwin Kernel Version 25.3.0: Wed Jan 28 20:49:24 PST 2026; root:xnu-12377.81.4~5/RELEASE_ARM64_T8132 arm64
+
+AGENT INFORMATION:
+  CI Platform: None
+  Build ID: N/A
+  Job ID: N/A
+  Agent Name: N/A
+  Container: N/A
+
+GIT INFORMATION:
+  Branch: main
+  Commit: 1c5cad3
+  Status: M  AGENTS.md A  ai-instructions/frontend-components.md MM logs/2026-03-05-conversations.jsonl MM logs/2026-03-05.log 
+
+COPILOT PAYLOAD:
+{"timestamp":"2026-03-05T13:39:19.884Z","hookEventName":"PreToolUse","sessionId":"08759084-6d18-42c0-b93b-0fd1a2c4a581","transcript_path":"/Users/alexl70/Library/Application Support/Code/User/workspaceStorage/b21d2b2c4133de2eb22354a8d6c6e00a/GitHub.copilot-chat/transcripts/08759084-6d18-42c0-b93b-0fd1a2c4a581.jsonl","tool_name":"multi_replace_string_in_file","tool_input":{"explanation":"Apply all changes to both files simultaneously: move unique frontend-component content into frontend-components.md (renumbering sections), and clean up AGENTS.md by removing duplicates, removing moved content, and renaming the section that loses its primary rule.","replacements":[{"filePath":"/Volumes/transcend/src/pet/linkshortener/ai-instructions/frontend-components.md","oldString":"---\n\n## 5. What Agents Must Not Do\n\n- Do not create any new file under `src/components/` manually; only the shadcn/vue CLI may place files there.\n- Do not build custom form inputs, buttons, modals, tables, tooltips, badges, or any other UI primitive from scratch when a shadcn/vue equivalent exists.\n- Do not introduce any additional UI component library (e.g., Vuetify, PrimeVue, Element Plus, Headless UI) — shadcn/vue and Tailwind CSS are the only permitted UI tools.\n- Do not use inline `style` attributes for static values; express all styling through Tailwind CSS utility classes.","newString":"---\n\n## 5. Component Authoring Standards\n\n- All Vue components (`src/views/` and `src/custom-components/`) must use `<script setup lang=\"ts\">`. The Options API is not permitted.\n\n---\n\n## 6. Styling\n\n- Use Tailwind CSS utility classes exclusively. Do not write custom CSS anywhere except `src/style.css` for global base styles.\n\n---\n\n## 7. Testing\n\n- shadcn/vue components installed into `src/components/` are excluded from test coverage requirements, as they are used as-is without customization. They may still be covered by tests when the consuming component's logic requires it (e.g., conditional rendering based on props). If you find any contradiction about it, report it immediately and start a discussion.\n\n---\n\n## 8. What Agents Must Not Do\n\n- Do not create any new file under `src/components/` manually; only the shadcn/vue CLI may place files there.\n- Do not build custom form inputs, buttons, modals, tables, tooltips, badges, or any other UI primitive from scratch when a shadcn/vue equivalent exists.\n- Do not introduce any additional UI component library (e.g., Vuetify, PrimeVue, Element Plus, Headless UI) — shadcn/vue and Tailwind CSS are the only permitted UI tools.\n- Do not use inline `style` attributes for static values; express all styling through Tailwind CSS utility classes."},{"filePath":"/Volumes/transcend/src/pet/linkshortener/AGENTS.md","oldString":"### 6.1 Composition API Only\n\n- All components use `<script setup lang=\"ts\">`. Options API is not permitted.\n- Reactive state lives in `ref` or `reactive`. Avoid direct mutation of Pinia state outside of store actions.","newString":"### 6.1 Reactive State\n\n- Reactive state lives in `ref` or `reactive`. Avoid direct mutation of Pinia state outside of store actions."},{"filePath":"/Volumes/transcend/src/pet/linkshortener/AGENTS.md","oldString":"### 6.3 Component Structure\n\n- shadcn/vue components belong in `src/components/`.\n- Page-level components (one per route) belong in `src/views/`.\n- shadcn/vue components are copied into the project and used \"as is\" without any customization. If you find the case where sticking to this rule leads to considerable code duplication or complexity, report it immediately and start the discussion about how to handle the situation.","newString":"### 6.3 Component Structure\n\n- shadcn/vue components belong in `src/components/`.\n- Page-level components (one per route) belong in `src/views/`."},{"filePath":"/Volumes/transcend/src/pet/linkshortener/AGENTS.md","oldString":"### 6.5 Styling\n\n- Use Tailwind CSS utility classes exclusively. Do not write custom CSS except in `src/style.css` for global base styles.\n- Do not use inline `style` attributes for anything other than truly dynamic values that cannot be expressed with Tailwind.\n\n---\n\n## 7. Testing Standards","newString":"---\n\n## 7. Testing Standards"},{"filePath":"/Volumes/transcend/src/pet/linkshortener/AGENTS.md","oldString":"- CSS, animations, and third-party SDK integrations are excluded from coverage requirements.\n- Imported shadcn/vue that are installed into `frontend/src/components/` are excluded from testing as they are used \"as is\" without any customization. Still they might be covered by tests if they are used in a way that requires some logic to be tested (e.g., conditional rendering based on props). If you find any contradiction about it, report it immediately and start a discussion about how to handle the situation.","newString":"- CSS, animations, and third-party SDK integrations are excluded from coverage requirements."},{"filePath":"/Volumes/transcend/src/pet/linkshortener/AGENTS.md","oldString":"- Do not bypass Huma registration for API endpoints.\n- Do not use the Options API in Vue components.\n- Do not alter existing database migrations; create new ones instead.","newString":"- Do not bypass Huma registration for API endpoints.\n- Do not alter existing database migrations; create new ones instead."}]},"tool_use_id":"toolu_bdrk_01TbAHcHWBxdGL9nMsLLW8JY__vscode-1772706677419","cwd":"/Volumes/transcend/src/pet/linkshortener"}
+
+===============================================================================
+
+
+===============================================================================
+COPILOT EVENT: POSTTOOLUSE
+===============================================================================
+Timestamp: 2026-03-05 15:39:20.038062000
+Date: 2026-03-05 15:39:20
+Hostname: ZmacMini.local
+User: alexl70
+PID: 43697
+Shell: /bin/zsh
+Working Directory: /Users/alexl70/src/pet/linkshortener
+System Info: Darwin ZmacMini.local 25.3.0 Darwin Kernel Version 25.3.0: Wed Jan 28 20:49:24 PST 2026; root:xnu-12377.81.4~5/RELEASE_ARM64_T8132 arm64
+
+AGENT INFORMATION:
+  CI Platform: None
+  Build ID: N/A
+  Job ID: N/A
+  Agent Name: N/A
+  Container: N/A
+
+GIT INFORMATION:
+  Branch: main
+  Commit: 1c5cad3
+  Status: M  AGENTS.md AM ai-instructions/frontend-components.md MM logs/2026-03-05-conversations.jsonl MM logs/2026-03-05.log 
+
+COPILOT PAYLOAD:
+{"timestamp":"2026-03-05T13:39:20.017Z","hookEventName":"PostToolUse","sessionId":"08759084-6d18-42c0-b93b-0fd1a2c4a581","transcript_path":"/Users/alexl70/Library/Application Support/Code/User/workspaceStorage/b21d2b2c4133de2eb22354a8d6c6e00a/GitHub.copilot-chat/transcripts/08759084-6d18-42c0-b93b-0fd1a2c4a581.jsonl","tool_name":"multi_replace_string_in_file","tool_input":{"explanation":"Apply all changes to both files simultaneously: move unique frontend-component content into frontend-components.md (renumbering sections), and clean up AGENTS.md by removing duplicates, removing moved content, and renaming the section that loses its primary rule.","replacements":[{"filePath":"/Volumes/transcend/src/pet/linkshortener/ai-instructions/frontend-components.md","oldString":"---\n\n## 5. What Agents Must Not Do\n\n- Do not create any new file under `src/components/` manually; only the shadcn/vue CLI may place files there.\n- Do not build custom form inputs, buttons, modals, tables, tooltips, badges, or any other UI primitive from scratch when a shadcn/vue equivalent exists.\n- Do not introduce any additional UI component library (e.g., Vuetify, PrimeVue, Element Plus, Headless UI) — shadcn/vue and Tailwind CSS are the only permitted UI tools.\n- Do not use inline `style` attributes for static values; express all styling through Tailwind CSS utility classes.","newString":"---\n\n## 5. Component Authoring Standards\n\n- All Vue components (`src/views/` and `src/custom-components/`) must use `<script setup lang=\"ts\">`. The Options API is not permitted.\n\n---\n\n## 6. Styling\n\n- Use Tailwind CSS utility classes exclusively. Do not write custom CSS anywhere except `src/style.css` for global base styles.\n\n---\n\n## 7. Testing\n\n- shadcn/vue components installed into `src/components/` are excluded from test coverage requirements, as they are used as-is without customization. They may still be covered by tests when the consuming component's logic requires it (e.g., conditional rendering based on props). If you find any contradiction about it, report it immediately and start a discussion.\n\n---\n\n## 8. What Agents Must Not Do\n\n- Do not create any new file under `src/components/` manually; only the shadcn/vue CLI may place files there.\n- Do not build custom form inputs, buttons, modals, tables, tooltips, badges, or any other UI primitive from scratch when a shadcn/vue equivalent exists.\n- Do not introduce any additional UI component library (e.g., Vuetify, PrimeVue, Element Plus, Headless UI) — shadcn/vue and Tailwind CSS are the only permitted UI tools.\n- Do not use inline `style` attributes for static values; express all styling through Tailwind CSS utility classes."},{"filePath":"/Volumes/transcend/src/pet/linkshortener/AGENTS.md","oldString":"### 6.1 Composition API Only\n\n- All components use `<script setup lang=\"ts\">`. Options API is not permitted.\n- Reactive state lives in `ref` or `reactive`. Avoid direct mutation of Pinia state outside of store actions.","newString":"### 6.1 Reactive State\n\n- Reactive state lives in `ref` or `reactive`. Avoid direct mutation of Pinia state outside of store actions."},{"filePath":"/Volumes/transcend/src/pet/linkshortener/AGENTS.md","oldString":"### 6.3 Component Structure\n\n- shadcn/vue components belong in `src/components/`.\n- Page-level components (one per route) belong in `src/views/`.\n- shadcn/vue components are copied into the project and used \"as is\" without any customization. If you find the case where sticking to this rule leads to considerable code duplication or complexity, report it immediately and start the discussion about how to handle the situation.","newString":"### 6.3 Component Structure\n\n- shadcn/vue components belong in `src/components/`.\n- Page-level components (one per route) belong in `src/views/`."},{"filePath":"/Volumes/transcend/src/pet/linkshortener/AGENTS.md","oldString":"### 6.5 Styling\n\n- Use Tailwind CSS utility classes exclusively. Do not write custom CSS except in `src/style.css` for global base styles.\n- Do not use inline `style` attributes for anything other than truly dynamic values that cannot be expressed with Tailwind.\n\n---\n\n## 7. Testing Standards","newString":"---\n\n## 7. Testing Standards"},{"filePath":"/Volumes/transcend/src/pet/linkshortener/AGENTS.md","oldString":"- CSS, animations, and third-party SDK integrations are excluded from coverage requirements.\n- Imported shadcn/vue that are installed into `frontend/src/components/` are excluded from testing as they are used \"as is\" without any customization. Still they might be covered by tests if they are used in a way that requires some logic to be tested (e.g., conditional rendering based on props). If you find any contradiction about it, report it immediately and start a discussion about how to handle the situation.","newString":"- CSS, animations, and third-party SDK integrations are excluded from coverage requirements."},{"filePath":"/Volumes/transcend/src/pet/linkshortener/AGENTS.md","oldString":"- Do not bypass Huma registration for API endpoints.\n- Do not use the Options API in Vue components.\n- Do not alter existing database migrations; create new ones instead.","newString":"- Do not bypass Huma registration for API endpoints.\n- Do not alter existing database migrations; create new ones instead."}]},"tool_response":"","tool_use_id":"toolu_bdrk_01TbAHcHWBxdGL9nMsLLW8JY__vscode-1772706677419","cwd":"/Volumes/transcend/src/pet/linkshortener"}
+
+===============================================================================
+
+
+===============================================================================
+COPILOT EVENT: PRETOOLUSE
+===============================================================================
+Timestamp: 2026-03-05 15:39:23.876276000
+Date: 2026-03-05 15:39:23
+Hostname: ZmacMini.local
+User: alexl70
+PID: 43743
+Shell: /bin/zsh
+Working Directory: /Users/alexl70/src/pet/linkshortener
+System Info: Darwin ZmacMini.local 25.3.0 Darwin Kernel Version 25.3.0: Wed Jan 28 20:49:24 PST 2026; root:xnu-12377.81.4~5/RELEASE_ARM64_T8132 arm64
+
+AGENT INFORMATION:
+  CI Platform: None
+  Build ID: N/A
+  Job ID: N/A
+  Agent Name: N/A
+  Container: N/A
+
+GIT INFORMATION:
+  Branch: main
+  Commit: 1c5cad3
+  Status: MM AGENTS.md AM ai-instructions/frontend-components.md MM logs/2026-03-05-conversations.jsonl MM logs/2026-03-05.log 
+
+COPILOT PAYLOAD:
+{"timestamp":"2026-03-05T13:39:23.856Z","hookEventName":"PreToolUse","sessionId":"08759084-6d18-42c0-b93b-0fd1a2c4a581","transcript_path":"/Users/alexl70/Library/Application Support/Code/User/workspaceStorage/b21d2b2c4133de2eb22354a8d6c6e00a/GitHub.copilot-chat/transcripts/08759084-6d18-42c0-b93b-0fd1a2c4a581.jsonl","tool_name":"read_file","tool_input":{"filePath":"/Volumes/transcend/src/pet/linkshortener/ai-instructions/frontend-components.md","startLine":1,"endLine":100},"tool_use_id":"toolu_bdrk_01YNksUL64fD7y9APjKsgzp3__vscode-1772706677420","cwd":"/Volumes/transcend/src/pet/linkshortener"}
+
+===============================================================================
+
+
+===============================================================================
+COPILOT EVENT: POSTTOOLUSE
+===============================================================================
+Timestamp: 2026-03-05 15:39:23.983106000
+Date: 2026-03-05 15:39:23
+Hostname: ZmacMini.local
+User: alexl70
+PID: 43771
+Shell: /bin/zsh
+Working Directory: /Users/alexl70/src/pet/linkshortener
+System Info: Darwin ZmacMini.local 25.3.0 Darwin Kernel Version 25.3.0: Wed Jan 28 20:49:24 PST 2026; root:xnu-12377.81.4~5/RELEASE_ARM64_T8132 arm64
+
+AGENT INFORMATION:
+  CI Platform: None
+  Build ID: N/A
+  Job ID: N/A
+  Agent Name: N/A
+  Container: N/A
+
+GIT INFORMATION:
+  Branch: main
+  Commit: 1c5cad3
+  Status: MM AGENTS.md AM ai-instructions/frontend-components.md MM logs/2026-03-05-conversations.jsonl MM logs/2026-03-05.log 
+
+COPILOT PAYLOAD:
+{"timestamp":"2026-03-05T13:39:23.943Z","hookEventName":"PostToolUse","sessionId":"08759084-6d18-42c0-b93b-0fd1a2c4a581","transcript_path":"/Users/alexl70/Library/Application Support/Code/User/workspaceStorage/b21d2b2c4133de2eb22354a8d6c6e00a/GitHub.copilot-chat/transcripts/08759084-6d18-42c0-b93b-0fd1a2c4a581.jsonl","tool_name":"read_file","tool_input":{"filePath":"/Volumes/transcend/src/pet/linkshortener/ai-instructions/frontend-components.md","startLine":1,"endLine":100},"tool_response":"","tool_use_id":"toolu_bdrk_01YNksUL64fD7y9APjKsgzp3__vscode-1772706677420","cwd":"/Volumes/transcend/src/pet/linkshortener"}
+
+===============================================================================
+
+
+===============================================================================
+COPILOT EVENT: PRETOOLUSE
+===============================================================================
+Timestamp: 2026-03-05 15:39:23.983118000
+Date: 2026-03-05 15:39:23
+Hostname: ZmacMini.local
+User: alexl70
+PID: 43772
+Shell: /bin/zsh
+Working Directory: /Users/alexl70/src/pet/linkshortener
+System Info: Darwin ZmacMini.local 25.3.0 Darwin Kernel Version 25.3.0: Wed Jan 28 20:49:24 PST 2026; root:xnu-12377.81.4~5/RELEASE_ARM64_T8132 arm64
+
+AGENT INFORMATION:
+  CI Platform: None
+  Build ID: N/A
+  Job ID: N/A
+  Agent Name: N/A
+  Container: N/A
+
+GIT INFORMATION:
+  Branch: main
+  Commit: 1c5cad3
+  Status: MM AGENTS.md AM ai-instructions/frontend-components.md MM logs/2026-03-05-conversations.jsonl MM logs/2026-03-05.log 
+
+COPILOT PAYLOAD:
+{"timestamp":"2026-03-05T13:39:23.944Z","hookEventName":"PreToolUse","sessionId":"08759084-6d18-42c0-b93b-0fd1a2c4a581","transcript_path":"/Users/alexl70/Library/Application Support/Code/User/workspaceStorage/b21d2b2c4133de2eb22354a8d6c6e00a/GitHub.copilot-chat/transcripts/08759084-6d18-42c0-b93b-0fd1a2c4a581.jsonl","tool_name":"read_file","tool_input":{"filePath":"/Volumes/transcend/src/pet/linkshortener/AGENTS.md","startLine":175,"endLine":280},"tool_use_id":"toolu_bdrk_015NhgbE2svH1wDXG3ggM8PN__vscode-1772706677421","cwd":"/Volumes/transcend/src/pet/linkshortener"}
+
+===============================================================================
+
+
+===============================================================================
+COPILOT EVENT: POSTTOOLUSE
+===============================================================================
+Timestamp: 2026-03-05 15:39:24.092315000
+Date: 2026-03-05 15:39:24
+Hostname: ZmacMini.local
+User: alexl70
+PID: 43823
+Shell: /bin/zsh
+Working Directory: /Users/alexl70/src/pet/linkshortener
+System Info: Darwin ZmacMini.local 25.3.0 Darwin Kernel Version 25.3.0: Wed Jan 28 20:49:24 PST 2026; root:xnu-12377.81.4~5/RELEASE_ARM64_T8132 arm64
+
+AGENT INFORMATION:
+  CI Platform: None
+  Build ID: N/A
+  Job ID: N/A
+  Agent Name: N/A
+  Container: N/A
+
+GIT INFORMATION:
+  Branch: main
+  Commit: 1c5cad3
+  Status: MM AGENTS.md AM ai-instructions/frontend-components.md MM logs/2026-03-05-conversations.jsonl MM logs/2026-03-05.log 
+
+COPILOT PAYLOAD:
+{"timestamp":"2026-03-05T13:39:24.076Z","hookEventName":"PostToolUse","sessionId":"08759084-6d18-42c0-b93b-0fd1a2c4a581","transcript_path":"/Users/alexl70/Library/Application Support/Code/User/workspaceStorage/b21d2b2c4133de2eb22354a8d6c6e00a/GitHub.copilot-chat/transcripts/08759084-6d18-42c0-b93b-0fd1a2c4a581.jsonl","tool_name":"read_file","tool_input":{"filePath":"/Volumes/transcend/src/pet/linkshortener/AGENTS.md","startLine":175,"endLine":280},"tool_response":"","tool_use_id":"toolu_bdrk_015NhgbE2svH1wDXG3ggM8PN__vscode-1772706677421","cwd":"/Volumes/transcend/src/pet/linkshortener"}
+
+===============================================================================
+

@@ -4,9 +4,10 @@ This file contains coding standards, conventions, and constraints that all AI ag
 
 ### Topic-specific instruction files
 
-| File                                                       | Scope      | Description                                                                |
-| ---------------------------------------------------------- | ---------- | -------------------------------------------------------------------------- |
-| [ai-instructions/app-auth.md](ai-instructions/app-auth.md) | Full-stack | Authentication: OAuth2/OIDC providers, JWT, route guards, sign-in modal UX |
+| File                                                                             | Scope      | Description                                                                              |
+| -------------------------------------------------------------------------------- | ---------- | ---------------------------------------------------------------------------------------- |
+| [ai-instructions/app-auth.md](ai-instructions/app-auth.md)                       | Full-stack | Authentication: OAuth2/OIDC providers, JWT, route guards, sign-in modal UX               |
+| [ai-instructions/frontend-components.md](ai-instructions/frontend-components.md) | Frontend   | UI components: shadcn/vue-only policy, no custom components without explicit instruction |
 
 !!!CRITICAL "Important"!!!
 **All agents must adhere to these instructions without exception.** Whenever you do any development of new features, bug fixes, refactoring, or any other code changes, you MUST check .md files in the `/ai-instructions/` directory for any relevant guidelines. If you find there any rules relevant to the task you are doing, you MUST follow them as well as the general rules in this file. If you find any contradictions between different instruction files, you MUST report them immediately and start a discussion about how to handle the situation. If you are unsure about any rule or how to apply it, you MUST ask for clarification before proceeding.
@@ -175,9 +176,8 @@ Handlers must not import `infrastructure/pg` directly. Wire dependencies via int
 
 ## 6. Frontend Standards
 
-### 6.1 Composition API Only
+### 6.1 Reactive State
 
-- All components use `<script setup lang="ts">`. Options API is not permitted.
 - Reactive state lives in `ref` or `reactive`. Avoid direct mutation of Pinia state outside of store actions.
 
 ### 6.2 API Client
@@ -191,17 +191,11 @@ Handlers must not import `infrastructure/pg` directly. Wire dependencies via int
 
 - shadcn/vue components belong in `src/components/`.
 - Page-level components (one per route) belong in `src/views/`.
-- shadcn/vue components are copied into the project and used "as is" without any customization. If you find the case where sticking to this rule leads to considerable code duplication or complexity, report it immediately and start the discussion about how to handle the situation.
 
 ### 6.4 State Management
 
 - Global shared state (auth token, user info, URL list) lives in Pinia stores under `src/stores/`.
 - Do not use `localStorage` directly in components. Wrap all persistence in Pinia store actions.
-
-### 6.5 Styling
-
-- Use Tailwind CSS utility classes exclusively. Do not write custom CSS except in `src/style.css` for global base styles.
-- Do not use inline `style` attributes for anything other than truly dynamic values that cannot be expressed with Tailwind.
 
 ---
 
@@ -221,7 +215,6 @@ Handlers must not import `infrastructure/pg` directly. Wire dependencies via int
 - Use `@vue/test-utils` for component mounting. Mock all API client calls with `vi.mock()`.
 - Test files use the `.spec.ts` suffix and live alongside the component or store they test.
 - CSS, animations, and third-party SDK integrations are excluded from coverage requirements.
-- Imported shadcn/vue that are installed into `frontend/src/components/` are excluded from testing as they are used "as is" without any customization. Still they might be covered by tests if they are used in a way that requires some logic to be tested (e.g., conditional rendering based on props). If you find any contradiction about it, report it immediately and start a discussion about how to handle the situation.
 
 ### 7.3 When to Write Tests
 
@@ -266,6 +259,5 @@ Handlers must not import `infrastructure/pg` directly. Wire dependencies via int
 - DO NOT hardcode secrets, credentials, or environment-specific URLs.
 - Do not write raw SQL (except in migration files where unavoidable).
 - Do not bypass Huma registration for API endpoints.
-- Do not use the Options API in Vue components.
 - Do not alter existing database migrations; create new ones instead.
 - Do not silently swallow errors in either Go or TypeScript code.
