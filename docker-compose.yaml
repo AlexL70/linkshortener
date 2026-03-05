@@ -1,0 +1,56 @@
+services:
+  db:
+    image: postgres:latest
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    command:
+      - postgres
+      # Memory Settings (total ~800MB for 4GB system)
+      - -c
+      - shared_buffers=200MB
+      - -c
+      - effective_cache_size=600MB
+      - -c
+      - work_mem=4MB
+      - -c
+      - maintenance_work_mem=50MB
+      # Connections
+      - -c
+      - max_connections=50
+      - -c
+      - superuser_reserved_connections=3
+      # WAL Settings
+      - -c
+      - wal_buffers=16MB
+      - -c
+      - checkpoint_timeout=15min
+      - -c
+      - max_wal_size=2GB
+      # Query Planning (assumes SSD storage)
+      - -c
+      - random_page_cost=1.1
+      - -c
+      - effective_io_concurrency=200
+      # Logging (minimal overhead)
+      - -c
+      - log_min_duration_statement=1000
+      - -c
+      - log_connections=off
+      # Temp Files
+      - -c
+      - temp_file_limit=1GB
+      # Autovacuum
+      - -c
+      - autovacuum=on
+      - -c
+      - autovacuum_min_maint_tuples=50
+
+volumes:
+  db_data:
