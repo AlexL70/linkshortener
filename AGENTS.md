@@ -1,6 +1,13 @@
 # Agent Instructions — Link Shortener Project
 
 This file contains coding standards, conventions, and constraints that all AI agents must follow when contributing to this project. Read it in full before making any changes. More granular, topic-specific guidelines live in the `/ai-instructions/` directory as separate markdown files. When a rule in `/ai-instructions/` conflicts with a rule here, the more specific file wins but you must report the contradiction as soon as you found it.
+
+### Topic-specific instruction files
+
+| File                                                       | Scope      | Description                                                                |
+| ---------------------------------------------------------- | ---------- | -------------------------------------------------------------------------- |
+| [ai-instructions/app-auth.md](ai-instructions/app-auth.md) | Full-stack | Authentication: OAuth2/OIDC providers, JWT, route guards, sign-in modal UX |
+
 !!!CRITICAL "Important"!!!
 **All agents must adhere to these instructions without exception.** Whenever you do any development of new features, bug fixes, refactoring, or any other code changes, you MUST check .md files in the `/ai-instructions/` directory for any relevant guidelines. If you find there any rules relevant to the task you are doing, you MUST follow them as well as the general rules in this file. If you find any contradictions between different instruction files, you MUST report them immediately and start a discussion about how to handle the situation. If you are unsure about any rule or how to apply it, you MUST ask for clarification before proceeding.
 
@@ -150,21 +157,14 @@ Handlers must not import `infrastructure/pg` directly. Wire dependencies via int
 - Validate all input through Huma's declared types (use struct tags like `validate:"required,url"` and `json` tags). Do not repeat validation logic inside the handler body if Huma already enforces it.
 - Return structured error responses consistently. Use Huma's error helpers (`huma.Error400BadRequest`, `huma.Error404NotFound`, etc.).
 
-### 5.4 Authentication & JWT
-
-- JWT tokens are stateless. Do not store session state server-side beyond the transient OAuth state cookie.
-- JWT claims must include: `user_id`, `user_name`, `sub`, `iat`, `exp`.
-- All protected endpoints must be guarded by JWT middleware that validates the `Authorization: Bearer <token>` header.
-- `gorilla/sessions` store is used exclusively for the duration of the OAuth2 redirect/callback flow and must be cleared immediately after the callback completes. The `gorilla/sessions` store MUST NEVER BE USED OTHERWISE in the application.
-
-### 5.5 Logging
+### 5.4 Logging
 
 - Use `log/slog` with a JSON handler targeting stdout.
 - Log levels in production: `ERROR`, `WARN`, `INFO`. No `DEBUG` in production builds.
 - Every log entry for a request must include at minimum: `user_id` (if authenticated), relevant entity IDs, and the error value (if one occurred).
 - DO NOT log sensitive data: passwords, JWT tokens, OAuth secrets, full IP addresses in error-level logs EVER.
 
-### 5.6 Performance
+### 5.5 Performance
 
 - Never use `SELECT *`. Always specify columns in Bun queries.
 - Write URL click records to an in-memory batch buffer and flush to the DB on a schedule (see `app_plan.md` §4 for defaults).
@@ -197,15 +197,8 @@ Handlers must not import `infrastructure/pg` directly. Wire dependencies via int
 
 - Global shared state (auth token, user info, URL list) lives in Pinia stores under `src/stores/`.
 - Do not use `localStorage` directly in components. Wrap all persistence in Pinia store actions.
-- JWT tokens may be stored in `localStorage` only through the auth store.
 
-### 6.5 Routing & Guards
-
-- All routes that require authentication must have a `beforeEnter` guard (or a global `beforeEach` guard) that checks for a valid JWT via the auth store.
-- Unauthenticated users must be redirected to the home page.
-- After successful login, users must be redirected to the dashboard page.
-
-### 6.6 Styling
+### 6.5 Styling
 
 - Use Tailwind CSS utility classes exclusively. Do not write custom CSS except in `src/style.css` for global base styles.
 - Do not use inline `style` attributes for anything other than truly dynamic values that cannot be expressed with Tailwind.
@@ -239,12 +232,10 @@ Handlers must not import `infrastructure/pg` directly. Wire dependencies via int
 
 ## 8. Security Rules (must be implemented before any public release)
 
-- **No passwords stored.** Authentication is exclusively through OAuth2/OIDC third-party providers.
 - **Input validation:** All URLs submitted by users must be validated: `http`/`https` scheme only, no `localhost`, no RFC-1918 private IP ranges (SSRF prevention), max length enforced.
 - **Shortcode validation:** User-supplied shortcodes must be alphanumeric + hyphens, exactly 6 characters, and checked against a reserved-words blocklist.
 - **Rate limiting:** Per-minute click rate limiting is enforced in middleware. Violations are recorded and may trigger temporary account suspension.
 - **Monthly quotas:** Redirect processing enforces the monthly click quota per user before recording the click.
-- **HTTP-only, SameSite cookies** must be used for the OAuth state session.
 - Never expose stack traces or internal error details in API responses. Log them server-side and return a generic error message to the client.
 
 ---
