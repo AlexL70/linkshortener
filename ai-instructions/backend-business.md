@@ -15,7 +15,7 @@ Business logic code lives under `backend/business-logic/`:
 | `business-logic/interfaces/` | Pure Go interfaces: repository contracts, service contracts                    |
 | `business-logic/handlers/`   | Pure Go business logic handlers; no HTTP or third-party framework dependencies |
 
-Auth-specific handler conventions are governed by [app-auth.md](app-auth.md). DB layer conventions are governed by [backend-dblayer.md](backend-dblayer.md). Web layer conventions (viewmodels, mappers) are governed by a separate instruction file.
+Auth-specific handler conventions are governed by [app-auth.md](app-auth.md). DB layer conventions are governed by [backend-dblayer.md](backend-dblayer.md). Web layer conventions (viewmodels, mappers) are governed by [backend-web.md](backend-web.md).
 
 ---
 

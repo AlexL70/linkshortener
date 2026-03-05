@@ -10,6 +10,7 @@ This file contains coding standards, conventions, and constraints that all AI ag
 | [ai-instructions/frontend-components.md](ai-instructions/frontend-components.md) | Frontend   | UI components: shadcn/vue-only policy, no custom components without explicit instruction |
 | [ai-instructions/backend-dblayer.md](ai-instructions/backend-dblayer.md)         | Backend    | DB layer: Bun ORM, models, migrations, repositories, mappings, click batching            |
 | [ai-instructions/backend-business.md](ai-instructions/backend-business.md)       | Backend    | Business logic: models, interfaces, handlers, viewmodels, mappers, URL shortening rules  |
+| [ai-instructions/backend-web.md](ai-instructions/backend-web.md)                 | Backend    | Web layer: Huma registration, viewmodels, mappers, error translation, no business logic  |
 
 !!!CRITICAL "Important"!!!
 **All agents must adhere to these instructions without exception.** Whenever you do any development of new features, bug fixes, refactoring, or any other code changes, you MUST check .md files in the `/ai-instructions/` directory for any relevant guidelines. If you find there any rules relevant to the task you are doing, you MUST follow them as well as the general rules in this file. If you find any contradictions between different instruction files, you MUST report them immediately and start a discussion about how to handle the situation. If you are unsure about any rule or how to apply it, you MUST ask for clarification before proceeding.
@@ -135,23 +136,19 @@ Never introduce a dependency that replaces any item listed above without explici
 - `infrastructure/pg/migrations/` — Database migration functions. Each migration is a separate Go function with a unique sequential number prefix (e.g., `001_initial_schema.go`).
 - `infrastructure/pg/models/` — Bun model structs that define the database schema. These may differ from business logic models and viewmodels.
 - `infrastructure/pg/mappings/` — Conversion functions between DB models and business logic models. `ToBusinessModel` maps a DB model to a business logic model; `ToDbModel` maps a business logic model to a DB model.
-- `web/viewmodels/` — Huma input/output structs (request bodies, response schemas). These are not model structs; do not embed Bun model structs inside them.
-- `web/mappers/` — Functions to convert between viewmodels and business logic models. Web layer should use these mappers to pass data to business logic handlers and to convert handler responses to viewmodels. Business logic layer should not know anything about viewmodels, so it should not use these mappers directly.
+- `web/viewmodels/` — Huma input/output structs (request bodies, response schemas).
+- `web/mappers/` — Conversion functions between viewmodels and business logic models.
+- `web/routes/` — Huma operation registrations and web handler functions.
+- Full web layer conventions are in [ai-instructions/backend-web.md](ai-instructions/backend-web.md).
 
-### 5.3 Huma web layer conventions
-
-- Register every web handler as a Huma operation with a descriptive `OperationID`, `Summary`, and correct HTTP status code(s).
-- Validate all input through Huma's declared types (use struct tags like `validate:"required,url"` and `json` tags). Do not repeat validation logic inside the handler body if Huma already enforces it.
-- Return structured error responses consistently. Use Huma's error helpers (`huma.Error400BadRequest`, `huma.Error404NotFound`, etc.).
-
-### 5.4 Logging
+### 5.2 Logging
 
 - Use `log/slog` with a JSON handler targeting stdout.
 - Log levels in production: `ERROR`, `WARN`, `INFO`. No `DEBUG` in production builds.
 - Every log entry for a request must include at minimum: `user_id` (if authenticated), relevant entity IDs, and the error value (if one occurred).
 - DO NOT log sensitive data: passwords, JWT tokens, OAuth secrets, full IP addresses in error-level logs EVER.
 
-### 5.5 Performance
+### 5.3 Performance
 
 - All list endpoints must be paginated. Default page size is controlled by the `DEFAULT_PAGE_SIZE` env var (default: 20).
 
