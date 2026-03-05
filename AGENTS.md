@@ -8,6 +8,8 @@ This file contains coding standards, conventions, and constraints that all AI ag
 | -------------------------------------------------------------------------------- | ---------- | ---------------------------------------------------------------------------------------- |
 | [ai-instructions/app-auth.md](ai-instructions/app-auth.md)                       | Full-stack | Authentication: OAuth2/OIDC providers, JWT, route guards, sign-in modal UX               |
 | [ai-instructions/frontend-components.md](ai-instructions/frontend-components.md) | Frontend   | UI components: shadcn/vue-only policy, no custom components without explicit instruction |
+| [ai-instructions/backend-dblayer.md](ai-instructions/backend-dblayer.md)         | Backend    | DB layer: Bun ORM, models, migrations, repositories, mappings, click batching            |
+| [ai-instructions/backend-business.md](ai-instructions/backend-business.md)       | Backend    | Business logic: models, interfaces, handlers, viewmodels, mappers, URL shortening rules  |
 
 !!!CRITICAL "Important"!!!
 **All agents must adhere to these instructions without exception.** Whenever you do any development of new features, bug fixes, refactoring, or any other code changes, you MUST check .md files in the `/ai-instructions/` directory for any relevant guidelines. If you find there any rules relevant to the task you are doing, you MUST follow them as well as the general rules in this file. If you find any contradictions between different instruction files, you MUST report them immediately and start a discussion about how to handle the situation. If you are unsure about any rule or how to apply it, you MUST ask for clarification before proceeding.
@@ -32,7 +34,7 @@ A URL shortener web application. Registered users authenticate via third-party O
 ├── backend/                ← Go application (Gin + Huma + Bun + PostgreSQL)
 │   ├── go.mod
 │   ├── business-logic/
-│   │   ├── handlers/       ← HTTP request handlers (Huma operations)
+│   │   ├── handlers/       ← Pure business logic handlers (no HTTP/framework dependencies)
 │   │   ├── interfaces/     ← Repository & service interfaces
 │   │   └── models/         ← business layer models that might differ from DB schema and view-models used on the web layer. They must be used in handlers and appropriate interfaces, but each level might have mapping to convert between them and DB/view or other types of models.
 │   ├── infrastructure/
@@ -107,23 +109,15 @@ Never introduce a dependency that replaces any item listed above without explici
 - **Go:** Always handle errors explicitly. Never ignore an error with `_` unless there is a clear documented reason. Always leave at least a short comment explaining why you ignored the particular error. Wrap errors with context using `fmt.Errorf("...: %w", err)`.
 - **TypeScript/Vue:** Never swallow errors silently. Surface errors to the user or propagate them to an appropriate error boundary. For business logic errors (e.g., validation failures, quota exceeded), return structured error responses from the backend and display user-friendly messages on the frontend. Log technical details to the console for debugging, but do not expose them in the UI.
 
-### 4.4 No Raw SQL
-
-- All database access must go through Bun's query builder or model-level APIs. Raw SQL strings are prohibited except for migration scripts where the query builder is insufficient. If you find the situation where avoidance of raw SQL leads to essentially bad performance, report this case to the user and initialize a discussion about whether an exception is warranted. All exceptions must be approved by the user, commented and documented in the appropriate Readme section.
-
-### 4.5 Code-First Schema
-
-- Database schema is derived from Go model structs in `backend/infrastructure/pg/models`. Schema changes start there, followed by a new Bun migration function. Never alter the database schema directly or via external tools. DB models should coincide with business logic models in `backend/business-logic/models`, but not necessarily repeat them. They are storage models, that might differ from the business logic models if it seems profitable to do so. Mapping functions must be placed in the `infrastructure/pg/mappings` directory. Functions must be named as ToBusinessModel to map DB to business logic models and ToDbModel to map business logic models to DB models.
-
-### 4.6 OpenAPI as the Contract
+### 4.4 OpenAPI as the Contract
 
 - All HTTP endpoints must be registered through Huma so they appear in the generated OpenAPI spec at `openapi/LinkShortener.json`. Do not register bare Gin routes that bypass Huma for anything other than the OAuth callback and redirect endpoints (which have special non-JSON response shapes). If in the future we need any other end-points for pure service purposes that are not supposed to be part of the public API, you'll be explicitly instructed what to do. If you find any contradiction about it, report it immediately and start a discussion how to handle the situation.
 
-### 4.7 DRY — Don't Repeat Yourself
+### 4.5 DRY — Don't Repeat Yourself
 
 - Extract shared logic into helper functions, middleware, or shared packages. Do not copy-paste logic across handlers or components. You still may have some code similarity and even duplication in some places in cases where they cover considerably different functionalities and might be changed independently in the future. If you have doubts about code duplication, report it and start a discussion about whether it should be refactored or left as is.
 
-### 4.8 No Hardcoded Configuration
+### 4.6 No Hardcoded Configuration
 
 - All environment-sensitive values (DB connection strings, JWT secret, OAuth client IDs/secrets, quota limits, rate limits, etc.) must be read from environment variables at startup. Provide sensible defaults using the values documented in `app_plan.md`. Never commit secrets. All secrets must be held either in .env.<env_name> or just .env files or in the OS environment variables. env.<env_name> files override .env files if LINKSHORTENER_ENV environment variable is defined on the OS level ad <env_name>. OS environment variables override ones defined in .env* files. It is essential that you DO NOT READ OR OTHERWISE USE any .env* files except initially creating them when you are explicitly instructed to do so. There is NO EXCEPTION to this rule. DO NOT TOUCH any existing files whose names start with .env whatsoever.
 
@@ -136,21 +130,13 @@ Never introduce a dependency that replaces any item listed above without explici
 - `business-logic/models/` — business logic models.
 - `business-logic/interfaces/` — Go interfaces business layer depends on (repositories, services). These are pure interfaces with no implementation details. Business layer must depend on these interfaces only and NOTHING ELSE.
 - `business-logic/handlers/` — business logic handlers. Handlers depend on interfaces, never on concrete implementations directly.
-- `infrastructure/pg/` — Concrete Bun-based implementations of repository interfaces. All database interaction lives here.
+- `infrastructure/pg/` — Bun DB setup and connection pool initialization.
+- `infrastructure/pg/repositories/` — Concrete Bun-based implementations of repository interfaces. All database interaction lives here.
 - `infrastructure/pg/migrations/` — Database migration functions. Each migration is a separate Go function with a unique sequential number prefix (e.g., `001_initial_schema.go`).
 - `infrastructure/pg/models/` — Bun model structs that define the database schema. These may differ from business logic models and viewmodels.
 - `infrastructure/pg/mappings/` — Conversion functions between DB models and business logic models. `ToBusinessModel` maps a DB model to a business logic model; `ToDbModel` maps a business logic model to a DB model.
 - `web/viewmodels/` — Huma input/output structs (request bodies, response schemas). These are not model structs; do not embed Bun model structs inside them.
 - `web/mappers/` — Functions to convert between viewmodels and business logic models. Web layer should use these mappers to pass data to business logic handlers and to convert handler responses to viewmodels. Business logic layer should not know anything about viewmodels, so it should not use these mappers directly.
-
-### 5.2 Dependency Direction
-
-```
-handlers → interfaces ← infrastructure/pg
-         ↘ viewmodels
-```
-
-Handlers must not import `infrastructure/pg` directly. Wire dependencies via interfaces.
 
 ### 5.3 Huma web layer conventions
 
@@ -167,10 +153,7 @@ Handlers must not import `infrastructure/pg` directly. Wire dependencies via int
 
 ### 5.5 Performance
 
-- Never use `SELECT *`. Always specify columns in Bun queries.
-- Write URL click records to an in-memory batch buffer and flush to the DB on a schedule (see `app_plan.md` §4 for defaults).
 - All list endpoints must be paginated. Default page size is controlled by the `DEFAULT_PAGE_SIZE` env var (default: 20).
-- Read connection pool limits from env vars at startup; do not hardcode them.
 
 ---
 
@@ -206,7 +189,6 @@ Handlers must not import `infrastructure/pg` directly. Wire dependencies via int
 - Minimum 95% code coverage for all packages under `business-logic/` and `infrastructure/`.
 - `main()` and auto-generated code are excluded from coverage requirements.
 - Tests follow the **Arrange / Act / Assert** pattern.
-- Use mock implementations (generated by `mockgen`) for all repository and service interfaces in handler tests.
 - Test files live alongside the code they test (e.g., `handlers/urls_test.go`).
 
 ### 7.2 Frontend
@@ -233,16 +215,7 @@ Handlers must not import `infrastructure/pg` directly. Wire dependencies via int
 
 ---
 
-## 9. Database Conventions
-
-- Table names are `PascalCase` plural, matching the Bun model struct name (e.g., `Users`, `ShortenedUrls`).
-- All tables must have `created_at TIMESTAMPTZ` and (where mutable) `updated_at TIMESTAMPTZ` columns, populated automatically by Bun hooks or default values.
-- Foreign keys always declare `ON DELETE CASCADE` unless there is a documented reason to prefer `SET NULL` or `RESTRICT`.
-- Every migration is a numbered Go function in `infrastructure/pg/migrations/`. Migrations are append-only; NEVER edit a migration that has already been applied unless you are EXPLICITLY told to do so. If you find any contradiction about it, report it immediately and start a discussion about how to handle the situation.
-
----
-
-## 10. Git & Commit Conventions
+## 9. Git & Commit Conventions
 
 - Commit messages follow the **Conventional Commits** format: `<type>(<scope>): <description>`. Common types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`.
 - Each commit should represent one logical, self-contained change.
@@ -251,13 +224,11 @@ Handlers must not import `infrastructure/pg` directly. Wire dependencies via int
 
 ---
 
-## 11. What Agents Must Not Do
+## 10. What Agents Must Not Do
 
 - Do not modify `app_plan.md` unless you are EXPLICITLY INSTRUCTED to update this file and user's instruction contains DIRECT LINK to it. If you find any contradiction between `app_plan.md` and other instructions, report it immediately and start a discussion about how to handle the situation.
 - Do not introduce new dependencies or install any packages/libraries without explicit user approval.
 - Do not remove or weaken existing input validation or security checks unless you are explicitly told to do so and made sure that the user is aware of potential risks.
 - DO NOT hardcode secrets, credentials, or environment-specific URLs.
-- Do not write raw SQL (except in migration files where unavoidable).
 - Do not bypass Huma registration for API endpoints.
-- Do not alter existing database migrations; create new ones instead.
 - Do not silently swallow errors in either Go or TypeScript code.
