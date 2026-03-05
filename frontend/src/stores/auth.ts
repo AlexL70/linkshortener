@@ -7,6 +7,8 @@ interface User {
   email: string
 }
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL as string ?? ''
+
 export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(localStorage.getItem('token'))
   const user = ref<User | null>(null)
@@ -22,11 +24,15 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = newUser
   }
 
+  function login(provider: string) {
+    window.location.href = `${BACKEND_URL}/auth/login/${provider}`
+  }
+
   function logout() {
     token.value = null
     user.value = null
     localStorage.removeItem('token')
   }
 
-  return { token, user, isAuthenticated, setToken, setUser, logout }
+  return { token, user, isAuthenticated, setToken, setUser, login, logout }
 })
