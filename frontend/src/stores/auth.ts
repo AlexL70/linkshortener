@@ -7,7 +7,7 @@ interface User {
   email: string
 }
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL as string ?? ''
+const BACKEND_URL = import.meta.env.APP_BASE_URL as string ?? ''
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(localStorage.getItem('token'))
