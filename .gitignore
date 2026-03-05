@@ -1,0 +1,16 @@
+# Environment variable files — never commit secrets
+.env
+.env.*
+
+# OS / editor artefacts
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Build outputs
+dist/
+build/
+
+# Go vendor directory
+vendor/
