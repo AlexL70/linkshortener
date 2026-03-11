@@ -7,6 +7,7 @@ This file contains coding standards, conventions, and constraints that all AI ag
 | File                                                                             | Scope      | Description                                                                              |
 | -------------------------------------------------------------------------------- | ---------- | ---------------------------------------------------------------------------------------- |
 | [ai-instructions/app-auth.md](ai-instructions/app-auth.md)                       | Full-stack | Authentication: OAuth2/OIDC providers, JWT, route guards, sign-in modal UX               |
+| [ai-instructions/app-environment.md](ai-instructions/app-environment.md)         | Full-stack | Environment variables: loading algorithm, LINKSHORTENER_ENV, config validation           |
 | [ai-instructions/frontend-components.md](ai-instructions/frontend-components.md) | Frontend   | UI components: shadcn/vue-only policy, no custom components without explicit instruction |
 | [ai-instructions/backend-dblayer.md](ai-instructions/backend-dblayer.md)         | Backend    | DB layer: Bun ORM, models, migrations, repositories, mappings, click batching            |
 | [ai-instructions/backend-business.md](ai-instructions/backend-business.md)       | Backend    | Business logic: models, interfaces, handlers, viewmodels, mappers, URL shortening rules  |
@@ -30,22 +31,37 @@ A URL shortener web application. Registered users authenticate via third-party O
 ├── AGENTS.md               ← This file
 ├── app_plan.md             ← Architecture & design reference (must be updated if and only if user explicitly instructs you to do so and their instruction contains a direct link to this file)
 ├── ai-instructions/        ← Topic-specific agent guidelines
+├── docker-compose.yaml     ← Local development environment (PostgreSQL, etc.)
+├── Makefile                ← Build and development task shortcuts
+├── README.md
+├── .github/
+│   ├── agents/             ← Custom agent definitions
+│   ├── hooks/              ← Logging hook configuration
+│   └── prompts/            ← Reusable prompt templates
+├── commands/               ← Utility scripts (e.g., logging hooks)
 ├── openapi/
 │   └── LinkShortener.json  ← Auto-generated OpenAPI 3.1 spec (do not edit manually)
+├── sql/                    ← SQL files generated from migrations (do not edit manually)
 ├── backend/                ← Go application (Gin + Huma + Bun + PostgreSQL)
 │   ├── go.mod
+│   ├── main.go
+│   ├── config/             ← Environment variable loading and validation
+│   ├── cmd/
+│   │   └── gensql/         ← Utility to generate SQL from Go migrations
 │   ├── business-logic/
 │   │   ├── handlers/       ← Pure business logic handlers (no HTTP/framework dependencies)
 │   │   ├── interfaces/     ← Repository & service interfaces
-│   │   └── models/         ← business layer models that might differ from DB schema and view-models used on the web layer. They must be used in handlers and appropriate interfaces, but each level might have mapping to convert between them and DB/view or other types of models.
+│   │   └── models/         ← Business layer models that might differ from DB schema and view-models used on the web layer. They must be used in handlers and appropriate interfaces, but each level might have mapping to convert between them and DB/view or other types of models.
 │   ├── infrastructure/
 │   │   └── pg/             ← Bun ORM setup and repository implementations
 │   │       ├── migrations/ ← Numbered Go migration functions
 │   │       ├── models/     ← Bun model structs (DB schema)
-│   │       └── mappings/   ← ToBusinessModel / ToDbModel conversion functions
+│   │       ├── mappings/   ← ToBusinessModel / ToDbModel conversion functions
+│   │       └── seed/       ← Seed data for development
 │   └── web/
 │       ├── viewmodels/     ← Request/response types used by Huma
-│       └── mappers/        ← Viewmodel ↔ business logic model converters
+│       ├── mappers/        ← Viewmodel ↔ business logic model converters
+│       └── routes/         ← Huma operation registrations and web handler functions
 └── frontend/               ← Vue 3 + TypeScript + Vite + shadcn/vue
     ├── src/
     │   ├── components/     ← shadcn/vue components only (custom components, if any, will go into separate folder custom-components/)
