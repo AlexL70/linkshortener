@@ -1,11 +1,15 @@
 package main
 
+//go:generate go run ./cmd/gensql
+
 import (
+	"context"
 	"log/slog"
 	"net/http"
 	"os"
 
 	"github.com/AlexL70/linkshortener/backend/config"
+	"github.com/AlexL70/linkshortener/backend/infrastructure/pg"
 	"github.com/AlexL70/linkshortener/backend/web/routes"
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humagin"
@@ -27,6 +31,24 @@ func main() {
 	}
 
 	config.LogConfig()
+
+	db, err := pg.Open()
+	if err != nil {
+		slog.Error("failed to open database", "error", err)
+		os.Exit(1)
+	}
+	defer db.Close() // nolint: errcheck — best-effort close on shutdown
+
+	// Auto-migration runs only in dev mode.
+	// In prod, apply the generated sql/schema.sql (or per-migration files) via psql.
+	if config.GetAppEnv() == config.EnvDev {
+		if err := pg.RunMigrations(context.Background(), db); err != nil {
+			slog.Error("failed to run migrations", "error", err)
+			os.Exit(1)
+		}
+	} else {
+		slog.Info("auto-migration skipped in prod mode")
+	}
 
 	router := gin.Default()
 
