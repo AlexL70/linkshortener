@@ -29,6 +29,7 @@ All DB layer code lives under `backend/infrastructure/pg/`:
 | `infrastructure/pg/migrations/`   | Numbered, append-only Go migration functions         |
 | `infrastructure/pg/mappings/`     | `ToBusinessModel` / `ToDbModel` conversion functions |
 | `infrastructure/pg/repositories/` | Concrete repository implementations                  |
+| `infrastructure/pg/seed/`         | Static seed data files used in `dev` mode            |
 
 Repository interface definitions belong in `business-logic/interfaces/`. Concrete repository implementations belong in `infrastructure/pg/repositories/`.
 
@@ -178,7 +179,8 @@ When `LINKSHORTENER_ENV=dev` and the database is found to be **empty** (no users
    - Any other domain → `"google"` (default fallback, as Google is the most commonly configured provider in dev)
 
    **This is a local-only dev convenience; no real OAuth flow is involved.**
-3. Create between 5 and 10 shortened URL records owned by that user, using arbitrary but realistic-looking long URLs and auto-generated shortcodes.
+
+3. Create between 5 and 10 shortened URL records owned by that user. The `long_url` and `shortcode` values must be drawn sequentially (or randomly sampled without replacement) from `infrastructure/pg/seed/urls.json`, which contains 25 pre-defined entries. Do not hardcode URL data in Go source code — always read it from this file.
 4. Log each seeded record at `INFO` level so developers can see what was created.
 5. If any step fails, log a `WARN` but do **not** abort startup — seed failures must never prevent the application from starting.
 

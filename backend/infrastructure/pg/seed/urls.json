@@ -1,0 +1,102 @@
+[
+    {
+        "shortcode": "gh1az3",
+        "long_url": "https://github.com/golang/go/blob/master/src/net/http/server.go"
+    },
+    {
+        "shortcode": "mdn8xk",
+        "long_url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise"
+    },
+    {
+        "shortcode": "vue3p9",
+        "long_url": "https://vuejs.org/guide/essentials/reactivity-fundamentals.html"
+    },
+    {
+        "shortcode": "gopl4r",
+        "long_url": "https://go.dev/doc/effective_go"
+    },
+    {
+        "shortcode": "pgdoc2",
+        "long_url": "https://www.postgresql.org/docs/current/query-optimization.html"
+    },
+    {
+        "shortcode": "tailw7",
+        "long_url": "https://tailwindcss.com/docs/responsive-design"
+    },
+    {
+        "shortcode": "vite5q",
+        "long_url": "https://vitejs.dev/guide/features.html"
+    },
+    {
+        "shortcode": "bun0rm",
+        "long_url": "https://bun.uptrace.dev/guide/golang-orm.html"
+    },
+    {
+        "shortcode": "huma6j",
+        "long_url": "https://huma.rocks/tutorial/your-first-api/"
+    },
+    {
+        "shortcode": "gin2fw",
+        "long_url": "https://gin-gonic.com/docs/examples/grouping-routes/"
+    },
+    {
+        "shortcode": "pinia4",
+        "long_url": "https://pinia.vuejs.org/core-concepts/state.html"
+    },
+    {
+        "shortcode": "jwt9ks",
+        "long_url": "https://jwt.io/introduction"
+    },
+    {
+        "shortcode": "oasp1b",
+        "long_url": "https://swagger.io/specification/"
+    },
+    {
+        "shortcode": "dckr3n",
+        "long_url": "https://docs.docker.com/compose/compose-file/compose-file-v3/"
+    },
+    {
+        "shortcode": "goth5y",
+        "long_url": "https://github.com/markbates/goth?tab=readme-ov-file#supported-providers"
+    },
+    {
+        "shortcode": "vitest",
+        "long_url": "https://vitest.dev/guide/coverage.html"
+    },
+    {
+        "shortcode": "slog2p",
+        "long_url": "https://pkg.go.dev/log/slog"
+    },
+    {
+        "shortcode": "shcnv8",
+        "long_url": "https://www.shadcn-vue.com/docs/components/dialog.html"
+    },
+    {
+        "shortcode": "gcld0e",
+        "long_url": "https://cloud.google.com/docs/authentication/token-types"
+    },
+    {
+        "shortcode": "msoau",
+        "long_url": "https://learn.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-auth-code-flow"
+    },
+    {
+        "shortcode": "base62",
+        "long_url": "https://en.wikipedia.org/wiki/Base62"
+    },
+    {
+        "shortcode": "rfc53x",
+        "long_url": "https://www.rfc-editor.org/rfc/rfc5321"
+    },
+    {
+        "shortcode": "do4gb2",
+        "long_url": "https://docs.digitalocean.com/products/droplets/how-to/connect-with-ssh/"
+    },
+    {
+        "shortcode": "testfy",
+        "long_url": "https://pkg.go.dev/github.com/stretchr/testify/assert"
+    },
+    {
+        "shortcode": "vurotr",
+        "long_url": "https://router.vuejs.org/guide/advanced/navigation-guards.html"
+    }
+]

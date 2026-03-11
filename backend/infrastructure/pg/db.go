@@ -5,8 +5,10 @@ import (
 	"database/sql"
 	"fmt"
 	"log/slog"
+	"net/url"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/AlexL70/linkshortener/backend/infrastructure/pg/migrations"
@@ -38,6 +40,54 @@ func Open() (*bun.DB, error) {
 
 	db := bun.NewDB(sqldb, pgdialect.New())
 	return db, nil
+}
+
+// EnsureDatabase creates the database named in DATABASE_URL if it does not already
+// exist. It connects to the "postgres" maintenance database to issue CREATE DATABASE,
+// so it is safe to call before the target database exists. Intended for dev mode only.
+func EnsureDatabase(ctx context.Context) error {
+	dsn := os.Getenv("DATABASE_URL")
+	if dsn == "" {
+		return fmt.Errorf("pg.EnsureDatabase: DATABASE_URL is not set")
+	}
+
+	u, err := url.Parse(dsn)
+	if err != nil {
+		return fmt.Errorf("pg.EnsureDatabase: parse DSN: %w", err)
+	}
+
+	dbName := strings.TrimPrefix(u.Path, "/")
+	if dbName == "" {
+		return fmt.Errorf("pg.EnsureDatabase: no database name in DATABASE_URL")
+	}
+
+	// Connect to the "postgres" maintenance database (target DB may not exist yet).
+	maintenanceSQLDB := sql.OpenDB(pgdriver.NewConnector(
+		pgdriver.WithDSN(dsn),
+		pgdriver.WithDatabase("postgres"),
+	))
+	defer maintenanceSQLDB.Close() //nolint:errcheck — best-effort close on maintenance connection
+
+	var exists bool
+	if err := maintenanceSQLDB.QueryRowContext(ctx,
+		"SELECT EXISTS(SELECT 1 FROM pg_database WHERE datname = $1)", dbName,
+	).Scan(&exists); err != nil {
+		return fmt.Errorf("pg.EnsureDatabase: check existence: %w", err)
+	}
+
+	if exists {
+		return nil
+	}
+
+	// PostgreSQL does not support CREATE DATABASE IF NOT EXISTS; existence checked above.
+	// dbName comes from a trusted env variable; quote the identifier to handle special chars.
+	quotedName := `"` + strings.ReplaceAll(dbName, `"`, `""`) + `"`
+	if _, err := maintenanceSQLDB.ExecContext(ctx, "CREATE DATABASE "+quotedName); err != nil {
+		return fmt.Errorf("pg.EnsureDatabase: create: %w", err)
+	}
+
+	slog.Info("database created", "db", dbName)
+	return nil
 }
 
 // RunMigrations applies any pending migrations using the registered migration set.

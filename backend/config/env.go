@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"log/slog"
+	"net/mail"
 	"os"
 	"strconv"
 	"strings"
@@ -35,6 +36,7 @@ var requiredVars = []string{
 	"MICROSOFT_CLIENT_SECRET",
 	"FACEBOOK_CLIENT_ID",
 	"FACEBOOK_CLIENT_SECRET",
+	"SUPER_ADMIN_EMAIL",
 }
 
 // optionalDefaults maps every optional variable to its documented default value.
@@ -154,6 +156,12 @@ func Validate() error {
 		val := os.Getenv(key)
 		if _, err := strconv.Atoi(val); err != nil {
 			return fmt.Errorf("environment variable %s must be an integer, got %q", key, val)
+		}
+	}
+
+	if email := os.Getenv("SUPER_ADMIN_EMAIL"); email != "" {
+		if _, err := mail.ParseAddress(email); err != nil {
+			return fmt.Errorf("SUPER_ADMIN_EMAIL is not a valid email address: %q", email)
 		}
 	}
 

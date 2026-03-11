@@ -49,6 +49,7 @@ func allRequiredKeys() []string {
 		"MICROSOFT_CLIENT_SECRET",
 		"FACEBOOK_CLIENT_ID",
 		"FACEBOOK_CLIENT_SECRET",
+		"SUPER_ADMIN_EMAIL",
 	}
 }
 
@@ -64,6 +65,7 @@ func setRequiredVars() {
 		"MICROSOFT_CLIENT_SECRET": "ms-client-secret",
 		"FACEBOOK_CLIENT_ID":      "fb-client-id",
 		"FACEBOOK_CLIENT_SECRET":  "fb-client-secret",
+		"SUPER_ADMIN_EMAIL":       "admin@example.com",
 	}
 	for k, v := range placeholders {
 		os.Setenv(k, v) //nolint:errcheck
@@ -358,5 +360,58 @@ func TestValidate_OSValueNotOverriddenByDefault(t *testing.T) {
 	}
 	if got := os.Getenv("PORT"); got != "9090" {
 		t.Errorf("Validate should not overwrite non-empty PORT: got %q", got)
+	}
+}
+
+// ── SUPER_ADMIN_EMAIL validation ──────────────────────────────────────────────
+
+func TestValidate_SuperAdminEmailMissing(t *testing.T) {
+	allOptional := make([]string, 0, len(optionalDefaults))
+	for k := range optionalDefaults {
+		allOptional = append(allOptional, k)
+	}
+	restore := saveEnv(append(allRequiredKeys(), allOptional...)...)
+	defer restore()
+
+	setRequiredVars()
+	os.Unsetenv("SUPER_ADMIN_EMAIL")
+
+	if err := Validate(); err == nil {
+		t.Error("expected error for missing SUPER_ADMIN_EMAIL, got nil")
+	}
+}
+
+func TestValidate_SuperAdminEmailInvalid(t *testing.T) {
+	allOptional := make([]string, 0, len(optionalDefaults))
+	for k := range optionalDefaults {
+		allOptional = append(allOptional, k)
+	}
+	restore := saveEnv(append(allRequiredKeys(), allOptional...)...)
+	defer restore()
+
+	setRequiredVars()
+	os.Setenv("SUPER_ADMIN_EMAIL", "not-a-valid-email")
+
+	if err := Validate(); err == nil {
+		t.Error("expected error for invalid SUPER_ADMIN_EMAIL, got nil")
+	}
+}
+
+func TestValidate_SuperAdminEmailValid(t *testing.T) {
+	allOptional := make([]string, 0, len(optionalDefaults))
+	for k := range optionalDefaults {
+		allOptional = append(allOptional, k)
+	}
+	restore := saveEnv(append(allRequiredKeys(), allOptional...)...)
+	defer restore()
+
+	setRequiredVars()
+	for k := range optionalDefaults {
+		os.Unsetenv(k) //nolint:errcheck
+	}
+	os.Setenv("SUPER_ADMIN_EMAIL", "superadmin@mycompany.org")
+
+	if err := Validate(); err != nil {
+		t.Errorf("expected no error for valid SUPER_ADMIN_EMAIL, got: %v", err)
 	}
 }
