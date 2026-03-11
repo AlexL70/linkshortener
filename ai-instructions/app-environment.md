@@ -52,6 +52,11 @@ After the loading algorithm has run, validate the resolved configuration:
   ```
 
 - Apply defaults for every optional variable that resolved to an empty string (see §4.2). Numeric defaults must be parsed and validated; abort on non-numeric input with a message identifying the offending variable and its value.
+- Validate `SUPER_ADMIN_EMAIL` as a syntactically valid email address (RFC 5322 local-part + `@` + domain). If the value is present but fails validation, abort immediately with a message such as:
+
+  ```
+  FATAL: SUPER_ADMIN_EMAIL is not a valid email address: "<actual_value>"
+  ```
 
 ---
 
@@ -72,6 +77,7 @@ After the loading algorithm has run, validate the resolved configuration:
 | `FACEBOOK_CLIENT_ID`      | Facebook OAuth2 application client ID                                                              |
 | `FACEBOOK_CLIENT_SECRET`  | Facebook OAuth2 application client secret                                                          |
 | `APP_BASE_URL`            | Base URL of the backend API used by the frontend, e.g. `http://localhost:8080`. **Frontend only.** |
+| `SUPER_ADMIN_EMAIL`       | Email address of the super-admin user. Must be a syntactically valid email address. Used to grant admin privileges and, in `dev` mode with an empty database, to seed an initial user record (see `backend-dblayer.md §14`). |
 
 If any of these is absent (resolved to an empty string) after the loading algorithm has run, the application **must not start**.
 

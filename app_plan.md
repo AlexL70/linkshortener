@@ -345,7 +345,28 @@ MAX_SHORTCODE_LENGTH=6
   - **URL Format:** `domain.com/r/{6-char-shortcode}` = max 20 characters (e.g., `example.com/r/abc123`)
 - **User Input:** Trim whitespace, validate UTF-8 encoding
 
-## 6. Testing Strategy
+## 8. Super Admin
+
+### Overview
+
+A single super-admin user is designated by the `SUPER_ADMIN_EMAIL` environment variable. The user whose `provider_email` in the `UserProviders` table matches this address is the super-admin. Admin status is currently determined at runtime by comparing the user's provider email against `SUPER_ADMIN_EMAIL`. A dedicated `is_admin` column will be added to the `Users` table in a future migration when the admin screen is implemented. Admin privileges are not transferable and are not self-service.
+
+### Admin Screen (Future)
+
+A dedicated admin interface will be introduced in a future iteration. It will be accessible only to users with `is_admin = true` and will provide, at minimum:
+
+- Viewing and managing all users (suspend, unsuspend, delete)
+- Viewing and managing all shortened URLs
+- Viewing anomaly and rate-limit violation logs
+- Manually resetting monthly quotas for individual users
+
+Admin-only API endpoints must verify `is_admin` on every request. A non-admin user receiving a request to an admin endpoint must get a `403 Forbidden` response, indistinguishable from a `404 Not Found` to avoid leaking the existence of admin routes.
+
+### Dev-Mode Seed Data
+
+In `dev` mode, if the database is empty after migrations, the backend automatically creates the super-admin user (derived from `SUPER_ADMIN_EMAIL`) and seeds a small number of shortened URL records owned by that user. Full details are in `ai-instructions/backend-dblayer.md §14`.
+
+---
 
 ### Backend (Go): Unit Tests - 95% Coverage Minimum
 

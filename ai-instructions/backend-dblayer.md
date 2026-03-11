@@ -163,3 +163,23 @@ Any schema change must start with updating the struct in `infrastructure/pg/mode
 - Do not write `UrlClicks` records synchronously in the redirect path — always use the batch buffer.
 - Do not embed Bun model structs in viewmodels or business logic models.
 - Do not bypass `ToBusinessModel` / `ToDbModel` mappers by casting or assigning structs directly across layers.
+
+---
+
+## 14. Dev-Mode Seed Data
+
+When `LINKSHORTENER_ENV=dev` and the database is found to be **empty** (no users exist) immediately after migrations have run, the backend must create seed data to support local development. The seed routine must:
+
+1. Create a user in the `Users` table with a username derived from the local-part of `SUPER_ADMIN_EMAIL`.
+2. Create a `UserProviders` record linking that user to the appropriate OAuth provider, using `SUPER_ADMIN_EMAIL` as `provider_email` and `"dev-seed"` as `provider_user_id`. The provider name must be inferred from the email domain using the following rules (case-insensitive domain match):
+   - `gmail.com` → `"google"`
+   - `outlook.com`, `hotmail.com`, `live.com`, `msn.com` → `"microsoft"`
+   - `facebook.com` → `"facebook"`
+   - Any other domain → `"google"` (default fallback, as Google is the most commonly configured provider in dev)
+
+   **This is a local-only dev convenience; no real OAuth flow is involved.**
+3. Create between 5 and 10 shortened URL records owned by that user, using arbitrary but realistic-looking long URLs and auto-generated shortcodes.
+4. Log each seeded record at `INFO` level so developers can see what was created.
+5. If any step fails, log a `WARN` but do **not** abort startup — seed failures must never prevent the application from starting.
+
+This routine must be skipped entirely in `prod` mode and whenever the database already contains at least one user.
