@@ -8,6 +8,57 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// DefaultPublicPaths is the set of URL path prefixes that bypass JWT validation.
+// Extend this slice when new public-access endpoints are added to the application.
+var DefaultPublicPaths = []string{
+	"/auth/",        // OAuth2 login / callback / logout / register
+	"/docs",         // Swagger UI
+	"/openapi.json", // OpenAPI spec
+	"/hello",        // Health check
+	"/r/",           // Public redirect endpoint (future)
+}
+
+// RequireJWTGlobal returns a Gin middleware that enforces JWT authentication on
+// all routes whose path does NOT start with one of the given publicPaths prefixes.
+// Paths that match a prefix are passed through without any token check.
+//
+// On success for protected routes it stores *JWTClaims in both the Gin context
+// (under CtxKeyJWTClaims) and the stdlib request context (for Huma handlers).
+func RequireJWTGlobal(blacklist *TokenBlacklist, publicPaths []string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		for _, prefix := range publicPaths {
+			if strings.HasPrefix(c.Request.URL.Path, prefix) {
+				c.Next()
+				return
+			}
+		}
+
+		authHeader := c.GetHeader("Authorization")
+		if !strings.HasPrefix(authHeader, "Bearer ") {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			return
+		}
+
+		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+		claims, err := ParseJWT(tokenStr)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			return
+		}
+
+		if blacklist.IsBlacklisted(claims.ID) {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			return
+		}
+
+		c.Set(string(CtxKeyJWTClaims), claims)
+		c.Request = c.Request.WithContext(
+			context.WithValue(c.Request.Context(), ctxKeyJWTClaimsStd{}, claims),
+		)
+		c.Next()
+	}
+}
+
 // ctxKeyJWTClaimsStd is the key used to store JWT claims in the stdlib request
 // context so that Huma handlers (which receive context.Context, not gin.Context)
 // can access the validated claims set by RequireJWT middleware.

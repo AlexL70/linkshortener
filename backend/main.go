@@ -68,8 +68,15 @@ func main() {
 	adminEmail := os.Getenv("SUPER_ADMIN_EMAIL")
 	authHandler := handlers.NewAuthHandler(userRepo, isDevMode, adminEmail)
 
+	urlRepo := pgrepositories.NewUrlRepository(db)
+	urlHandler := handlers.NewUrlHandler(urlRepo)
+
+	blacklist := routes.NewTokenBlacklist()
+	router.Use(routes.RequireJWTGlobal(blacklist, routes.DefaultPublicPaths))
+
 	routes.RegisterHello(api)
-	routes.RegisterAuthRoutes(router, api, authHandler, routes.NewTokenBlacklist())
+	routes.RegisterAuthRoutes(router, api, authHandler, blacklist)
+	routes.RegisterUrlRoutes(api, urlHandler)
 
 	port := os.Getenv("PORT")
 	slog.Info("starting server", "port", port)
