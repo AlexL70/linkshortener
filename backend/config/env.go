@@ -37,6 +37,7 @@ var requiredVars = []string{
 	"FACEBOOK_CLIENT_ID",
 	"FACEBOOK_CLIENT_SECRET",
 	"SUPER_ADMIN_EMAIL",
+	"APP_BASE_URL",
 }
 
 // optionalDefaults maps every optional variable to its documented default value.

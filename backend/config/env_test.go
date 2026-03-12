@@ -50,6 +50,7 @@ func allRequiredKeys() []string {
 		"FACEBOOK_CLIENT_ID",
 		"FACEBOOK_CLIENT_SECRET",
 		"SUPER_ADMIN_EMAIL",
+		"APP_BASE_URL",
 	}
 }
 
@@ -66,6 +67,7 @@ func setRequiredVars() {
 		"FACEBOOK_CLIENT_ID":      "fb-client-id",
 		"FACEBOOK_CLIENT_SECRET":  "fb-client-secret",
 		"SUPER_ADMIN_EMAIL":       "admin@example.com",
+		"APP_BASE_URL":            "http://localhost:8080",
 	}
 	for k, v := range placeholders {
 		os.Setenv(k, v) //nolint:errcheck

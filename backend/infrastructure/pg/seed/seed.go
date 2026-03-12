@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	bizmodels "github.com/AlexL70/linkshortener/backend/business-logic/models"
 	pgmodels "github.com/AlexL70/linkshortener/backend/infrastructure/pg/models"
 	"github.com/uptrace/bun"
 )
@@ -53,7 +54,7 @@ func run(ctx context.Context, db *bun.DB) error {
 	}
 	userName := parts[0]
 	domain := strings.ToLower(parts[1])
-	provider := inferProvider(domain)
+	provider := inferProvider(domain) // returns bizmodels.Provider
 
 	now := time.Now()
 
@@ -71,8 +72,8 @@ func run(ctx context.Context, db *bun.DB) error {
 	// Insert user provider record (no real OAuth involved — dev only).
 	up := &pgmodels.UserProvider{
 		UserID:         user.ID,
-		Provider:       provider,
-		ProviderUserID: "dev-seed",
+		Provider:       string(provider),
+		ProviderUserID: bizmodels.DevSeedProviderUserID,
 		ProviderEmail:  email,
 		CreatedAt:      now,
 	}
@@ -113,16 +114,16 @@ func run(ctx context.Context, db *bun.DB) error {
 }
 
 // inferProvider maps an email domain to the matching OAuth provider name.
-func inferProvider(domain string) string {
+func inferProvider(domain string) bizmodels.Provider {
 	switch domain {
 	case "gmail.com":
-		return "google"
+		return bizmodels.ProviderGoogle
 	case "outlook.com", "hotmail.com", "live.com", "msn.com":
-		return "microsoft"
+		return bizmodels.ProviderMicrosoft
 	case "facebook.com":
-		return "facebook"
+		return bizmodels.ProviderFacebook
 	default:
 		// Google is the most commonly configured provider in dev.
-		return "google"
+		return bizmodels.ProviderGoogle
 	}
 }

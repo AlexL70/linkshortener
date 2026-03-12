@@ -11,6 +11,7 @@ Thumbs.db
 # Build outputs
 dist/
 build/
+backend/*.out
 
 # Go vendor directory
 vendor/

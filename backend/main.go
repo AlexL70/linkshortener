@@ -8,8 +8,10 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/AlexL70/linkshortener/backend/business-logic/handlers"
 	"github.com/AlexL70/linkshortener/backend/config"
 	"github.com/AlexL70/linkshortener/backend/infrastructure/pg"
+	pgrepositories "github.com/AlexL70/linkshortener/backend/infrastructure/pg/repositories"
 	"github.com/AlexL70/linkshortener/backend/infrastructure/pg/seed"
 	"github.com/AlexL70/linkshortener/backend/web/routes"
 	"github.com/danielgtaylor/huma/v2"
@@ -61,7 +63,13 @@ func main() {
 	humaConfig := huma.DefaultConfig("Link Shortener API", "0.1.0")
 	api := humagin.New(router, humaConfig)
 
+	userRepo := pgrepositories.NewUserRepository(db)
+	isDevMode := config.GetAppEnv() == config.EnvDev
+	adminEmail := os.Getenv("SUPER_ADMIN_EMAIL")
+	authHandler := handlers.NewAuthHandler(userRepo, isDevMode, adminEmail)
+
 	routes.RegisterHello(api)
+	routes.RegisterAuthRoutes(router, api, authHandler)
 
 	port := os.Getenv("PORT")
 	slog.Info("starting server", "port", port)
