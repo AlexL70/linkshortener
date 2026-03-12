@@ -69,7 +69,7 @@ func main() {
 	authHandler := handlers.NewAuthHandler(userRepo, isDevMode, adminEmail)
 
 	routes.RegisterHello(api)
-	routes.RegisterAuthRoutes(router, api, authHandler)
+	routes.RegisterAuthRoutes(router, api, authHandler, routes.NewTokenBlacklist())
 
 	port := os.Getenv("PORT")
 	slog.Info("starting server", "port", port)

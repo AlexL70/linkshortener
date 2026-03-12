@@ -26,10 +26,11 @@ import (
 // Bare Gin routes (permitted exceptions per app-auth.md §2.4):
 //   - GET /auth/login/:provider
 //   - GET /auth/callback
+//   - POST /auth/logout
 //
 // Huma-registered routes:
 //   - POST /auth/register
-func RegisterAuthRoutes(router *gin.Engine, api huma.API, h *handlers.AuthHandler) {
+func RegisterAuthRoutes(router *gin.Engine, api huma.API, h *handlers.AuthHandler, blacklist *TokenBlacklist) {
 	// Configure the gorilla/sessions cookie store for transient OAuth state.
 	// HttpOnly and SameSite=Lax per the security checklist in app-auth.md §4.
 	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
@@ -138,5 +139,18 @@ func RegisterAuthRoutes(router *gin.Engine, api huma.API, h *handlers.AuthHandle
 		}
 
 		return webmappers.UserToAuthTokenResponse(token), nil
+	})
+
+	// Protected group: all routes here require a valid JWT.
+	protected := router.Group("/")
+	protected.Use(RequireJWT(blacklist))
+
+	// POST /auth/logout — invalidates the caller's JWT by adding its jti to the
+	// blacklist. Returns 204 No Content on success.
+	protected.POST("/auth/logout", func(c *gin.Context) {
+		claims, _ := c.MustGet(string(CtxKeyJWTClaims)).(*JWTClaims)
+		blacklist.Add(claims.ID, claims.ExpiresAt.Time)
+		slog.Info("auth: user logged out", "user_id", claims.UserID)
+		c.Status(http.StatusNoContent)
 	})
 }

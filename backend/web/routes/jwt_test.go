@@ -19,6 +19,62 @@ func TestCreateJWT_RoundTrip(t *testing.T) {
 	assert.NotEmpty(t, token)
 }
 
+func TestCreateJWT_JTIPresent(t *testing.T) {
+	// Every full JWT must carry a non-empty jti claim so it can be blacklisted.
+	user := &bizmodels.User{ID: 99, UserName: "jtiuser"}
+	token, err := routes.CreateJWT(user)
+	require.NoError(t, err)
+
+	claims, err := routes.ParseJWT(token)
+	require.NoError(t, err)
+	assert.NotEmpty(t, claims.ID, "jti (RegisteredClaims.ID) must be non-empty")
+}
+
+func TestCreateJWT_TwoTokensHaveDifferentJTI(t *testing.T) {
+	user := &bizmodels.User{ID: 7, UserName: "uniquejti"}
+	t1, err := routes.CreateJWT(user)
+	require.NoError(t, err)
+	t2, err := routes.CreateJWT(user)
+	require.NoError(t, err)
+
+	c1, _ := routes.ParseJWT(t1)
+	c2, _ := routes.ParseJWT(t2)
+	assert.NotEqual(t, c1.ID, c2.ID, "each issued JWT must have a unique jti")
+}
+
+func TestParseJWT_RoundTrip(t *testing.T) {
+	user := &bizmodels.User{ID: 5, UserName: "parsetest"}
+	tokenStr, err := routes.CreateJWT(user)
+	require.NoError(t, err)
+
+	claims, err := routes.ParseJWT(tokenStr)
+	require.NoError(t, err)
+	assert.Equal(t, int64(5), claims.UserID)
+	assert.Equal(t, "parsetest", claims.UserName)
+	assert.Equal(t, "5", claims.Subject)
+	assert.NotEmpty(t, claims.ID)
+}
+
+func TestParseJWT_InvalidToken(t *testing.T) {
+	_, err := routes.ParseJWT("not.a.valid.jwt")
+	require.Error(t, err)
+	assert.ErrorIs(t, err, businesslogic.ErrValidation)
+}
+
+func TestParseJWT_WrongSecret(t *testing.T) {
+	user := &bizmodels.User{ID: 3, UserName: "secrettest"}
+	tokenStr, err := routes.CreateJWT(user)
+	require.NoError(t, err)
+
+	originalSecret := os.Getenv("JWT_SECRET")
+	os.Setenv("JWT_SECRET", "completely-different-secret")
+	defer os.Setenv("JWT_SECRET", originalSecret)
+
+	_, err = routes.ParseJWT(tokenStr)
+	require.Error(t, err)
+	assert.ErrorIs(t, err, businesslogic.ErrValidation)
+}
+
 func TestCreateAndParsePreRegToken_RoundTrip(t *testing.T) {
 	input := &bizmodels.AuthInput{
 		Provider:       bizmodels.ProviderGoogle,

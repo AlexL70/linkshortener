@@ -34,11 +34,18 @@ func TestMain(m *testing.M) {
 }
 
 // newTestRouter builds a Gin engine + Huma API wired with the given AuthHandler.
-func newTestRouter(h *handlers.AuthHandler) *gin.Engine {
+// An optional blacklist may be provided; if nil a fresh one is used.
+func newTestRouter(h *handlers.AuthHandler, bl ...*routes.TokenBlacklist) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
 	api := humagin.New(router, huma.DefaultConfig("Test API", "0.0.1"))
-	routes.RegisterAuthRoutes(router, api, h)
+	var blacklist *routes.TokenBlacklist
+	if len(bl) > 0 && bl[0] != nil {
+		blacklist = bl[0]
+	} else {
+		blacklist = routes.NewTokenBlacklist()
+	}
+	routes.RegisterAuthRoutes(router, api, h, blacklist)
 	return router
 }
 
@@ -203,4 +210,64 @@ func TestRegister_InternalError_Returns500(t *testing.T) {
 	newTestRouter(h).ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
+}
+
+// --- POST /auth/logout tests ---
+
+func TestLogout_ValidToken_Returns204(t *testing.T) {
+	h := newAuthHandler(t, nil)
+	user := &bizmodels.User{ID: 10, UserName: "logoutuser"}
+	token, err := routes.CreateJWT(user)
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/auth/logout", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	w := httptest.NewRecorder()
+	newTestRouter(h).ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusNoContent, w.Code)
+}
+
+func TestLogout_MissingToken_Returns401(t *testing.T) {
+	h := newAuthHandler(t, nil)
+	req := httptest.NewRequest(http.MethodPost, "/auth/logout", nil)
+	w := httptest.NewRecorder()
+	newTestRouter(h).ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusUnauthorized, w.Code)
+}
+
+func TestLogout_InvalidToken_Returns401(t *testing.T) {
+	h := newAuthHandler(t, nil)
+	req := httptest.NewRequest(http.MethodPost, "/auth/logout", nil)
+	req.Header.Set("Authorization", "Bearer not.a.real.token")
+	w := httptest.NewRecorder()
+	newTestRouter(h).ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusUnauthorized, w.Code)
+}
+
+func TestLogout_ReplayAfterLogout_Returns401(t *testing.T) {
+	// Use a shared blacklist so the second request sees the blacklisted jti.
+	bl := routes.NewTokenBlacklist()
+	h := newAuthHandler(t, nil)
+	user := &bizmodels.User{ID: 11, UserName: "replayuser"}
+	token, err := routes.CreateJWT(user)
+	require.NoError(t, err)
+
+	router := newTestRouter(h, bl)
+
+	// First logout — must succeed.
+	req1 := httptest.NewRequest(http.MethodPost, "/auth/logout", nil)
+	req1.Header.Set("Authorization", "Bearer "+token)
+	w1 := httptest.NewRecorder()
+	router.ServeHTTP(w1, req1)
+	require.Equal(t, http.StatusNoContent, w1.Code)
+
+	// Replay the same token — must be rejected.
+	req2 := httptest.NewRequest(http.MethodPost, "/auth/logout", nil)
+	req2.Header.Set("Authorization", "Bearer "+token)
+	w2 := httptest.NewRecorder()
+	router.ServeHTTP(w2, req2)
+	assert.Equal(t, http.StatusUnauthorized, w2.Code)
 }
