@@ -5,9 +5,11 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"os"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/danielgtaylor/huma/v2/adapters/humagin"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/sessions"
 	"github.com/markbates/goth"
@@ -35,6 +37,7 @@ func RegisterAuthRoutes(router *gin.Engine, api huma.API, h *handlers.AuthHandle
 	// HttpOnly and SameSite=Lax per the security checklist in app-auth.md §4.
 	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
 	store.Options = &sessions.Options{
+		Path:     "/", // must be "/" so the cookie is sent on the callback path too
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
 		Secure:   os.Getenv("LINKSHORTENER_ENV") != "dev",
@@ -58,6 +61,29 @@ func RegisterAuthRoutes(router *gin.Engine, api huma.API, h *handlers.AuthHandle
 			c.JSON(http.StatusNotImplemented, gin.H{"error": "provider not implemented"})
 			return
 		}
+
+		// Validate redirect_to and persist it in the session so the callback can
+		// pick it up after the OAuth round-trip.
+		if redirectTo := c.Query("redirect_to"); redirectTo != "" {
+			parsed, err := url.ParseRequestURI(redirectTo)
+			if err != nil || (parsed.Scheme != "http" && parsed.Scheme != "https") || parsed.Host == "" {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "invalid redirect_to URL"})
+				return
+			}
+			session, err := store.Get(c.Request, "linkshortener_state")
+			if err != nil {
+				slog.Error("auth: failed to get session for login", "error", err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+				return
+			}
+			session.Values["redirect_to"] = redirectTo
+			if err := session.Save(c.Request, c.Writer); err != nil {
+				slog.Error("auth: failed to save session for login", "error", err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+				return
+			}
+		}
+
 		req := gothic.GetContextWithProvider(c.Request, providerName)
 		gothic.BeginAuthHandler(c.Writer, req)
 	})
@@ -68,11 +94,23 @@ func RegisterAuthRoutes(router *gin.Engine, api huma.API, h *handlers.AuthHandle
 			providerName = string(bizmodels.ProviderGoogle)
 		}
 
+		// Retrieve and clear redirect_to from the session before any other work so
+		// we can use it in error redirects too.
+		session, _ := store.Get(c.Request, "linkshortener_state")
+		redirectTo, _ := session.Values["redirect_to"].(string)
+		delete(session.Values, "redirect_to")
+		_ = session.Save(c.Request, c.Writer) //nolint:errcheck — best-effort cleanup
+
+		if redirectTo == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "missing redirect URL"})
+			return
+		}
+
 		req := gothic.GetContextWithProvider(c.Request, providerName)
 		gothUser, err := gothic.CompleteUserAuth(c.Writer, req)
 		if err != nil {
 			slog.Error("auth: OAuth callback failed", "error", err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "OAuth authentication failed"})
+			c.Redirect(http.StatusFound, redirectTo+"#error=authentication_failed")
 			return
 		}
 
@@ -83,34 +121,34 @@ func RegisterAuthRoutes(router *gin.Engine, api huma.API, h *handlers.AuthHandle
 		user, resolveErr := h.ResolveUserByProvider(c.Request.Context(), input)
 
 		if resolveErr == nil {
-			// Existing user — issue a full JWT.
+			// Existing user — issue a full JWT and redirect to the frontend.
 			token, jwtErr := CreateJWT(user)
 			if jwtErr != nil {
 				slog.Error("auth: failed to create JWT", "user_id", user.ID, "error", jwtErr)
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+				c.Redirect(http.StatusFound, redirectTo+"#error=internal_error")
 				return
 			}
-			c.JSON(http.StatusOK, webmappers.UserToAuthTokenResponse(token).Body)
+			c.Redirect(http.StatusFound, redirectTo+"#token="+token)
 			return
 		}
 
 		if errors.Is(resolveErr, businesslogic.ErrNewUser) {
-			// New user — issue a pre-registration token for the registration form.
+			// New user — issue a pre-registration token; the frontend will show a
+			// registration form and POST to /auth/register.
 			preRegToken, preRegErr := CreatePreRegToken(input)
 			if preRegErr != nil {
 				slog.Error("auth: failed to create pre-reg token", "error", preRegErr)
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+				c.Redirect(http.StatusFound, redirectTo+"#error=internal_error")
 				return
 			}
-			c.JSON(http.StatusOK, &viewmodels.PreRegistrationTokenBody{
-				PreRegistrationToken: preRegToken,
-				SuggestedUserName:    input.DisplayName,
-			})
+			fragment := "#pre_registration_token=" + preRegToken +
+				"&suggested_user_name=" + url.QueryEscape(input.DisplayName)
+			c.Redirect(http.StatusFound, redirectTo+fragment)
 			return
 		}
 
 		slog.Error("auth: ResolveUserByProvider failed", "error", resolveErr)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		c.Redirect(http.StatusFound, redirectTo+"#error=authentication_failed")
 	})
 
 	huma.Register(api, huma.Operation{
@@ -141,16 +179,40 @@ func RegisterAuthRoutes(router *gin.Engine, api huma.API, h *handlers.AuthHandle
 		return webmappers.UserToAuthTokenResponse(token), nil
 	})
 
-	// Protected group: all routes here require a valid JWT.
-	protected := router.Group("/")
-	protected.Use(RequireJWT(blacklist))
+	// Protected Huma API: shares the main OpenAPI spec but registers routes on a
+	// JWT-gated Gin group. Empty OpenAPIPath/DocsPath/SchemasPath prevent duplicate
+	// spec-serving endpoints; huma.DefaultFormats keeps the same JSON serialisation.
+	protectedGroup := router.Group("/")
+	protectedGroup.Use(RequireJWT(blacklist))
+	protectedAPI := humagin.NewWithGroup(router, protectedGroup, huma.Config{
+		OpenAPI:       api.OpenAPI(),
+		OpenAPIPath:   "",
+		DocsPath:      "",
+		SchemasPath:   "",
+		Formats:       huma.DefaultFormats,
+		DefaultFormat: "application/json",
+	})
 
 	// POST /auth/logout — invalidates the caller's JWT by adding its jti to the
 	// blacklist. Returns 204 No Content on success.
-	protected.POST("/auth/logout", func(c *gin.Context) {
-		claims, _ := c.MustGet(string(CtxKeyJWTClaims)).(*JWTClaims)
+	// JWT validation is enforced by the protectedGroup middleware; claims are
+	// forwarded into the stdlib context by RequireJWT for retrieval here.
+	huma.Register(protectedAPI, huma.Operation{
+		OperationID:   "logout",
+		Method:        http.MethodPost,
+		Path:          "/auth/logout",
+		Summary:       "Log out the authenticated user by blacklisting the JWT",
+		DefaultStatus: http.StatusNoContent,
+		Security:      []map[string][]string{{"bearer": {}}},
+	}, func(ctx context.Context, _ *struct{}) (*struct{}, error) {
+		claims := GetJWTClaimsFromContext(ctx)
+		if claims == nil {
+			// Should never happen — RequireJWT middleware always sets claims before
+			// this handler runs; defensive guard only.
+			return nil, huma.Error401Unauthorized("unauthorized")
+		}
 		blacklist.Add(claims.ID, claims.ExpiresAt.Time)
 		slog.Info("auth: user logged out", "user_id", claims.UserID)
-		c.Status(http.StatusNoContent)
+		return nil, nil
 	})
 }

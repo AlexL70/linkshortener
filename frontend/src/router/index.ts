@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -11,6 +12,14 @@ const routes: RouteRecordRaw[] = [
     path: '/dashboard',
     name: 'dashboard',
     component: () => import('@/views/DashboardView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    // Public route: receives the OAuth redirect from the backend and processes
+    // the hash fragment (#token=…, #pre_registration_token=…, or #error=…).
+    path: '/auth/callback',
+    name: 'auth-callback',
+    component: () => import('@/views/AuthCallbackView.vue'),
   },
 ]
 
@@ -20,9 +29,16 @@ const router = createRouter({
 })
 
 router.beforeEach((to) => {
-  const token = localStorage.getItem('token')
-  if (to.meta.requiresAuth && !token) {
+  const auth = useAuthStore()
+
+  // Protected route — unauthenticated users are sent to the home page.
+  if (to.meta.requiresAuth && !auth.isAuthenticated) {
     return { name: 'home' }
+  }
+
+  // Home page — authenticated users are sent directly to the dashboard.
+  if (to.name === 'home' && auth.isAuthenticated) {
+    return { name: 'dashboard' }
   }
 })
 

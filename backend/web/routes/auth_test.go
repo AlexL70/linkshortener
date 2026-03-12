@@ -184,6 +184,49 @@ func TestLogin_GoogleProvider_StartsOAuthFlow(t *testing.T) {
 	assert.True(t, code >= 300 && code < 400, "expected redirect for Google login, got %d", code)
 }
 
+func TestLogin_InvalidRedirectTo_Returns400(t *testing.T) {
+	for _, bad := range []string{
+		"javascript:alert(1)",
+		"data:text/html,<script>",
+		"ftp://example.com/callback",
+		"//no-scheme.example.com",
+		"not-a-url-at-all",
+	} {
+		t.Run(bad, func(t *testing.T) {
+			h := newAuthHandler(t, nil)
+			req := httptest.NewRequest(http.MethodGet, "/auth/login/google?redirect_to="+bad, nil)
+			w := httptest.NewRecorder()
+			newTestRouter(h).ServeHTTP(w, req)
+			assert.Equal(t, http.StatusBadRequest, w.Code, "expected 400 for redirect_to=%q", bad)
+		})
+	}
+}
+
+func TestLogin_ValidRedirectTo_StartsOAuthFlow(t *testing.T) {
+	h := newAuthHandler(t, nil)
+	req := httptest.NewRequest(http.MethodGet,
+		"/auth/login/google?redirect_to=http%3A%2F%2Flocalhost%3A5173%2Fauth%2Fcallback", nil)
+	w := httptest.NewRecorder()
+	newTestRouter(h).ServeHTTP(w, req)
+
+	// Valid redirect_to must not block the OAuth flow — still a 3xx.
+	assert.True(t, w.Code >= 300 && w.Code < 400,
+		"expected redirect for Google login with valid redirect_to, got %d", w.Code)
+}
+
+func TestCallback_NoSessionRedirectTo_Returns400(t *testing.T) {
+	// Without a redirect_to stored in the session the callback returns 400.
+	h := newAuthHandler(t, nil)
+	req := httptest.NewRequest(http.MethodGet, "/auth/callback", nil)
+	w := httptest.NewRecorder()
+	newTestRouter(h).ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	var resp map[string]string
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
+	assert.Equal(t, "missing redirect URL", resp["error"])
+}
+
 func TestRegister_InternalError_Returns500(t *testing.T) {
 	input := &bizmodels.AuthInput{
 		Provider:       bizmodels.ProviderGoogle,

@@ -76,7 +76,7 @@ After the loading algorithm has run, validate the resolved configuration:
 | `MICROSOFT_CLIENT_SECRET` | Microsoft OAuth2 application client secret                                                         |
 | `FACEBOOK_CLIENT_ID`      | Facebook OAuth2 application client ID                                                              |
 | `FACEBOOK_CLIENT_SECRET`  | Facebook OAuth2 application client secret                                                          |
-| `APP_BASE_URL`            | Base URL of the backend API used by the frontend, e.g. `http://localhost:8080`. **Frontend only.** |
+| `APP_BASE_URL`            | The application's externally-accessible base URL, e.g. `http://localhost:8080`. Used by the backend to construct the OAuth provider callback URL and by the frontend as the API base URL. |
 | `SUPER_ADMIN_EMAIL`       | Email address of the super-admin user. Must be a syntactically valid email address. Used to grant admin privileges and, in `dev` mode with an empty database, to seed an initial user record (see `backend-dblayer.md §14`). |
 
 If any of these is absent (resolved to an empty string) after the loading algorithm has run, the application **must not start**.
