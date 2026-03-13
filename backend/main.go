@@ -72,6 +72,7 @@ func main() {
 	urlHandler := handlers.NewUrlHandler(urlRepo)
 
 	blacklist := routes.NewTokenBlacklist()
+	router.Use(routes.CORSMiddleware())
 	router.Use(routes.RequireJWTGlobal(blacklist, routes.DefaultPublicPaths))
 
 	routes.RegisterHello(api)

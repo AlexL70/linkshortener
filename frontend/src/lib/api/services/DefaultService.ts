@@ -5,6 +5,7 @@
 import type { AuthTokenBody } from '../models/AuthTokenBody';
 import type { ErrorModel } from '../models/ErrorModel';
 import type { HelloResponseBody } from '../models/HelloResponseBody';
+import type { ListUrlsResponseBody } from '../models/ListUrlsResponseBody';
 import type { RegisterRequestBody } from '../models/RegisterRequestBody';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
@@ -49,6 +50,28 @@ export class DefaultService {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/hello',
+        });
+    }
+    /**
+     * List authenticated user's shortened URLs
+     * @returns ListUrlsResponseBody OK
+     * @returns ErrorModel Error
+     * @throws ApiError
+     */
+    public static listUserUrls({
+        page = 1,
+        pageSize,
+    }: {
+        page?: number,
+        pageSize?: number,
+    }): CancelablePromise<ListUrlsResponseBody | ErrorModel> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/user/urls',
+            query: {
+                'page': page,
+                'page_size': pageSize,
+            },
         });
     }
 }

@@ -11,6 +11,8 @@ export type { AuthTokenBody } from './models/AuthTokenBody';
 export type { ErrorDetail } from './models/ErrorDetail';
 export type { ErrorModel } from './models/ErrorModel';
 export type { HelloResponseBody } from './models/HelloResponseBody';
+export type { ListUrlsResponseBody } from './models/ListUrlsResponseBody';
 export type { RegisterRequestBody } from './models/RegisterRequestBody';
+export type { UrlItem } from './models/UrlItem';
 
 export { DefaultService } from './services/DefaultService';

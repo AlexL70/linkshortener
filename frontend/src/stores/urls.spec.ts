@@ -1,0 +1,185 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { setActivePinia, createPinia } from 'pinia'
+import { useUrlsStore } from './urls'
+import { DefaultService } from '@/lib/api/services/DefaultService'
+import type { UrlItem } from '@/lib/api/models/UrlItem'
+
+// ── helpers ───────────────────────────────────────────────────────────────────
+
+function makeUrlItem(overrides: Partial<UrlItem> = {}): UrlItem {
+  return {
+    id: 1,
+    shortcode: 'abc123',
+    long_url: 'https://example.com',
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z',
+    ...overrides,
+  }
+}
+
+function makeListResponse(items: UrlItem[], page = 1, pageSize = 20, total?: number) {
+  return {
+    items,
+    total: total ?? items.length,
+    page,
+    page_size: pageSize,
+  }
+}
+
+// ── setup / teardown ──────────────────────────────────────────────────────────
+
+beforeEach(() => {
+  setActivePinia(createPinia())
+})
+
+afterEach(() => {
+  vi.restoreAllMocks()
+})
+
+// ── initial state ─────────────────────────────────────────────────────────────
+
+describe('initial state', () => {
+  it('starts with empty items and sensible defaults', () => {
+    const store = useUrlsStore()
+
+    expect(store.items).toEqual([])
+    expect(store.total).toBe(0)
+    expect(store.page).toBe(1)
+    expect(store.pageSize).toBe(20)
+    expect(store.loading).toBe(false)
+    expect(store.error).toBeNull()
+  })
+})
+
+// ── fetchUrls — success ───────────────────────────────────────────────────────
+
+describe('fetchUrls — success', () => {
+  it('populates items and pagination from a successful API response', async () => {
+    const url1 = makeUrlItem({ id: 1, shortcode: 'aaa111' })
+    const url2 = makeUrlItem({ id: 2, shortcode: 'bbb222' })
+    vi.spyOn(DefaultService, 'listUserUrls').mockResolvedValue(
+      makeListResponse([url1, url2], 1, 20, 2) as never,
+    )
+
+    const store = useUrlsStore()
+    await store.fetchUrls()
+
+    expect(store.items).toEqual([url1, url2])
+    expect(store.total).toBe(2)
+    expect(store.page).toBe(1)
+    expect(store.pageSize).toBe(20)
+    expect(store.loading).toBe(false)
+    expect(store.error).toBeNull()
+  })
+
+  it('passes page and pageSize query parameters to the API', async () => {
+    const spy = vi.spyOn(DefaultService, 'listUserUrls').mockResolvedValue(
+      makeListResponse([], 3, 10, 0) as never,
+    )
+
+    const store = useUrlsStore()
+    await store.fetchUrls(3, 10)
+
+    expect(spy).toHaveBeenCalledWith({ page: 3, pageSize: 10 })
+  })
+
+  it('treats null items as an empty array', async () => {
+    vi.spyOn(DefaultService, 'listUserUrls').mockResolvedValue(
+      { items: null, total: 0, page: 1, page_size: 20 } as never,
+    )
+
+    const store = useUrlsStore()
+    await store.fetchUrls()
+
+    expect(store.items).toEqual([])
+  })
+
+  it('sets loading to true during the request and false after', async () => {
+    let resolveFn!: (v: unknown) => void
+    vi.spyOn(DefaultService, 'listUserUrls').mockReturnValue(
+      new Promise((resolve) => { resolveFn = resolve }) as never,
+    )
+
+    const store = useUrlsStore()
+    const fetchPromise = store.fetchUrls()
+
+    expect(store.loading).toBe(true)
+    resolveFn(makeListResponse([]))
+    await fetchPromise
+    expect(store.loading).toBe(false)
+  })
+})
+
+// ── fetchUrls — API error response ────────────────────────────────────────────
+
+describe('fetchUrls — API error response', () => {
+  it('sets error when the API returns an ErrorModel with a title', async () => {
+    vi.spyOn(DefaultService, 'listUserUrls').mockResolvedValue(
+      { status: 401, title: 'Unauthorized' } as never,
+    )
+
+    const store = useUrlsStore()
+    await store.fetchUrls()
+
+    expect(store.error).toBe('Unauthorized')
+    expect(store.items).toEqual([])
+  })
+
+  it('falls back to a generic message when ErrorModel has no title', async () => {
+    vi.spyOn(DefaultService, 'listUserUrls').mockResolvedValue(
+      { status: 500 } as never,
+    )
+
+    const store = useUrlsStore()
+    await store.fetchUrls()
+
+    expect(store.error).toBe('Failed to load URLs')
+  })
+})
+
+// ── fetchUrls — network error ─────────────────────────────────────────────────
+
+describe('fetchUrls — network error', () => {
+  it('sets a generic error message when the request throws', async () => {
+    vi.spyOn(DefaultService, 'listUserUrls').mockRejectedValue(new Error('Network Error'))
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const store = useUrlsStore()
+    await store.fetchUrls()
+
+    expect(store.error).toBe('An unexpected error occurred while loading your URLs.')
+    expect(store.loading).toBe(false)
+  })
+
+  it('logs the error to the console', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    vi.spyOn(DefaultService, 'listUserUrls').mockRejectedValue(new Error('timeout'))
+
+    const store = useUrlsStore()
+    await store.fetchUrls()
+
+    expect(consoleSpy).toHaveBeenCalledWith('fetchUrls: request failed', expect.any(Error))
+  })
+})
+
+// ── reset ─────────────────────────────────────────────────────────────────────
+
+describe('reset', () => {
+  it('clears all state back to defaults', async () => {
+    vi.spyOn(DefaultService, 'listUserUrls').mockResolvedValue(
+      makeListResponse([makeUrlItem()], 2, 10, 1) as never,
+    )
+
+    const store = useUrlsStore()
+    await store.fetchUrls(2, 10)
+
+    store.reset()
+
+    expect(store.items).toEqual([])
+    expect(store.total).toBe(0)
+    expect(store.page).toBe(1)
+    expect(store.pageSize).toBe(20)
+    expect(store.loading).toBe(false)
+    expect(store.error).toBeNull()
+  })
+})
