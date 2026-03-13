@@ -44,7 +44,6 @@ func main() {
 
 	authHandler := handlers.NewAuthHandler(stubUserRepo{}, false, "")
 	urlHandler := handlers.NewUrlHandler(stubUrlRepo{})
-	routes.RegisterHello(api)
 	routes.RegisterAuthRoutes(router, api, authHandler, routes.NewTokenBlacklist())
 	routes.RegisterUrlRoutes(api, urlHandler)
 

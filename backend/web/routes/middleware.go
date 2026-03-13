@@ -14,7 +14,6 @@ var DefaultPublicPaths = []string{
 	"/auth/",        // OAuth2 login / callback / logout / register
 	"/docs",         // Swagger UI
 	"/openapi.json", // OpenAPI spec
-	"/hello",        // Health check
 	"/r/",           // Public redirect endpoint (future)
 }
 

@@ -75,7 +75,6 @@ func main() {
 	router.Use(routes.CORSMiddleware())
 	router.Use(routes.RequireJWTGlobal(blacklist, routes.DefaultPublicPaths))
 
-	routes.RegisterHello(api)
 	routes.RegisterAuthRoutes(router, api, authHandler, blacklist)
 	routes.RegisterUrlRoutes(api, urlHandler)
 

@@ -37,7 +37,7 @@ export const useAuthStore = defineStore('auth', () => {
    */
   function handleCallback(jwtToken: string) {
     const parts = jwtToken.split('.')
-    if (parts.length !== 3) return
+    if (parts.length !== 3 || typeof parts[1] === 'undefined') return
 
     try {
       const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')))

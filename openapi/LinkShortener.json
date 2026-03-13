@@ -103,27 +103,6 @@
         },
         "type": "object"
       },
-      "HelloResponseBody": {
-        "additionalProperties": false,
-        "properties": {
-          "$schema": {
-            "description": "A URL to the JSON Schema for this object.",
-            "examples": [
-              "https://example.com/schemas/HelloResponseBody.json"
-            ],
-            "format": "uri",
-            "readOnly": true,
-            "type": "string"
-          },
-          "message": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "message"
-        ],
-        "type": "object"
-      },
       "ListUrlsResponseBody": {
         "additionalProperties": false,
         "properties": {
@@ -297,34 +276,6 @@
           }
         },
         "summary": "Complete new-user registration after OAuth callback"
-      }
-    },
-    "/hello": {
-      "get": {
-        "operationId": "hello",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HelloResponseBody"
-                }
-              }
-            },
-            "description": "OK"
-          },
-          "default": {
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorModel"
-                }
-              }
-            },
-            "description": "Error"
-          }
-        },
-        "summary": "Hello World"
       }
     },
     "/user/urls": {

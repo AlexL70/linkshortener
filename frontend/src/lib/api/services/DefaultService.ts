@@ -4,7 +4,6 @@
 /* eslint-disable */
 import type { AuthTokenBody } from '../models/AuthTokenBody';
 import type { ErrorModel } from '../models/ErrorModel';
-import type { HelloResponseBody } from '../models/HelloResponseBody';
 import type { ListUrlsResponseBody } from '../models/ListUrlsResponseBody';
 import type { RegisterRequestBody } from '../models/RegisterRequestBody';
 import type { CancelablePromise } from '../core/CancelablePromise';
@@ -38,18 +37,6 @@ export class DefaultService {
             url: '/auth/register',
             body: requestBody,
             mediaType: 'application/json',
-        });
-    }
-    /**
-     * Hello World
-     * @returns HelloResponseBody OK
-     * @returns ErrorModel Error
-     * @throws ApiError
-     */
-    public static hello(): CancelablePromise<HelloResponseBody | ErrorModel> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/hello',
         });
     }
     /**
