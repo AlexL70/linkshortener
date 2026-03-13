@@ -32,15 +32,16 @@ run-dev: run-pg-dev run-backend-dev run-frontend-dev
 
 # Stop the backend server run by run-backend-dev command.
 stop-backend-dev:
-	pkill -f "go tool air -c .air.toml"
+	pkill -f "[g]o tool air -c .air.toml" || true
 
 # Stop the frontend development server run by run-frontend-dev command.
 stop-frontend-dev:
-	pkill -f "npm run dev"
+	pkill -f "[n]ode_modules/.bin/vite" || true
+	pkill esbuild || true
 
 # Stop the PostgreSQL database container started by run-pg-dev command.
 stop-pg-dev:
 	docker compose down db
 
 # Stop all development services started by run-dev command.
-stop-dev: stop-backend-dev stop-frontend-dev stop-pg-dev
+stop-dev: stop-frontend-dev stop-backend-dev stop-pg-dev
