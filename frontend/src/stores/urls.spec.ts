@@ -45,7 +45,7 @@ describe('initial state', () => {
     expect(store.items).toEqual([])
     expect(store.total).toBe(0)
     expect(store.page).toBe(1)
-    expect(store.pageSize).toBe(20)
+    expect(store.pageSize).toBe(0)
     expect(store.loading).toBe(false)
     expect(store.error).toBeNull()
   })
@@ -81,6 +81,17 @@ describe('fetchUrls — success', () => {
     await store.fetchUrls(3, 10)
 
     expect(spy).toHaveBeenCalledWith({ page: 3, pageSize: 10 })
+  })
+
+  it('omits pageSize when called with no explicit page size, deferring to server default', async () => {
+    const spy = vi.spyOn(DefaultService, 'listUserUrls').mockResolvedValue(
+      makeListResponse([], 1, 5, 5) as never,
+    )
+
+    const store = useUrlsStore()
+    await store.fetchUrls()
+
+    expect(spy).toHaveBeenCalledWith({ page: 1, pageSize: undefined })
   })
 
   it('treats null items as an empty array', async () => {
@@ -178,7 +189,7 @@ describe('reset', () => {
     expect(store.items).toEqual([])
     expect(store.total).toBe(0)
     expect(store.page).toBe(1)
-    expect(store.pageSize).toBe(20)
+    expect(store.pageSize).toBe(0)
     expect(store.loading).toBe(false)
     expect(store.error).toBeNull()
   })

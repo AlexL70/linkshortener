@@ -16,17 +16,17 @@ export const useUrlsStore = defineStore('urls', () => {
   const items = ref<UrlItem[]>([])
   const total = ref(0)
   const page = ref(1)
-  const pageSize = ref(20)
+  const pageSize = ref(0)
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  async function fetchUrls(requestedPage = 1, requestedPageSize = 20) {
+  async function fetchUrls(requestedPage = 1, requestedPageSize = 0) {
     loading.value = true
     error.value = null
     try {
       const response = await DefaultService.listUserUrls({
         page: requestedPage,
-        pageSize: requestedPageSize,
+        pageSize: requestedPageSize > 0 ? requestedPageSize : undefined,
       })
       if ('status' in response && typeof response.status === 'number') {
         // ErrorModel response
@@ -50,7 +50,7 @@ export const useUrlsStore = defineStore('urls', () => {
     items.value = []
     total.value = 0
     page.value = 1
-    pageSize.value = 20
+    pageSize.value = 0
     loading.value = false
     error.value = null
   }
