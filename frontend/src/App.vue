@@ -2,7 +2,15 @@
 import { RouterView, useRouter } from 'vue-router'
 import { ref } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { useThemeStore } from '@/stores/theme'
 import { Button } from '@/components/ui/button'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
+import { Moon, Sun, Monitor } from 'lucide-vue-next'
 import {
   Dialog,
   DialogContent,
@@ -12,6 +20,7 @@ import {
 } from '@/components/ui/dialog'
 
 const auth = useAuthStore()
+const themeStore = useThemeStore()
 const router = useRouter()
 const signInOpen = ref(false)
 
@@ -36,8 +45,48 @@ async function handleLogout() {
   <header
     class="fixed top-0 left-0 right-0 z-50 flex h-14 items-center justify-between border-b bg-background px-6 shadow-sm">
     <span class="text-lg font-semibold tracking-tight">Link Shortener</span>
-    <div>
-      <Button v-if="!auth.isAuthenticated" variant="default" @click="signInOpen = true">
+    <div class="flex items-center gap-2">
+      <TooltipProvider :delay-duration="300">
+        <div class="flex items-center">
+          <Tooltip>
+            <TooltipTrigger as-child>
+              <Button
+                variant="ghost" size="icon"
+                :class="themeStore.mode === 'light' ? 'bg-accent' : ''"
+                aria-label="Light mode"
+                @click="themeStore.setMode('light')">
+                <Sun />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Light mode</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger as-child>
+              <Button
+                variant="ghost" size="icon"
+                :class="themeStore.mode === 'dark' ? 'bg-accent' : ''"
+                aria-label="Dark mode"
+                @click="themeStore.setMode('dark')">
+                <Moon />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Dark mode</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger as-child>
+              <Button
+                variant="ghost" size="icon"
+                :class="themeStore.mode === 'system' ? 'bg-accent' : ''"
+                aria-label="Follow system settings"
+                @click="themeStore.setMode('system')">
+                <Monitor />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Follow system settings</TooltipContent>
+          </Tooltip>
+        </div>
+      </TooltipProvider>
+      <Button v-if="!auth.isAuthenticated" variant="outline" @click="signInOpen = true">
         Sign In
       </Button>
       <Button v-else variant="outline" @click="handleLogout">
