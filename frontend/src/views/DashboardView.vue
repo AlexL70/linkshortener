@@ -107,19 +107,19 @@ onMounted(() => {
           You haven't created any short URLs yet.
         </p>
         <div v-for="url in urlsStore.items" :key="url.id" class="cursor-pointer rounded-md border p-4"
-          @click="toggleCard(url.id)">
+          @click="toggleCard(String(url.id))">
           <!-- Row 1: shortcode + badge + chevron -->
           <div class="flex items-center gap-2">
             <span class="flex-1 font-mono font-medium">{{ url.shortcode }}</span>
             <Badge v-if="isExpired(url.expires_at)" variant="destructive">Expired</Badge>
             <Badge v-else variant="secondary">Active</Badge>
-            <ChevronUp v-if="expandedId === url.id" class="h-4 w-4 text-muted-foreground" />
+            <ChevronUp v-if="expandedId === String(url.id)" class="h-4 w-4 text-muted-foreground" />
             <ChevronDown v-else class="h-4 w-4 text-muted-foreground" />
           </div>
           <!-- Row 2: truncated URL preview (always visible) -->
           <p class="mt-1 truncate text-sm text-muted-foreground">{{ url.long_url }}</p>
           <!-- Expanded details -->
-          <template v-if="expandedId === url.id">
+          <template v-if="expandedId === String(url.id)">
             <a :href="url.long_url" target="_blank" rel="noopener noreferrer"
               class="mt-2 block break-all text-sm text-muted-foreground hover:underline" @click.stop>
               {{ url.long_url }}
