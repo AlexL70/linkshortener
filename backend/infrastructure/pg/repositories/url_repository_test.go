@@ -234,3 +234,122 @@ func TestCreate_DuplicateShortcode_ReturnsConflict(t *testing.T) {
 	require.Error(t, err)
 	assert.ErrorIs(t, err, businesslogic.ErrConflict)
 }
+
+// ── FindByID ──────────────────────────────────────────────────────────────────
+
+func TestFindByID_Success(t *testing.T) {
+	db := openTestDB(t)
+	defer db.Close() //nolint:errcheck
+
+	ctx := context.Background()
+	userRepo := repositories.NewUserRepository(db)
+	up := &bizmodels.UserProvider{Provider: bizmodels.ProviderGoogle, ProviderUserID: "fbi-sub-1", ProviderEmail: "fbi1@example.com"}
+	user, err := userRepo.CreateUserWithProvider(ctx, "fbiuser1", up)
+	require.NoError(t, err)
+	defer cleanUsers(t, db, user.ID)
+
+	id := insertTestURL(t, db, user.ID, "fbi001", "https://findbyid.com")
+
+	urlRepo := repositories.NewUrlRepository(db)
+	got, err := urlRepo.FindByID(ctx, id)
+	require.NoError(t, err)
+	require.NotNil(t, got)
+	assert.Equal(t, id, got.ID)
+	assert.Equal(t, "fbi001", got.Shortcode)
+	assert.Equal(t, "https://findbyid.com", got.LongUrl)
+	assert.Equal(t, user.ID, got.UserID)
+}
+
+func TestFindByID_NotFound_ReturnsErrNotFound(t *testing.T) {
+	db := openTestDB(t)
+	defer db.Close() //nolint:errcheck
+
+	ctx := context.Background()
+	urlRepo := repositories.NewUrlRepository(db)
+
+	_, err := urlRepo.FindByID(ctx, -999)
+	require.Error(t, err)
+	assert.ErrorIs(t, err, businesslogic.ErrNotFound)
+}
+
+// ── Update ────────────────────────────────────────────────────────────────────
+
+func TestUpdate_Success(t *testing.T) {
+	db := openTestDB(t)
+	defer db.Close() //nolint:errcheck
+
+	ctx := context.Background()
+	userRepo := repositories.NewUserRepository(db)
+	up := &bizmodels.UserProvider{Provider: bizmodels.ProviderGoogle, ProviderUserID: "upd-sub-1", ProviderEmail: "upd1@example.com"}
+	user, err := userRepo.CreateUserWithProvider(ctx, "upduser1", up)
+	require.NoError(t, err)
+	defer cleanUsers(t, db, user.ID)
+
+	id := insertTestURL(t, db, user.ID, "up0001", "https://original.com")
+
+	urlRepo := repositories.NewUrlRepository(db)
+	input := &bizmodels.ShortenedUrl{
+		ID:        id,
+		UserID:    user.ID,
+		Shortcode: "up0001",
+		LongUrl:   "https://updated.com",
+	}
+	updated, err := urlRepo.Update(ctx, input)
+	require.NoError(t, err)
+	require.NotNil(t, updated)
+	assert.Equal(t, id, updated.ID)
+	assert.Equal(t, "https://updated.com", updated.LongUrl)
+	assert.Nil(t, updated.ExpiresAt)
+	assert.False(t, updated.UpdatedAt.IsZero())
+}
+
+func TestUpdate_ChangeShortcode_Success(t *testing.T) {
+	db := openTestDB(t)
+	defer db.Close() //nolint:errcheck
+
+	ctx := context.Background()
+	userRepo := repositories.NewUserRepository(db)
+	up := &bizmodels.UserProvider{Provider: bizmodels.ProviderGoogle, ProviderUserID: "upd-sub-2", ProviderEmail: "upd2@example.com"}
+	user, err := userRepo.CreateUserWithProvider(ctx, "upduser2", up)
+	require.NoError(t, err)
+	defer cleanUsers(t, db, user.ID)
+
+	id := insertTestURL(t, db, user.ID, "old001", "https://example.com")
+
+	urlRepo := repositories.NewUrlRepository(db)
+	input := &bizmodels.ShortenedUrl{
+		ID:        id,
+		UserID:    user.ID,
+		Shortcode: "new001",
+		LongUrl:   "https://example.com",
+	}
+	updated, err := urlRepo.Update(ctx, input)
+	require.NoError(t, err)
+	assert.Equal(t, "new001", updated.Shortcode)
+}
+
+func TestUpdate_DuplicateShortcode_ReturnsConflict(t *testing.T) {
+	db := openTestDB(t)
+	defer db.Close() //nolint:errcheck
+
+	ctx := context.Background()
+	userRepo := repositories.NewUserRepository(db)
+	up := &bizmodels.UserProvider{Provider: bizmodels.ProviderGoogle, ProviderUserID: "upd-sub-3", ProviderEmail: "upd3@example.com"}
+	user, err := userRepo.CreateUserWithProvider(ctx, "upduser3", up)
+	require.NoError(t, err)
+	defer cleanUsers(t, db, user.ID)
+
+	insertTestURL(t, db, user.ID, "taken2", "https://taken.com")
+	id := insertTestURL(t, db, user.ID, "other2", "https://other.com")
+
+	urlRepo := repositories.NewUrlRepository(db)
+	input := &bizmodels.ShortenedUrl{
+		ID:        id,
+		UserID:    user.ID,
+		Shortcode: "taken2", // conflict with existing row
+		LongUrl:   "https://other.com",
+	}
+	_, err = urlRepo.Update(ctx, input)
+	require.Error(t, err)
+	assert.ErrorIs(t, err, businesslogic.ErrConflict)
+}

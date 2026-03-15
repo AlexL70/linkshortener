@@ -60,6 +60,28 @@ func RegisterUrlRoutes(api huma.API, h *handlers.UrlHandler) {
 			Body: webmappers.CreateUrlToResponse(created, baseUrl),
 		}, nil
 	})
+
+	huma.Register(api, huma.Operation{
+		OperationID: "update-shortened-url",
+		Method:      http.MethodPatch,
+		Path:        "/user/urls/{id}",
+		Summary:     "Update an existing shortened URL",
+	}, func(ctx context.Context, input *viewmodels.UpdateUrlInput) (*viewmodels.UpdateUrlResponse, error) {
+		claims := GetJWTClaimsFromContext(ctx)
+		if claims == nil {
+			return nil, huma.NewError(http.StatusUnauthorized, "unauthorized")
+		}
+
+		updated, err := h.UpdateUrl(ctx, input.ID, claims.UserID, input.Body.LongUrl, input.Body.Shortcode, input.Body.ExpiresAt)
+		if err != nil {
+			return nil, MapError(err)
+		}
+
+		baseUrl := os.Getenv("APP_BASE_URL")
+		return &viewmodels.UpdateUrlResponse{
+			Body: webmappers.UpdateUrlToResponse(updated, baseUrl),
+		}, nil
+	})
 }
 
 // resolvePageSize returns the caller-supplied page size when positive, otherwise

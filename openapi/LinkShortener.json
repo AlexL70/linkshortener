@@ -22,6 +22,78 @@
         ],
         "type": "object"
       },
+      "CreateUrlRequestBody": {
+        "additionalProperties": false,
+        "properties": {
+          "$schema": {
+            "description": "A URL to the JSON Schema for this object.",
+            "examples": [
+              "https://example.com/schemas/CreateUrlRequestBody.json"
+            ],
+            "format": "uri",
+            "readOnly": true,
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "long_url": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "shortcode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "long_url"
+        ],
+        "type": "object"
+      },
+      "CreateUrlResponseBody": {
+        "additionalProperties": false,
+        "properties": {
+          "$schema": {
+            "description": "A URL to the JSON Schema for this object.",
+            "examples": [
+              "https://example.com/schemas/CreateUrlResponseBody.json"
+            ],
+            "format": "uri",
+            "readOnly": true,
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "long_url": {
+            "type": "string"
+          },
+          "short_url": {
+            "type": "string"
+          },
+          "shortcode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "shortcode",
+          "long_url",
+          "short_url",
+          "created_at"
+        ],
+        "type": "object"
+      },
       "ErrorDetail": {
         "additionalProperties": false,
         "properties": {
@@ -169,6 +241,83 @@
         "required": [
           "pre_registration_token",
           "user_name"
+        ],
+        "type": "object"
+      },
+      "UpdateUrlRequestBody": {
+        "additionalProperties": false,
+        "properties": {
+          "$schema": {
+            "description": "A URL to the JSON Schema for this object.",
+            "examples": [
+              "https://example.com/schemas/UpdateUrlRequestBody.json"
+            ],
+            "format": "uri",
+            "readOnly": true,
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "long_url": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "shortcode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "long_url"
+        ],
+        "type": "object"
+      },
+      "UpdateUrlResponseBody": {
+        "additionalProperties": false,
+        "properties": {
+          "$schema": {
+            "description": "A URL to the JSON Schema for this object.",
+            "examples": [
+              "https://example.com/schemas/UpdateUrlResponseBody.json"
+            ],
+            "format": "uri",
+            "readOnly": true,
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "long_url": {
+            "type": "string"
+          },
+          "short_url": {
+            "type": "string"
+          },
+          "shortcode": {
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "shortcode",
+          "long_url",
+          "short_url",
+          "created_at",
+          "updated_at"
         ],
         "type": "object"
       },
@@ -327,6 +476,89 @@
           }
         },
         "summary": "List authenticated user's shortened URLs"
+      },
+      "post": {
+        "operationId": "create-shortened-url",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUrlRequestBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateUrlResponseBody"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Create a new shortened URL"
+      }
+    },
+    "/user/urls/{id}": {
+      "patch": {
+        "operationId": "update-shortened-url",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUrlRequestBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateUrlResponseBody"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Update an existing shortened URL"
       }
     }
   }

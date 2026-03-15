@@ -121,3 +121,49 @@ func TestCreateUrlToResponse_NoExpiry(t *testing.T) {
 	assert.Nil(t, body.ExpiresAt)
 	assert.Equal(t, "https://s.example.com/r/noexp1", body.ShortUrl)
 }
+
+// ── UpdateUrlToResponse ───────────────────────────────────────────────────────
+
+func TestUpdateUrlToResponse_AllFields(t *testing.T) {
+	now := time.Now().Truncate(time.Second)
+	exp := now.Add(24 * time.Hour)
+	m := &bizmodels.ShortenedUrl{
+		ID:        10,
+		UserID:    3,
+		Shortcode: "upd001",
+		LongUrl:   "https://updated.com",
+		ExpiresAt: &exp,
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+
+	body := mappers.UpdateUrlToResponse(m, "https://short.example.com")
+
+	require.NotNil(t, body)
+	assert.Equal(t, int64(10), body.ID)
+	assert.Equal(t, "upd001", body.Shortcode)
+	assert.Equal(t, "https://updated.com", body.LongUrl)
+	assert.Equal(t, "https://short.example.com/r/upd001", body.ShortUrl)
+	require.NotNil(t, body.ExpiresAt)
+	assert.Equal(t, exp, *body.ExpiresAt)
+	assert.Equal(t, now, body.CreatedAt)
+	assert.Equal(t, now, body.UpdatedAt)
+}
+
+func TestUpdateUrlToResponse_NoExpiry(t *testing.T) {
+	now := time.Now().Truncate(time.Second)
+	m := &bizmodels.ShortenedUrl{
+		ID:        11,
+		Shortcode: "noexp2",
+		LongUrl:   "https://no-expiry.com",
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+
+	body := mappers.UpdateUrlToResponse(m, "https://short.example.com")
+
+	require.NotNil(t, body)
+	assert.Nil(t, body.ExpiresAt)
+	assert.Equal(t, "https://no-expiry.com", body.LongUrl)
+	assert.Equal(t, "https://short.example.com/r/noexp2", body.ShortUrl)
+}

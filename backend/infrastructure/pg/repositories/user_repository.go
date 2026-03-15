@@ -2,10 +2,7 @@ package repositories
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	businesslogic "github.com/AlexL70/linkshortener/backend/business-logic"
@@ -34,7 +31,7 @@ func (r *userRepository) FindByProviderID(ctx context.Context, provider bizmodel
 		Limit(1).
 		Scan(ctx)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if isNotFound(err) {
 			return nil, nil, businesslogic.ErrNotFound
 		}
 		return nil, nil, fmt.Errorf("UserRepository.FindByProviderID: %w", err)
@@ -57,7 +54,7 @@ func (r *userRepository) FindByProviderEmailWithSeedID(ctx context.Context, prov
 		Limit(1).
 		Scan(ctx)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if isNotFound(err) {
 			return nil, nil, businesslogic.ErrNotFound
 		}
 		return nil, nil, fmt.Errorf("UserRepository.FindByProviderEmailWithSeedID: %w", err)
@@ -133,20 +130,10 @@ func (r *userRepository) findUserByID(ctx context.Context, id int64) (*pgmodels.
 		Limit(1).
 		Scan(ctx)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if isNotFound(err) {
 			return nil, businesslogic.ErrNotFound
 		}
 		return nil, fmt.Errorf("findUserByID: %w", err)
 	}
 	return user, nil
-}
-
-// isUniqueViolation reports whether err originates from a PostgreSQL
-// unique-constraint violation (SQLSTATE 23505).
-func isUniqueViolation(err error) bool {
-	if err == nil {
-		return false
-	}
-	msg := err.Error()
-	return strings.Contains(msg, "23505") || strings.Contains(msg, "unique constraint")
 }

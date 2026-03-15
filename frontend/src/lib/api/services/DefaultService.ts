@@ -8,6 +8,8 @@ import type { CreateUrlResponseBody } from '../models/CreateUrlResponseBody';
 import type { ErrorModel } from '../models/ErrorModel';
 import type { ListUrlsResponseBody } from '../models/ListUrlsResponseBody';
 import type { RegisterRequestBody } from '../models/RegisterRequestBody';
+import type { UpdateUrlRequestBody } from '../models/UpdateUrlRequestBody';
+import type { UpdateUrlResponseBody } from '../models/UpdateUrlResponseBody';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
@@ -77,6 +79,29 @@ export class DefaultService {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/user/urls',
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Update an existing shortened URL
+     * @returns UpdateUrlResponseBody OK
+     * @returns ErrorModel Error
+     * @throws ApiError
+     */
+    public static updateUrl({
+        id,
+        requestBody,
+    }: {
+        id: number,
+        requestBody?: UpdateUrlRequestBody,
+    }): CancelablePromise<UpdateUrlResponseBody | ErrorModel> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/user/urls/{id}',
+            path: {
+                'id': id,
+            },
             body: requestBody,
             mediaType: 'application/json',
         });

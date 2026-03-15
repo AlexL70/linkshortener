@@ -43,3 +43,17 @@ func CreateUrlToResponse(m *bizmodels.ShortenedUrl, baseUrl string) *viewmodels.
 		CreatedAt: m.CreatedAt,
 	}
 }
+
+// UpdateUrlToResponse builds an UpdateUrlResponseBody from an updated ShortenedUrl.
+// shortUrl is constructed as baseUrl + "/r/" + shortcode.
+func UpdateUrlToResponse(m *bizmodels.ShortenedUrl, baseUrl string) *viewmodels.UpdateUrlResponseBody {
+	return &viewmodels.UpdateUrlResponseBody{
+		ID:        m.ID,
+		Shortcode: m.Shortcode,
+		LongUrl:   m.LongUrl,
+		ShortUrl:  baseUrl + "/r/" + m.Shortcode,
+		ExpiresAt: m.ExpiresAt,
+		CreatedAt: m.CreatedAt,
+		UpdatedAt: m.UpdatedAt,
+	}
+}
