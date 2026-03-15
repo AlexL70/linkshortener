@@ -96,6 +96,10 @@ If any of these is absent (resolved to an empty string) after the loading algori
 | `CLICK_BATCH_SIZE`            | `1000`    | Number of click events buffered before a flush to the database |
 | `CLICK_BATCH_TIMEOUT_SECONDS` | `5`       | Maximum seconds between automatic click-batch flushes          |
 | `DEFAULT_PAGE_SIZE`           | `20`      | Default number of items returned by paginated list endpoints   |
+| `MAX_URL_LENGTH`              | `2048`    | Maximum allowed length (in characters) for a submitted long URL |
+| `MIN_SHORTCODE_LENGTH`        | `6`       | Minimum length for a user-supplied custom shortcode             |
+| `MAX_SHORTCODE_LENGTH`        | `6`       | Maximum length for both custom and auto-generated shortcodes    |
+| `MAX_SHORTCODE_RETRIES`       | `10`      | Maximum number of retry attempts when a generated shortcode collides with an existing one |
 
 ---
 

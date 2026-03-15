@@ -21,7 +21,7 @@ func newUrlHandler(t *testing.T) (*handlers.UrlHandler, *mocks.MockUrlRepository
 	ctrl := gomock.NewController(t)
 	repo := mocks.NewMockUrlRepository(ctrl)
 	gen := mocks.NewMockShortcodeGenerator(ctrl)
-	return handlers.NewUrlHandler(repo, gen, 2048, 6, 6), repo, gen
+	return handlers.NewUrlHandler(repo, gen, 2048, 6, 6, 10), repo, gen
 }
 
 func TestListUrls_Success(t *testing.T) {

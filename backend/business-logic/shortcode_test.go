@@ -1,5 +1,7 @@
 //go:build ignore
 
+package businesslogic_test
+
 import (
 	"strings"
 	"testing"

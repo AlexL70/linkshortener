@@ -74,8 +74,9 @@ func main() {
 	maxUrlLen, _ := strconv.Atoi(os.Getenv("MAX_URL_LENGTH"))
 	minShortcodeLen, _ := strconv.Atoi(os.Getenv("MIN_SHORTCODE_LENGTH"))
 	maxShortcodeLen, _ := strconv.Atoi(os.Getenv("MAX_SHORTCODE_LENGTH"))
+	maxShortcodeRetries, _ := strconv.Atoi(os.Getenv("MAX_SHORTCODE_RETRIES"))
 	shortcodeGen := businesslogic.NewShortcodeGenerator(maxShortcodeLen)
-	urlHandler := handlers.NewUrlHandler(urlRepo, shortcodeGen, maxUrlLen, minShortcodeLen, maxShortcodeLen)
+	urlHandler := handlers.NewUrlHandler(urlRepo, shortcodeGen, maxUrlLen, minShortcodeLen, maxShortcodeLen, maxShortcodeRetries)
 
 	blacklist := routes.NewTokenBlacklist()
 	router.Use(routes.CORSMiddleware())

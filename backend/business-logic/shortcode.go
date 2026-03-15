@@ -70,8 +70,11 @@ func ValidateCustomShortcode(shortcode string, minLen, maxLen int) error {
 			return fmt.Errorf("%w: shortcode must contain only alphanumeric characters and hyphens", ErrValidation)
 		}
 	}
-	if _, reserved := reservedShortcodes[strings.ToLower(shortcode)]; reserved {
-		return fmt.Errorf("%w: shortcode is reserved", ErrValidation)
+	lower := strings.ToLower(shortcode)
+	for word := range reservedShortcodes {
+		if strings.HasPrefix(lower, word) {
+			return fmt.Errorf("%w: shortcode is reserved", ErrValidation)
+		}
 	}
 	return nil
 }

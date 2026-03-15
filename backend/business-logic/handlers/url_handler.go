@@ -12,27 +12,28 @@ import (
 	bizmodels "github.com/AlexL70/linkshortener/backend/business-logic/models"
 )
 
-const maxShortcodeRetries = 10
-
 // UrlHandler contains the business logic for managing shortened URLs.
 type UrlHandler struct {
-	urls            interfaces.UrlRepository
-	generator       interfaces.ShortcodeGenerator
-	maxUrlLen       int
-	minShortcodeLen int
-	maxShortcodeLen int
+	urls                interfaces.UrlRepository
+	generator           interfaces.ShortcodeGenerator
+	maxUrlLen           int
+	minShortcodeLen     int
+	maxShortcodeLen     int
+	maxShortcodeRetries int
 }
 
 // NewUrlHandler constructs a UrlHandler.
-// maxUrlLen, minShortcodeLen, and maxShortcodeLen are read from configuration
-// (MAX_URL_LENGTH, MIN_SHORTCODE_LENGTH, MAX_SHORTCODE_LENGTH) and applied during validation.
-func NewUrlHandler(urls interfaces.UrlRepository, generator interfaces.ShortcodeGenerator, maxUrlLen, minShortcodeLen, maxShortcodeLen int) *UrlHandler {
+// maxUrlLen, minShortcodeLen, maxShortcodeLen, and maxShortcodeRetries are read from
+// configuration (MAX_URL_LENGTH, MIN_SHORTCODE_LENGTH, MAX_SHORTCODE_LENGTH,
+// MAX_SHORTCODE_RETRIES) and applied during validation and shortcode generation.
+func NewUrlHandler(urls interfaces.UrlRepository, generator interfaces.ShortcodeGenerator, maxUrlLen, minShortcodeLen, maxShortcodeLen, maxShortcodeRetries int) *UrlHandler {
 	return &UrlHandler{
-		urls:            urls,
-		generator:       generator,
-		maxUrlLen:       maxUrlLen,
-		minShortcodeLen: minShortcodeLen,
-		maxShortcodeLen: maxShortcodeLen,
+		urls:                urls,
+		generator:           generator,
+		maxUrlLen:           maxUrlLen,
+		minShortcodeLen:     minShortcodeLen,
+		maxShortcodeLen:     maxShortcodeLen,
+		maxShortcodeRetries: maxShortcodeRetries,
 	}
 }
 
@@ -73,7 +74,7 @@ func (h *UrlHandler) CreateUrl(ctx context.Context, userID int64, longUrl string
 		return created, nil
 	}
 
-	for attempt := 0; attempt < maxShortcodeRetries; attempt++ {
+	for attempt := 0; attempt < h.maxShortcodeRetries; attempt++ {
 		sc, err := h.generator.GenerateShortcode()
 		if err != nil {
 			return nil, fmt.Errorf("UrlHandler.CreateUrl: shortcode generation failed: %w", err)
@@ -94,5 +95,5 @@ func (h *UrlHandler) CreateUrl(ctx context.Context, userID int64, longUrl string
 		slog.WarnContext(ctx, "shortcode collision, retrying", "attempt", attempt+1, "user_id", userID)
 	}
 
-	return nil, fmt.Errorf("UrlHandler.CreateUrl: %w: exhausted %d shortcode retries", businesslogic.ErrConflict, maxShortcodeRetries)
+	return nil, fmt.Errorf("UrlHandler.CreateUrl: %w: exhausted %d shortcode retries", businesslogic.ErrConflict, h.maxShortcodeRetries)
 }
