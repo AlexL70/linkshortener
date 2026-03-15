@@ -8,6 +8,8 @@ export { OpenAPI } from './core/OpenAPI';
 export type { OpenAPIConfig } from './core/OpenAPI';
 
 export type { AuthTokenBody } from './models/AuthTokenBody';
+export type { CreateUrlRequestBody } from './models/CreateUrlRequestBody';
+export type { CreateUrlResponseBody } from './models/CreateUrlResponseBody';
 export type { ErrorDetail } from './models/ErrorDetail';
 export type { ErrorModel } from './models/ErrorModel';
 export type { ListUrlsResponseBody } from './models/ListUrlsResponseBody';

@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
 
+	businesslogic "github.com/AlexL70/linkshortener/backend/business-logic"
 	bizmodels "github.com/AlexL70/linkshortener/backend/business-logic/models"
 	pgmodels "github.com/AlexL70/linkshortener/backend/infrastructure/pg/models"
 	"github.com/AlexL70/linkshortener/backend/infrastructure/pg/repositories"
@@ -158,3 +159,78 @@ func TestFindByUserID_IsolatedToOwner(t *testing.T) {
 //
 // openTestDB and cleanUsers are defined in user_repository_test.go and are
 // accessible here since both files share the repositories_test package.
+
+// ── Create ────────────────────────────────────────────────────────────────────
+
+func TestCreate_Success(t *testing.T) {
+	db := openTestDB(t)
+	defer db.Close() //nolint:errcheck
+
+	ctx := context.Background()
+	userRepo := repositories.NewUserRepository(db)
+	up := &bizmodels.UserProvider{Provider: bizmodels.ProviderGoogle, ProviderUserID: "create-sub-1", ProviderEmail: "create1@example.com"}
+	user, err := userRepo.CreateUserWithProvider(ctx, "createuser1", up)
+	require.NoError(t, err)
+	defer cleanUsers(t, db, user.ID)
+
+	urlRepo := repositories.NewUrlRepository(db)
+	input := &bizmodels.ShortenedUrl{
+		UserID:    user.ID,
+		Shortcode: "cr0001",
+		LongUrl:   "https://create-test.com",
+	}
+	created, err := urlRepo.Create(ctx, input)
+	require.NoError(t, err)
+	assert.NotZero(t, created.ID)
+	assert.Equal(t, "cr0001", created.Shortcode)
+	assert.Equal(t, "https://create-test.com", created.LongUrl)
+	assert.Equal(t, user.ID, created.UserID)
+	assert.False(t, created.CreatedAt.IsZero())
+}
+
+func TestCreate_WithExpiry_Success(t *testing.T) {
+	db := openTestDB(t)
+	defer db.Close() //nolint:errcheck
+
+	ctx := context.Background()
+	userRepo := repositories.NewUserRepository(db)
+	up := &bizmodels.UserProvider{Provider: bizmodels.ProviderGoogle, ProviderUserID: "create-sub-exp", ProviderEmail: "createexp@example.com"}
+	user, err := userRepo.CreateUserWithProvider(ctx, "createuserexp", up)
+	require.NoError(t, err)
+	defer cleanUsers(t, db, user.ID)
+
+	exp := time.Now().Add(24 * time.Hour).Truncate(time.Second)
+	urlRepo := repositories.NewUrlRepository(db)
+	input := &bizmodels.ShortenedUrl{
+		UserID:    user.ID,
+		Shortcode: "expurl",
+		LongUrl:   "https://expiry-test.com",
+		ExpiresAt: &exp,
+	}
+	created, err := urlRepo.Create(ctx, input)
+	require.NoError(t, err)
+	require.NotNil(t, created.ExpiresAt)
+	assert.Equal(t, exp.Unix(), created.ExpiresAt.Unix())
+}
+
+func TestCreate_DuplicateShortcode_ReturnsConflict(t *testing.T) {
+	db := openTestDB(t)
+	defer db.Close() //nolint:errcheck
+
+	ctx := context.Background()
+	userRepo := repositories.NewUserRepository(db)
+	up := &bizmodels.UserProvider{Provider: bizmodels.ProviderGoogle, ProviderUserID: "create-sub-dup", ProviderEmail: "createdup@example.com"}
+	user, err := userRepo.CreateUserWithProvider(ctx, "createuserdup", up)
+	require.NoError(t, err)
+	defer cleanUsers(t, db, user.ID)
+
+	urlRepo := repositories.NewUrlRepository(db)
+	input := &bizmodels.ShortenedUrl{UserID: user.ID, Shortcode: "dup001", LongUrl: "https://dup.com"}
+	_, err = urlRepo.Create(ctx, input)
+	require.NoError(t, err)
+
+	// Second insert with the same shortcode must return ErrConflict.
+	_, err = urlRepo.Create(ctx, input)
+	require.Error(t, err)
+	assert.ErrorIs(t, err, businesslogic.ErrConflict)
+}

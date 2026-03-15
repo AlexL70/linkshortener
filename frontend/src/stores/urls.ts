@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { DefaultService } from '@/lib/api/services/DefaultService'
 import type { UrlItem } from '@/lib/api/models/UrlItem'
+import type { CreateUrlResponseBody } from '@/lib/api/models/CreateUrlResponseBody'
 
 export interface UrlsState {
   items: UrlItem[]
@@ -19,6 +20,8 @@ export const useUrlsStore = defineStore('urls', () => {
   const pageSize = ref(0)
   const loading = ref(false)
   const error = ref<string | null>(null)
+  const creating = ref(false)
+  const createError = ref<string | null>(null)
 
   async function fetchUrls(requestedPage = 1, requestedPageSize = 0) {
     loading.value = true
@@ -55,5 +58,39 @@ export const useUrlsStore = defineStore('urls', () => {
     error.value = null
   }
 
-  return { items, total, page, pageSize, loading, error, fetchUrls, reset }
+  async function createUrl(params: {
+    longUrl: string
+    shortcode?: string
+    expiresAt?: string
+  }): Promise<CreateUrlResponseBody | null> {
+    creating.value = true
+    createError.value = null
+    try {
+      const response = await DefaultService.createUrl({
+        requestBody: {
+          long_url: params.longUrl,
+          shortcode: params.shortcode,
+          expires_at: params.expiresAt,
+        },
+      })
+      if ('status' in response && typeof response.status === 'number') {
+        createError.value = (response as { title?: string }).title ?? 'Failed to create URL'
+        return null
+      }
+      await fetchUrls(1, pageSize.value > 0 ? pageSize.value : undefined)
+      return response as CreateUrlResponseBody
+    } catch (err) {
+      console.error('createUrl: request failed', err)
+      createError.value = 'An unexpected error occurred while creating your URL.'
+      return null
+    } finally {
+      creating.value = false
+    }
+  }
+
+  function clearCreateError() {
+    createError.value = null
+  }
+
+  return { items, total, page, pageSize, loading, error, creating, createError, fetchUrls, reset, createUrl, clearCreateError }
 })

@@ -53,6 +53,9 @@ var optionalDefaults = map[string]string{
 	"CLICK_BATCH_SIZE":            "1000",
 	"CLICK_BATCH_TIMEOUT_SECONDS": "5",
 	"DEFAULT_PAGE_SIZE":           "20",
+	"MAX_URL_LENGTH":              "2048",
+	"MIN_SHORTCODE_LENGTH":        "6",
+	"MAX_SHORTCODE_LENGTH":        "6",
 }
 
 // numericOptional is the subset of optionalDefaults whose values must be valid integers.
@@ -67,6 +70,9 @@ var numericOptional = map[string]bool{
 	"CLICK_BATCH_SIZE":            true,
 	"CLICK_BATCH_TIMEOUT_SECONDS": true,
 	"DEFAULT_PAGE_SIZE":           true,
+	"MAX_URL_LENGTH":              true,
+	"MIN_SHORTCODE_LENGTH":        true,
+	"MAX_SHORTCODE_LENGTH":        true,
 }
 
 // secretVars lists variables whose values must be masked in prod mode logs.

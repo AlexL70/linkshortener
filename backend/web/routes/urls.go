@@ -37,6 +37,29 @@ func RegisterUrlRoutes(api huma.API, h *handlers.UrlHandler) {
 			Body: webmappers.ListUrlsToResponse(urls, total, input.Page, pageSize),
 		}, nil
 	})
+
+	huma.Register(api, huma.Operation{
+		OperationID:   "create-shortened-url",
+		Method:        http.MethodPost,
+		Path:          "/user/urls",
+		Summary:       "Create a new shortened URL",
+		DefaultStatus: http.StatusCreated,
+	}, func(ctx context.Context, input *viewmodels.CreateUrlInput) (*viewmodels.CreateUrlResponse, error) {
+		claims := GetJWTClaimsFromContext(ctx)
+		if claims == nil {
+			return nil, huma.NewError(http.StatusUnauthorized, "unauthorized")
+		}
+
+		created, err := h.CreateUrl(ctx, claims.UserID, input.Body.LongUrl, input.Body.Shortcode, input.Body.ExpiresAt)
+		if err != nil {
+			return nil, MapError(err)
+		}
+
+		baseUrl := os.Getenv("APP_BASE_URL")
+		return &viewmodels.CreateUrlResponse{
+			Body: webmappers.CreateUrlToResponse(created, baseUrl),
+		}, nil
+	})
 }
 
 // resolvePageSize returns the caller-supplied page size when positive, otherwise

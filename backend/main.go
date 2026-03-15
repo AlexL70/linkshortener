@@ -7,7 +7,9 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"strconv"
 
+	businesslogic "github.com/AlexL70/linkshortener/backend/business-logic"
 	"github.com/AlexL70/linkshortener/backend/business-logic/handlers"
 	"github.com/AlexL70/linkshortener/backend/config"
 	"github.com/AlexL70/linkshortener/backend/infrastructure/pg"
@@ -69,7 +71,11 @@ func main() {
 	authHandler := handlers.NewAuthHandler(userRepo, isDevMode, adminEmail)
 
 	urlRepo := pgrepositories.NewUrlRepository(db)
-	urlHandler := handlers.NewUrlHandler(urlRepo)
+	maxUrlLen, _ := strconv.Atoi(os.Getenv("MAX_URL_LENGTH"))
+	minShortcodeLen, _ := strconv.Atoi(os.Getenv("MIN_SHORTCODE_LENGTH"))
+	maxShortcodeLen, _ := strconv.Atoi(os.Getenv("MAX_SHORTCODE_LENGTH"))
+	shortcodeGen := businesslogic.NewShortcodeGenerator(maxShortcodeLen)
+	urlHandler := handlers.NewUrlHandler(urlRepo, shortcodeGen, maxUrlLen, minShortcodeLen, maxShortcodeLen)
 
 	blacklist := routes.NewTokenBlacklist()
 	router.Use(routes.CORSMiddleware())

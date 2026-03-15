@@ -30,3 +30,16 @@ func ListUrlsToResponse(urls []*bizmodels.ShortenedUrl, total, page, pageSize in
 		PageSize: pageSize,
 	}
 }
+
+// CreateUrlToResponse builds a CreateUrlResponseBody from a created ShortenedUrl.
+// shortUrl is constructed as baseUrl + "/r/" + shortcode.
+func CreateUrlToResponse(m *bizmodels.ShortenedUrl, baseUrl string) *viewmodels.CreateUrlResponseBody {
+	return &viewmodels.CreateUrlResponseBody{
+		ID:        m.ID,
+		Shortcode: m.Shortcode,
+		LongUrl:   m.LongUrl,
+		ShortUrl:  baseUrl + "/r/" + m.Shortcode,
+		ExpiresAt: m.ExpiresAt,
+		CreatedAt: m.CreatedAt,
+	}
+}

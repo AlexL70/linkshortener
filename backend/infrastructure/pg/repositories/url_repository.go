@@ -3,9 +3,11 @@ package repositories
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/uptrace/bun"
 
+	businesslogic "github.com/AlexL70/linkshortener/backend/business-logic"
 	"github.com/AlexL70/linkshortener/backend/business-logic/interfaces"
 	bizmodels "github.com/AlexL70/linkshortener/backend/business-logic/models"
 	pgmappings "github.com/AlexL70/linkshortener/backend/infrastructure/pg/mappings"
@@ -49,4 +51,20 @@ func (r *urlRepository) FindByUserID(ctx context.Context, userID int64, page, pa
 	}
 
 	return pgmappings.ShortenedUrlSliceToBusinessModel(dbs), total, nil
+}
+
+func (r *urlRepository) Create(ctx context.Context, url *bizmodels.ShortenedUrl) (*bizmodels.ShortenedUrl, error) {
+	db := pgmappings.ShortenedUrlToDbModel(url)
+	now := time.Now()
+	db.CreatedAt = now
+	db.UpdatedAt = now
+
+	if _, err := r.db.NewInsert().Model(db).Returning("*").Exec(ctx); err != nil {
+		if isUniqueViolation(err) {
+			return nil, fmt.Errorf("UrlRepository.Create: %w", businesslogic.ErrConflict)
+		}
+		return nil, fmt.Errorf("UrlRepository.Create: %w", err)
+	}
+
+	return pgmappings.ShortenedUrlToBusinessModel(db), nil
 }

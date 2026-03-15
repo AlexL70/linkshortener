@@ -43,7 +43,7 @@ func main() {
 	api := humagin.New(router, humaConfig)
 
 	authHandler := handlers.NewAuthHandler(stubUserRepo{}, false, "")
-	urlHandler := handlers.NewUrlHandler(stubUrlRepo{})
+	urlHandler := handlers.NewUrlHandler(stubUrlRepo{}, stubShortcodeGenerator{}, 2048, 6, 6)
 	routes.RegisterAuthRoutes(router, api, authHandler, routes.NewTokenBlacklist())
 	routes.RegisterUrlRoutes(api, urlHandler)
 
@@ -92,4 +92,13 @@ func (stubUrlRepo) FindByUserID(_ context.Context, _ int64, _, _ int) ([]*bizmod
 	return nil, 0, nil
 }
 
+func (stubUrlRepo) Create(_ context.Context, _ *bizmodels.ShortenedUrl) (*bizmodels.ShortenedUrl, error) {
+	return nil, nil
+}
+
 var _ bizinterfaces.UrlRepository = stubUrlRepo{}
+
+// stubShortcodeGenerator is a no-op ShortcodeGenerator used during spec generation.
+type stubShortcodeGenerator struct{}
+
+func (stubShortcodeGenerator) GenerateShortcode() (string, error) { return "abc123", nil }

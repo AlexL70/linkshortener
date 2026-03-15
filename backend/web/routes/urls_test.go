@@ -1,6 +1,7 @@
 package routes_test
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -45,19 +46,23 @@ func newUrlTestRouterNoAuth(h *handlers.UrlHandler) *gin.Engine {
 	return router
 }
 
-// newUrlHandler creates a real UrlHandler backed by a mock repository.
-func newUrlHandlerForTest(t *testing.T, setupMock func(*mocks.MockUrlRepository)) *handlers.UrlHandler {
+// newUrlHandlerForTest creates a real UrlHandler backed by mock repo and generator.
+func newUrlHandlerForTest(t *testing.T, setupRepo func(*mocks.MockUrlRepository), setupGen func(*mocks.MockShortcodeGenerator)) *handlers.UrlHandler {
 	t.Helper()
 	ctrl := gomock.NewController(t)
 	mockRepo := mocks.NewMockUrlRepository(ctrl)
-	if setupMock != nil {
-		setupMock(mockRepo)
+	mockGen := mocks.NewMockShortcodeGenerator(ctrl)
+	if setupRepo != nil {
+		setupRepo(mockRepo)
 	}
-	return handlers.NewUrlHandler(mockRepo)
+	if setupGen != nil {
+		setupGen(mockGen)
+	}
+	return handlers.NewUrlHandler(mockRepo, mockGen, 2048, 6, 6)
 }
 
 func TestListUserUrls_NoAuth_Returns401(t *testing.T) {
-	h := newUrlHandlerForTest(t, nil)
+	h := newUrlHandlerForTest(t, nil, nil)
 	bl := routes.NewTokenBlacklist()
 
 	req := httptest.NewRequest(http.MethodGet, "/user/urls", nil)
@@ -78,7 +83,7 @@ func TestListUserUrls_ValidJWT_ReturnsURLs(t *testing.T) {
 
 	h := newUrlHandlerForTest(t, func(m *mocks.MockUrlRepository) {
 		m.EXPECT().FindByUserID(gomock.Any(), int64(1), 1, 20).Return(urls, 2, nil)
-	})
+	}, nil)
 	bl := routes.NewTokenBlacklist()
 
 	token, err := routes.CreateJWT(user)
@@ -109,7 +114,7 @@ func TestListUserUrls_CustomPageSize_Respected(t *testing.T) {
 	user := &bizmodels.User{ID: 2, UserName: "bob"}
 	h := newUrlHandlerForTest(t, func(m *mocks.MockUrlRepository) {
 		m.EXPECT().FindByUserID(gomock.Any(), int64(2), 1, 5).Return([]*bizmodels.ShortenedUrl{}, 0, nil)
-	})
+	}, nil)
 	bl := routes.NewTokenBlacklist()
 
 	token, err := routes.CreateJWT(user)
@@ -133,7 +138,7 @@ func TestListUserUrls_PageParam_Respected(t *testing.T) {
 	user := &bizmodels.User{ID: 3, UserName: "carol"}
 	h := newUrlHandlerForTest(t, func(m *mocks.MockUrlRepository) {
 		m.EXPECT().FindByUserID(gomock.Any(), int64(3), 3, 20).Return([]*bizmodels.ShortenedUrl{}, 0, nil)
-	})
+	}, nil)
 	bl := routes.NewTokenBlacklist()
 
 	token, err := routes.CreateJWT(user)
@@ -152,7 +157,7 @@ func TestListUserUrls_RepoError_Returns500(t *testing.T) {
 	user := &bizmodels.User{ID: 4, UserName: "dave"}
 	h := newUrlHandlerForTest(t, func(m *mocks.MockUrlRepository) {
 		m.EXPECT().FindByUserID(gomock.Any(), int64(4), 1, 20).Return(nil, 0, errors.New("db failure"))
-	})
+	}, nil)
 	bl := routes.NewTokenBlacklist()
 
 	token, err := routes.CreateJWT(user)
@@ -171,7 +176,7 @@ func TestListUserUrls_NotFoundError_Returns404(t *testing.T) {
 	user := &bizmodels.User{ID: 5, UserName: "eve"}
 	h := newUrlHandlerForTest(t, func(m *mocks.MockUrlRepository) {
 		m.EXPECT().FindByUserID(gomock.Any(), int64(5), 1, 20).Return(nil, 0, businesslogic.ErrNotFound)
-	})
+	}, nil)
 	bl := routes.NewTokenBlacklist()
 
 	token, err := routes.CreateJWT(user)
@@ -187,7 +192,7 @@ func TestListUserUrls_NotFoundError_Returns404(t *testing.T) {
 }
 
 func TestListUserUrls_BlacklistedToken_Returns401(t *testing.T) {
-	h := newUrlHandlerForTest(t, nil)
+	h := newUrlHandlerForTest(t, nil, nil)
 	bl := routes.NewTokenBlacklist()
 
 	user := &bizmodels.User{ID: 6, UserName: "frank"}
@@ -212,7 +217,7 @@ func TestListUserUrls_EmptyList_Returns200(t *testing.T) {
 	user := &bizmodels.User{ID: 7, UserName: "grace"}
 	h := newUrlHandlerForTest(t, func(m *mocks.MockUrlRepository) {
 		m.EXPECT().FindByUserID(gomock.Any(), int64(7), 1, 20).Return([]*bizmodels.ShortenedUrl{}, 0, nil)
-	})
+	}, nil)
 	bl := routes.NewTokenBlacklist()
 
 	token, err := routes.CreateJWT(user)
@@ -237,7 +242,7 @@ func TestListUserUrls_EmptyList_Returns200(t *testing.T) {
 func TestListUserUrls_NilClaims_Returns401(t *testing.T) {
 	// Router without JWT middleware: claims will be nil in the handler,
 	// exercising the defensive nil check inside the Huma handler function.
-	h := newUrlHandlerForTest(t, nil)
+	h := newUrlHandlerForTest(t, nil, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/user/urls", nil)
 	w := httptest.NewRecorder()
@@ -245,4 +250,125 @@ func TestListUserUrls_NilClaims_Returns401(t *testing.T) {
 	newUrlTestRouterNoAuth(h).ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusUnauthorized, w.Code)
+}
+
+// ── POST /user/urls (create-shortened-url) ────────────────────────────────────
+
+func TestCreateUrl_NoAuth_Returns401(t *testing.T) {
+	h := newUrlHandlerForTest(t, nil, nil)
+	bl := routes.NewTokenBlacklist()
+
+	body := bytes.NewBufferString(`{"long_url":"https://example.com"}`)
+	req := httptest.NewRequest(http.MethodPost, "/user/urls", body)
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	newUrlTestRouter(h, bl).ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusUnauthorized, w.Code)
+}
+
+func TestCreateUrl_ValidRequest_Returns201(t *testing.T) {
+	os.Setenv("APP_BASE_URL", "https://short.example.com")
+	now := time.Now().Truncate(time.Second)
+	user := &bizmodels.User{ID: 10, UserName: "alice"}
+	createdUrl := &bizmodels.ShortenedUrl{ID: 42, UserID: 10, Shortcode: "ab1234", LongUrl: "https://example.com", CreatedAt: now, UpdatedAt: now}
+
+	h := newUrlHandlerForTest(t,
+		func(m *mocks.MockUrlRepository) {
+			m.EXPECT().Create(gomock.Any(), gomock.Any()).Return(createdUrl, nil)
+		},
+		func(g *mocks.MockShortcodeGenerator) {
+			g.EXPECT().GenerateShortcode().Return("ab1234", nil)
+		},
+	)
+	bl := routes.NewTokenBlacklist()
+	token, err := routes.CreateJWT(user)
+	require.NoError(t, err)
+
+	body := bytes.NewBufferString(`{"long_url":"https://example.com"}`)
+	req := httptest.NewRequest(http.MethodPost, "/user/urls", body)
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	newUrlTestRouter(h, bl).ServeHTTP(w, req)
+
+	require.Equal(t, http.StatusCreated, w.Code)
+	var resp map[string]interface{}
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
+	assert.Equal(t, "ab1234", resp["shortcode"])
+	assert.Equal(t, "https://short.example.com/r/ab1234", resp["short_url"])
+}
+
+func TestCreateUrl_CustomShortcode_Returns201(t *testing.T) {
+	os.Setenv("APP_BASE_URL", "https://short.example.com")
+	now := time.Now().Truncate(time.Second)
+	user := &bizmodels.User{ID: 11, UserName: "bob"}
+	createdUrl := &bizmodels.ShortenedUrl{ID: 43, UserID: 11, Shortcode: "my-sc1", LongUrl: "https://example.com", CreatedAt: now, UpdatedAt: now}
+
+	h := newUrlHandlerForTest(t,
+		func(m *mocks.MockUrlRepository) {
+			m.EXPECT().Create(gomock.Any(), gomock.Any()).Return(createdUrl, nil)
+		},
+		nil,
+	)
+	bl := routes.NewTokenBlacklist()
+	token, err := routes.CreateJWT(user)
+	require.NoError(t, err)
+
+	body := bytes.NewBufferString(`{"long_url":"https://example.com","shortcode":"my-sc1"}`)
+	req := httptest.NewRequest(http.MethodPost, "/user/urls", body)
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	newUrlTestRouter(h, bl).ServeHTTP(w, req)
+
+	require.Equal(t, http.StatusCreated, w.Code)
+	var resp map[string]interface{}
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
+	assert.Equal(t, "my-sc1", resp["shortcode"])
+}
+
+func TestCreateUrl_InvalidUrl_Returns400(t *testing.T) {
+	user := &bizmodels.User{ID: 12, UserName: "carol"}
+	h := newUrlHandlerForTest(t, nil, nil)
+	bl := routes.NewTokenBlacklist()
+	token, err := routes.CreateJWT(user)
+	require.NoError(t, err)
+
+	body := bytes.NewBufferString(`{"long_url":"ftp://bad.scheme.com"}`)
+	req := httptest.NewRequest(http.MethodPost, "/user/urls", body)
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	newUrlTestRouter(h, bl).ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestCreateUrl_ConflictShortcode_Returns409(t *testing.T) {
+	user := &bizmodels.User{ID: 13, UserName: "dave"}
+	sc := "taken1"
+	h := newUrlHandlerForTest(t,
+		func(m *mocks.MockUrlRepository) {
+			m.EXPECT().Create(gomock.Any(), gomock.Any()).Return(nil, businesslogic.ErrConflict)
+		},
+		nil,
+	)
+	bl := routes.NewTokenBlacklist()
+	token, err := routes.CreateJWT(user)
+	require.NoError(t, err)
+
+	body := bytes.NewBufferString(`{"long_url":"https://example.com","shortcode":"` + sc + `"}`)
+	req := httptest.NewRequest(http.MethodPost, "/user/urls", body)
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	newUrlTestRouter(h, bl).ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusConflict, w.Code)
 }

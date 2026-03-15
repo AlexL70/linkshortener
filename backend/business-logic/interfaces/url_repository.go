@@ -11,4 +11,7 @@ type UrlRepository interface {
 	// FindByUserID returns a paginated list of shortened URLs owned by userID,
 	// along with the total count for pagination metadata.
 	FindByUserID(ctx context.Context, userID int64, page, pageSize int) ([]*bizmodels.ShortenedUrl, int, error)
+
+	// Create persists a new shortened URL and returns the stored record with its generated ID and timestamps.
+	Create(ctx context.Context, url *bizmodels.ShortenedUrl) (*bizmodels.ShortenedUrl, error)
 }

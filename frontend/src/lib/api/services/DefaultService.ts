@@ -3,6 +3,8 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { AuthTokenBody } from '../models/AuthTokenBody';
+import type { CreateUrlRequestBody } from '../models/CreateUrlRequestBody';
+import type { CreateUrlResponseBody } from '../models/CreateUrlResponseBody';
 import type { ErrorModel } from '../models/ErrorModel';
 import type { ListUrlsResponseBody } from '../models/ListUrlsResponseBody';
 import type { RegisterRequestBody } from '../models/RegisterRequestBody';
@@ -59,6 +61,24 @@ export class DefaultService {
                 'page': page,
                 'page_size': pageSize,
             },
+        });
+    }
+    /**
+     * Create a new shortened URL
+     * @returns CreateUrlResponseBody Created
+     * @returns ErrorModel Error
+     * @throws ApiError
+     */
+    public static createUrl({
+        requestBody,
+    }: {
+        requestBody?: CreateUrlRequestBody,
+    }): CancelablePromise<CreateUrlResponseBody | ErrorModel> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/user/urls',
+            body: requestBody,
+            mediaType: 'application/json',
         });
     }
 }

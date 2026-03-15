@@ -3,6 +3,7 @@ import { setActivePinia, createPinia } from 'pinia'
 import { useUrlsStore } from './urls'
 import { DefaultService } from '@/lib/api/services/DefaultService'
 import type { UrlItem } from '@/lib/api/models/UrlItem'
+import type { CreateUrlResponseBody } from '@/lib/api/models/CreateUrlResponseBody'
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -192,5 +193,133 @@ describe('reset', () => {
     expect(store.pageSize).toBe(0)
     expect(store.loading).toBe(false)
     expect(store.error).toBeNull()
+  })
+})
+
+// ── createUrl helpers ─────────────────────────────────────────────────────────
+
+function makeCreateUrlResponse(overrides: Partial<CreateUrlResponseBody> = {}): CreateUrlResponseBody {
+  return {
+    id: 99,
+    shortcode: 'abc123',
+    long_url: 'https://example.com',
+    short_url: 'https://s.example.com/r/abc123',
+    created_at: '2024-06-01T00:00:00Z',
+    ...overrides,
+  }
+}
+
+// ── createUrl — success ───────────────────────────────────────────────────────
+
+describe('createUrl — success', () => {
+  it('returns the created URL and refreshes the list', async () => {
+    const created = makeCreateUrlResponse()
+    vi.spyOn(DefaultService, 'createUrl').mockResolvedValue(created as never)
+    vi.spyOn(DefaultService, 'listUserUrls').mockResolvedValue(
+      makeListResponse([makeUrlItem({ id: 99, shortcode: 'abc123' })]) as never,
+    )
+
+    const store = useUrlsStore()
+    const result = await store.createUrl({ longUrl: 'https://example.com' })
+
+    expect(result).toEqual(created)
+    expect(store.creating).toBe(false)
+    expect(store.createError).toBeNull()
+    expect(store.items).toHaveLength(1)
+  })
+
+  it('passes all parameters to the API', async () => {
+    const spy = vi.spyOn(DefaultService, 'createUrl').mockResolvedValue(
+      makeCreateUrlResponse() as never,
+    )
+    vi.spyOn(DefaultService, 'listUserUrls').mockResolvedValue(
+      makeListResponse([]) as never,
+    )
+
+    const store = useUrlsStore()
+    await store.createUrl({ longUrl: 'https://example.com', shortcode: 'abc123', expiresAt: '2025-01-01T00:00:00Z' })
+
+    expect(spy).toHaveBeenCalledWith({
+      requestBody: {
+        long_url: 'https://example.com',
+        shortcode: 'abc123',
+        expires_at: '2025-01-01T00:00:00Z',
+      },
+    })
+  })
+
+  it('sets creating to true during the request and false after', async () => {
+    let resolveFn!: (v: unknown) => void
+    vi.spyOn(DefaultService, 'createUrl').mockReturnValue(
+      new Promise((resolve) => { resolveFn = resolve }) as never,
+    )
+
+    const store = useUrlsStore()
+    const createPromise = store.createUrl({ longUrl: 'https://example.com' })
+
+    expect(store.creating).toBe(true)
+    resolveFn(makeCreateUrlResponse())
+    vi.spyOn(DefaultService, 'listUserUrls').mockResolvedValue(makeListResponse([]) as never)
+    await createPromise
+    expect(store.creating).toBe(false)
+  })
+})
+
+// ── createUrl — API error response ────────────────────────────────────────────
+
+describe('createUrl — API error response', () => {
+  it('sets createError and returns null when the API returns an ErrorModel', async () => {
+    vi.spyOn(DefaultService, 'createUrl').mockResolvedValue(
+      { status: 400, title: 'Invalid URL' } as never,
+    )
+
+    const store = useUrlsStore()
+    const result = await store.createUrl({ longUrl: 'not-a-url' })
+
+    expect(result).toBeNull()
+    expect(store.createError).toBe('Invalid URL')
+    expect(store.creating).toBe(false)
+  })
+
+  it('falls back to a generic message when ErrorModel has no title', async () => {
+    vi.spyOn(DefaultService, 'createUrl').mockResolvedValue(
+      { status: 500 } as never,
+    )
+
+    const store = useUrlsStore()
+    await store.createUrl({ longUrl: 'https://example.com' })
+
+    expect(store.createError).toBe('Failed to create URL')
+  })
+})
+
+// ── createUrl — network error ─────────────────────────────────────────────────
+
+describe('createUrl — network error', () => {
+  it('sets a generic createError message when the request throws', async () => {
+    vi.spyOn(DefaultService, 'createUrl').mockRejectedValue(new Error('Network Error'))
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const store = useUrlsStore()
+    const result = await store.createUrl({ longUrl: 'https://example.com' })
+
+    expect(result).toBeNull()
+    expect(store.createError).toBe('An unexpected error occurred while creating your URL.')
+    expect(store.creating).toBe(false)
+  })
+})
+
+// ── clearCreateError ──────────────────────────────────────────────────────────
+
+describe('clearCreateError', () => {
+  it('resets createError to null', async () => {
+    vi.spyOn(DefaultService, 'createUrl').mockResolvedValue({ status: 400, title: 'Bad' } as never)
+
+    const store = useUrlsStore()
+    await store.createUrl({ longUrl: 'bad' })
+    expect(store.createError).not.toBeNull()
+
+    store.clearCreateError()
+    expect(store.createError).toBeNull()
   })
 })

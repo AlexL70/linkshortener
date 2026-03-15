@@ -35,6 +35,21 @@ func (m *MockUrlRepository) EXPECT() *MockUrlRepositoryMockRecorder {
 	return m.recorder
 }
 
+// Create mocks base method.
+func (m *MockUrlRepository) Create(ctx context.Context, url *models.ShortenedUrl) (*models.ShortenedUrl, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Create", ctx, url)
+	ret0, _ := ret[0].(*models.ShortenedUrl)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Create indicates an expected call of Create.
+func (mr *MockUrlRepositoryMockRecorder) Create(ctx, url interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockUrlRepository)(nil).Create), ctx, url)
+}
+
 // FindByUserID mocks base method.
 func (m *MockUrlRepository) FindByUserID(ctx context.Context, userID int64, page, pageSize int) ([]*models.ShortenedUrl, int, error) {
 	m.ctrl.T.Helper()

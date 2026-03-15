@@ -31,3 +31,30 @@ type UrlItem struct {
 	CreatedAt time.Time  `json:"created_at"`
 	UpdatedAt time.Time  `json:"updated_at"`
 }
+
+// CreateUrlInput is the Huma input for POST /user/urls.
+type CreateUrlInput struct {
+	Body *CreateUrlRequestBody
+}
+
+// CreateUrlRequestBody is the JSON request body for creating a new shortened URL.
+type CreateUrlRequestBody struct {
+	LongUrl   string     `json:"long_url" required:"true" minLength:"1"`
+	Shortcode *string    `json:"shortcode,omitempty"`
+	ExpiresAt *time.Time `json:"expires_at,omitempty"`
+}
+
+// CreateUrlResponse is the Huma output for POST /user/urls (201 Created).
+type CreateUrlResponse struct {
+	Body *CreateUrlResponseBody
+}
+
+// CreateUrlResponseBody is the JSON payload returned when a URL is successfully created.
+type CreateUrlResponseBody struct {
+	ID        int64      `json:"id"`
+	Shortcode string     `json:"shortcode"`
+	LongUrl   string     `json:"long_url"`
+	ShortUrl  string     `json:"short_url"`
+	ExpiresAt *time.Time `json:"expires_at,omitempty"`
+	CreatedAt time.Time  `json:"created_at"`
+}
