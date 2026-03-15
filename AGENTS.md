@@ -9,6 +9,7 @@ This file contains coding standards, conventions, and constraints that all AI ag
 | [ai-instructions/app-auth.md](ai-instructions/app-auth.md)                       | Full-stack | Authentication: OAuth2/OIDC providers, JWT, route guards, sign-in modal UX               |
 | [ai-instructions/app-environment.md](ai-instructions/app-environment.md)         | Full-stack | Environment variables: loading algorithm, LINKSHORTENER_ENV, config validation           |
 | [ai-instructions/frontend-components.md](ai-instructions/frontend-components.md) | Frontend   | UI components: shadcn/vue-only policy, no custom components without explicit instruction |
+| [ai-instructions/frontend-ui-ux.md](ai-instructions/frontend-ui-ux.md)           | Frontend   | UI/UX design: consistency, accessibility, responsiveness, navigation, visual hierarchy   |
 | [ai-instructions/backend-dblayer.md](ai-instructions/backend-dblayer.md)         | Backend    | DB layer: Bun ORM, models, migrations, repositories, mappings, click batching            |
 | [ai-instructions/backend-business.md](ai-instructions/backend-business.md)       | Backend    | Business logic: models, interfaces, handlers, viewmodels, mappers, URL shortening rules  |
 | [ai-instructions/backend-web.md](ai-instructions/backend-web.md)                 | Backend    | Web layer: Huma registration, viewmodels, mappers, error translation, no business logic  |
