@@ -14,6 +14,8 @@ export type { ErrorDetail } from './models/ErrorDetail';
 export type { ErrorModel } from './models/ErrorModel';
 export type { ListUrlsResponseBody } from './models/ListUrlsResponseBody';
 export type { RegisterRequestBody } from './models/RegisterRequestBody';
+export type { UpdateUrlRequestBody } from './models/UpdateUrlRequestBody';
+export type { UpdateUrlResponseBody } from './models/UpdateUrlResponseBody';
 export type { UrlItem } from './models/UrlItem';
 
 export { DefaultService } from './services/DefaultService';

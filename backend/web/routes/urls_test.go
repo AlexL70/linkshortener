@@ -372,3 +372,140 @@ func TestCreateUrl_ConflictShortcode_Returns409(t *testing.T) {
 
 	assert.Equal(t, http.StatusConflict, w.Code)
 }
+
+// ── PATCH /user/urls/{id} (update-shortened-url) ──────────────────────────────
+
+func TestUpdateUrl_NoAuth_Returns401(t *testing.T) {
+	h := newUrlHandlerForTest(t, nil, nil)
+	bl := routes.NewTokenBlacklist()
+
+	body := bytes.NewBufferString(`{"long_url":"https://example.com"}`)
+	req := httptest.NewRequest(http.MethodPatch, "/user/urls/1", body)
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	newUrlTestRouter(h, bl).ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusUnauthorized, w.Code)
+}
+
+func TestUpdateUrl_ValidRequest_Returns200(t *testing.T) {
+	os.Setenv("APP_BASE_URL", "https://short.example.com")
+	now := time.Now().Truncate(time.Second)
+	user := &bizmodels.User{ID: 20, UserName: "alice"}
+	existing := &bizmodels.ShortenedUrl{ID: 5, UserID: 20, Shortcode: "old-sc", LongUrl: "https://old.com", CreatedAt: now, UpdatedAt: now}
+	updatedUrl := &bizmodels.ShortenedUrl{ID: 5, UserID: 20, Shortcode: "old-sc", LongUrl: "https://new.com", CreatedAt: now, UpdatedAt: now}
+
+	h := newUrlHandlerForTest(t,
+		func(m *mocks.MockUrlRepository) {
+			m.EXPECT().FindByID(gomock.Any(), int64(5)).Return(existing, nil)
+			m.EXPECT().Update(gomock.Any(), gomock.Any()).Return(updatedUrl, nil)
+		},
+		nil,
+	)
+	bl := routes.NewTokenBlacklist()
+	token, err := routes.CreateJWT(user)
+	require.NoError(t, err)
+
+	body := bytes.NewBufferString(`{"long_url":"https://new.com"}`)
+	req := httptest.NewRequest(http.MethodPatch, "/user/urls/5", body)
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	newUrlTestRouter(h, bl).ServeHTTP(w, req)
+
+	require.Equal(t, http.StatusOK, w.Code)
+	var resp map[string]interface{}
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
+	assert.Equal(t, "https://new.com", resp["long_url"])
+	assert.Equal(t, "https://short.example.com/r/old-sc", resp["short_url"])
+}
+
+func TestUpdateUrl_NotFound_Returns404(t *testing.T) {
+	user := &bizmodels.User{ID: 21, UserName: "bob"}
+	h := newUrlHandlerForTest(t,
+		func(m *mocks.MockUrlRepository) {
+			m.EXPECT().FindByID(gomock.Any(), int64(99)).Return(nil, businesslogic.ErrNotFound)
+		},
+		nil,
+	)
+	bl := routes.NewTokenBlacklist()
+	token, err := routes.CreateJWT(user)
+	require.NoError(t, err)
+
+	body := bytes.NewBufferString(`{"long_url":"https://example.com"}`)
+	req := httptest.NewRequest(http.MethodPatch, "/user/urls/99", body)
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	newUrlTestRouter(h, bl).ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusNotFound, w.Code)
+}
+
+func TestUpdateUrl_WrongOwner_Returns403(t *testing.T) {
+	now := time.Now().Truncate(time.Second)
+	user := &bizmodels.User{ID: 22, UserName: "carol"}
+	existing := &bizmodels.ShortenedUrl{ID: 6, UserID: 99, Shortcode: "abc123", LongUrl: "https://example.com", CreatedAt: now, UpdatedAt: now}
+
+	h := newUrlHandlerForTest(t,
+		func(m *mocks.MockUrlRepository) {
+			m.EXPECT().FindByID(gomock.Any(), int64(6)).Return(existing, nil)
+		},
+		nil,
+	)
+	bl := routes.NewTokenBlacklist()
+	token, err := routes.CreateJWT(user)
+	require.NoError(t, err)
+
+	body := bytes.NewBufferString(`{"long_url":"https://example.com"}`)
+	req := httptest.NewRequest(http.MethodPatch, "/user/urls/6", body)
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	newUrlTestRouter(h, bl).ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusForbidden, w.Code)
+}
+
+func TestUpdateUrl_InvalidUrl_Returns400(t *testing.T) {
+	now := time.Now().Truncate(time.Second)
+	user := &bizmodels.User{ID: 23, UserName: "dave"}
+	existing := &bizmodels.ShortenedUrl{ID: 7, UserID: 23, Shortcode: "abc123", LongUrl: "https://example.com", CreatedAt: now, UpdatedAt: now}
+
+	h := newUrlHandlerForTest(t,
+		func(m *mocks.MockUrlRepository) {
+			m.EXPECT().FindByID(gomock.Any(), int64(7)).Return(existing, nil)
+		},
+		nil,
+	)
+	bl := routes.NewTokenBlacklist()
+	token, err := routes.CreateJWT(user)
+	require.NoError(t, err)
+
+	body := bytes.NewBufferString(`{"long_url":"ftp://bad-scheme.com"}`)
+	req := httptest.NewRequest(http.MethodPatch, "/user/urls/7", body)
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	newUrlTestRouter(h, bl).ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestUpdateUrl_NilClaims_Returns401(t *testing.T) {
+	h := newUrlHandlerForTest(t, nil, nil)
+
+	body := bytes.NewBufferString(`{"long_url":"https://example.com"}`)
+	req := httptest.NewRequest(http.MethodPatch, "/user/urls/1", body)
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	newUrlTestRouterNoAuth(h).ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusUnauthorized, w.Code)
+}

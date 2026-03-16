@@ -50,6 +50,21 @@ func (mr *MockUrlRepositoryMockRecorder) Create(ctx, url interface{}) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockUrlRepository)(nil).Create), ctx, url)
 }
 
+// FindByID mocks base method.
+func (m *MockUrlRepository) FindByID(ctx context.Context, id int64) (*models.ShortenedUrl, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindByID", ctx, id)
+	ret0, _ := ret[0].(*models.ShortenedUrl)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindByID indicates an expected call of FindByID.
+func (mr *MockUrlRepositoryMockRecorder) FindByID(ctx, id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByID", reflect.TypeOf((*MockUrlRepository)(nil).FindByID), ctx, id)
+}
+
 // FindByUserID mocks base method.
 func (m *MockUrlRepository) FindByUserID(ctx context.Context, userID int64, page, pageSize int) ([]*models.ShortenedUrl, int, error) {
 	m.ctrl.T.Helper()
@@ -64,4 +79,19 @@ func (m *MockUrlRepository) FindByUserID(ctx context.Context, userID int64, page
 func (mr *MockUrlRepositoryMockRecorder) FindByUserID(ctx, userID, page, pageSize interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByUserID", reflect.TypeOf((*MockUrlRepository)(nil).FindByUserID), ctx, userID, page, pageSize)
+}
+
+// Update mocks base method.
+func (m *MockUrlRepository) Update(ctx context.Context, url *models.ShortenedUrl) (*models.ShortenedUrl, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Update", ctx, url)
+	ret0, _ := ret[0].(*models.ShortenedUrl)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Update indicates an expected call of Update.
+func (mr *MockUrlRepositoryMockRecorder) Update(ctx, url interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockUrlRepository)(nil).Update), ctx, url)
 }

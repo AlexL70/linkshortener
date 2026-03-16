@@ -92,7 +92,15 @@ func (stubUrlRepo) FindByUserID(_ context.Context, _ int64, _, _ int) ([]*bizmod
 	return nil, 0, nil
 }
 
+func (stubUrlRepo) FindByID(_ context.Context, _ int64) (*bizmodels.ShortenedUrl, error) {
+	return nil, nil
+}
+
 func (stubUrlRepo) Create(_ context.Context, _ *bizmodels.ShortenedUrl) (*bizmodels.ShortenedUrl, error) {
+	return nil, nil
+}
+
+func (stubUrlRepo) Update(_ context.Context, _ *bizmodels.ShortenedUrl) (*bizmodels.ShortenedUrl, error) {
 	return nil, nil
 }
 

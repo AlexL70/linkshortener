@@ -323,3 +323,131 @@ describe('clearCreateError', () => {
     expect(store.createError).toBeNull()
   })
 })
+
+// ── updateUrl helpers ─────────────────────────────────────────────────────────
+
+function makeUpdateUrlResponse() {
+  return {
+    id: 99,
+    shortcode: 'abc123',
+    long_url: 'https://updated.com',
+    created_at: '2024-06-01T00:00:00Z',
+    updated_at: '2024-06-02T00:00:00Z',
+  }
+}
+
+// ── updateUrl — success ───────────────────────────────────────────────────────
+
+describe('updateUrl — success', () => {
+  it('returns the updated URL and refreshes the list', async () => {
+    const updated = makeUpdateUrlResponse()
+    vi.spyOn(DefaultService, 'updateUrl').mockResolvedValue(updated as never)
+    vi.spyOn(DefaultService, 'listUserUrls').mockResolvedValue(
+      makeListResponse([makeUrlItem({ id: 99, long_url: 'https://updated.com' })]) as never,
+    )
+
+    const store = useUrlsStore()
+    const result = await store.updateUrl({ id: 99, longUrl: 'https://updated.com' })
+
+    expect(result).toEqual(updated)
+    expect(store.updating).toBe(false)
+    expect(store.updateError).toBeNull()
+    expect(store.items).toHaveLength(1)
+  })
+
+  it('passes all parameters to the API', async () => {
+    const spy = vi.spyOn(DefaultService, 'updateUrl').mockResolvedValue(
+      makeUpdateUrlResponse() as never,
+    )
+    vi.spyOn(DefaultService, 'listUserUrls').mockResolvedValue(
+      makeListResponse([]) as never,
+    )
+
+    const store = useUrlsStore()
+    await store.updateUrl({ id: 5, longUrl: 'https://updated.com', shortcode: 'new-sc', expiresAt: '2025-01-01T00:00:00Z' })
+
+    expect(spy).toHaveBeenCalledWith({
+      id: 5,
+      requestBody: {
+        long_url: 'https://updated.com',
+        shortcode: 'new-sc',
+        expires_at: '2025-01-01T00:00:00Z',
+      },
+    })
+  })
+
+  it('sets updating to true during the request and false after', async () => {
+    let resolveFn!: (v: unknown) => void
+    vi.spyOn(DefaultService, 'updateUrl').mockReturnValue(
+      new Promise((resolve) => { resolveFn = resolve }) as never,
+    )
+
+    const store = useUrlsStore()
+    const updatePromise = store.updateUrl({ id: 1, longUrl: 'https://example.com' })
+
+    expect(store.updating).toBe(true)
+    resolveFn(makeUpdateUrlResponse())
+    vi.spyOn(DefaultService, 'listUserUrls').mockResolvedValue(makeListResponse([]) as never)
+    await updatePromise
+    expect(store.updating).toBe(false)
+  })
+})
+
+// ── updateUrl — API error response ────────────────────────────────────────────
+
+describe('updateUrl — API error response', () => {
+  it('sets updateError and returns null when the API returns an ErrorModel', async () => {
+    vi.spyOn(DefaultService, 'updateUrl').mockResolvedValue(
+      { status: 404, title: 'Not Found' } as never,
+    )
+
+    const store = useUrlsStore()
+    const result = await store.updateUrl({ id: 99, longUrl: 'https://example.com' })
+
+    expect(result).toBeNull()
+    expect(store.updateError).toBe('Not Found')
+    expect(store.updating).toBe(false)
+  })
+
+  it('falls back to a generic message when ErrorModel has no title', async () => {
+    vi.spyOn(DefaultService, 'updateUrl').mockResolvedValue(
+      { status: 500 } as never,
+    )
+
+    const store = useUrlsStore()
+    await store.updateUrl({ id: 99, longUrl: 'https://example.com' })
+
+    expect(store.updateError).toBe('Failed to update URL')
+  })
+})
+
+// ── updateUrl — network error ─────────────────────────────────────────────────
+
+describe('updateUrl — network error', () => {
+  it('sets a generic updateError message when the request throws', async () => {
+    vi.spyOn(DefaultService, 'updateUrl').mockRejectedValue(new Error('Network Error'))
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const store = useUrlsStore()
+    const result = await store.updateUrl({ id: 1, longUrl: 'https://example.com' })
+
+    expect(result).toBeNull()
+    expect(store.updateError).toBe('An unexpected error occurred while updating your URL.')
+    expect(store.updating).toBe(false)
+  })
+})
+
+// ── clearUpdateError ──────────────────────────────────────────────────────────
+
+describe('clearUpdateError', () => {
+  it('resets updateError to null', async () => {
+    vi.spyOn(DefaultService, 'updateUrl').mockResolvedValue({ status: 404, title: 'Not Found' } as never)
+
+    const store = useUrlsStore()
+    await store.updateUrl({ id: 1, longUrl: 'bad' })
+    expect(store.updateError).not.toBeNull()
+
+    store.clearUpdateError()
+    expect(store.updateError).toBeNull()
+  })
+})

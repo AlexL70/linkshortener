@@ -212,3 +212,117 @@ func TestCreateUrl_RepoCreateError(t *testing.T) {
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "db failure")
 }
+
+// ── UpdateUrl ─────────────────────────────────────────────────────────────────
+
+func TestUpdateUrl_Success(t *testing.T) {
+	h, repo, _ := newUrlHandler(t)
+	ctx := context.Background()
+	now := time.Now()
+	existing := &bizmodels.ShortenedUrl{ID: 1, UserID: 10, Shortcode: "old-sc", LongUrl: "https://old.com", CreatedAt: now, UpdatedAt: now}
+	updated := &bizmodels.ShortenedUrl{ID: 1, UserID: 10, Shortcode: "old-sc", LongUrl: "https://new.com", CreatedAt: now, UpdatedAt: now}
+
+	repo.EXPECT().FindByID(ctx, int64(1)).Return(existing, nil)
+	repo.EXPECT().Update(ctx, gomock.Any()).Return(updated, nil)
+
+	got, err := h.UpdateUrl(ctx, 1, 10, "https://new.com", nil, nil)
+	require.NoError(t, err)
+	assert.Equal(t, updated, got)
+}
+
+func TestUpdateUrl_ChangeShortcode_Success(t *testing.T) {
+	h, repo, _ := newUrlHandler(t)
+	ctx := context.Background()
+	now := time.Now()
+	sc := "new-sc"
+	existing := &bizmodels.ShortenedUrl{ID: 2, UserID: 10, Shortcode: "old-sc", LongUrl: "https://example.com", CreatedAt: now, UpdatedAt: now}
+	updated := &bizmodels.ShortenedUrl{ID: 2, UserID: 10, Shortcode: sc, LongUrl: "https://example.com", CreatedAt: now, UpdatedAt: now}
+
+	repo.EXPECT().FindByID(ctx, int64(2)).Return(existing, nil)
+	repo.EXPECT().Update(ctx, gomock.Any()).Return(updated, nil)
+
+	got, err := h.UpdateUrl(ctx, 2, 10, "https://example.com", &sc, nil)
+	require.NoError(t, err)
+	assert.Equal(t, updated, got)
+}
+
+func TestUpdateUrl_NotFound_ReturnsNotFound(t *testing.T) {
+	h, repo, _ := newUrlHandler(t)
+	ctx := context.Background()
+
+	repo.EXPECT().FindByID(ctx, int64(99)).Return(nil, businesslogic.ErrNotFound)
+
+	_, err := h.UpdateUrl(ctx, 99, 10, "https://example.com", nil, nil)
+	require.Error(t, err)
+	assert.ErrorIs(t, err, businesslogic.ErrNotFound)
+}
+
+func TestUpdateUrl_WrongOwner_ReturnsUnauthorized(t *testing.T) {
+	h, repo, _ := newUrlHandler(t)
+	ctx := context.Background()
+	now := time.Now()
+	existing := &bizmodels.ShortenedUrl{ID: 3, UserID: 99, Shortcode: "abc123", LongUrl: "https://example.com", CreatedAt: now, UpdatedAt: now}
+
+	repo.EXPECT().FindByID(ctx, int64(3)).Return(existing, nil)
+
+	_, err := h.UpdateUrl(ctx, 3, 10, "https://example.com", nil, nil)
+	require.Error(t, err)
+	assert.ErrorIs(t, err, businesslogic.ErrUnauthorized)
+}
+
+func TestUpdateUrl_InvalidUrl_ReturnsValidation(t *testing.T) {
+	h, repo, _ := newUrlHandler(t)
+	ctx := context.Background()
+	now := time.Now()
+	existing := &bizmodels.ShortenedUrl{ID: 4, UserID: 10, Shortcode: "abc123", LongUrl: "https://example.com", CreatedAt: now, UpdatedAt: now}
+
+	repo.EXPECT().FindByID(ctx, int64(4)).Return(existing, nil)
+
+	_, err := h.UpdateUrl(ctx, 4, 10, "ftp://bad-scheme.com", nil, nil)
+	require.Error(t, err)
+	assert.ErrorIs(t, err, businesslogic.ErrValidation)
+}
+
+func TestUpdateUrl_InvalidShortcode_ReturnsValidation(t *testing.T) {
+	h, repo, _ := newUrlHandler(t)
+	ctx := context.Background()
+	now := time.Now()
+	sc := "ab"
+	existing := &bizmodels.ShortenedUrl{ID: 5, UserID: 10, Shortcode: "abc123", LongUrl: "https://example.com", CreatedAt: now, UpdatedAt: now}
+
+	repo.EXPECT().FindByID(ctx, int64(5)).Return(existing, nil)
+
+	_, err := h.UpdateUrl(ctx, 5, 10, "https://example.com", &sc, nil)
+	require.Error(t, err)
+	assert.ErrorIs(t, err, businesslogic.ErrValidation)
+}
+
+func TestUpdateUrl_ShortcodeConflict_ReturnsConflict(t *testing.T) {
+	h, repo, _ := newUrlHandler(t)
+	ctx := context.Background()
+	now := time.Now()
+	sc := "taken1"
+	existing := &bizmodels.ShortenedUrl{ID: 6, UserID: 10, Shortcode: "abc123", LongUrl: "https://example.com", CreatedAt: now, UpdatedAt: now}
+
+	repo.EXPECT().FindByID(ctx, int64(6)).Return(existing, nil)
+	repo.EXPECT().Update(ctx, gomock.Any()).Return(nil, businesslogic.ErrConflict)
+
+	_, err := h.UpdateUrl(ctx, 6, 10, "https://example.com", &sc, nil)
+	require.Error(t, err)
+	assert.ErrorIs(t, err, businesslogic.ErrConflict)
+}
+
+func TestUpdateUrl_RepoUpdateError(t *testing.T) {
+	h, repo, _ := newUrlHandler(t)
+	ctx := context.Background()
+	now := time.Now()
+	existing := &bizmodels.ShortenedUrl{ID: 7, UserID: 10, Shortcode: "abc123", LongUrl: "https://example.com", CreatedAt: now, UpdatedAt: now}
+	dbErr := errors.New("db failure")
+
+	repo.EXPECT().FindByID(ctx, int64(7)).Return(existing, nil)
+	repo.EXPECT().Update(ctx, gomock.Any()).Return(nil, dbErr)
+
+	_, err := h.UpdateUrl(ctx, 7, 10, "https://example.com", nil, nil)
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "db failure")
+}

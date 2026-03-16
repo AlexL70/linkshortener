@@ -58,3 +58,34 @@ type CreateUrlResponseBody struct {
 	ExpiresAt *time.Time `json:"expires_at,omitempty"`
 	CreatedAt time.Time  `json:"created_at"`
 }
+
+// UpdateUrlInput is the Huma input for PATCH /user/urls/{id}.
+type UpdateUrlInput struct {
+	ID   int64 `path:"id"`
+	Body *UpdateUrlRequestBody
+}
+
+// UpdateUrlRequestBody is the JSON request body for updating an existing shortened URL.
+// LongUrl is required. Shortcode, when provided, replaces the current one.
+// ExpiresAt, when null, clears the current expiry; when provided, sets a new one.
+type UpdateUrlRequestBody struct {
+	LongUrl   string     `json:"long_url" required:"true" minLength:"1"`
+	Shortcode *string    `json:"shortcode,omitempty"`
+	ExpiresAt *time.Time `json:"expires_at,omitempty"`
+}
+
+// UpdateUrlResponse is the Huma output for PATCH /user/urls/{id}.
+type UpdateUrlResponse struct {
+	Body *UpdateUrlResponseBody
+}
+
+// UpdateUrlResponseBody is the JSON payload returned when a URL is successfully updated.
+type UpdateUrlResponseBody struct {
+	ID        int64      `json:"id"`
+	Shortcode string     `json:"shortcode"`
+	LongUrl   string     `json:"long_url"`
+	ShortUrl  string     `json:"short_url"`
+	ExpiresAt *time.Time `json:"expires_at,omitempty"`
+	CreatedAt time.Time  `json:"created_at"`
+	UpdatedAt time.Time  `json:"updated_at"`
+}

@@ -97,3 +97,44 @@ func (h *UrlHandler) CreateUrl(ctx context.Context, userID int64, longUrl string
 
 	return nil, fmt.Errorf("UrlHandler.CreateUrl: %w: exhausted %d shortcode retries", businesslogic.ErrConflict, h.maxShortcodeRetries)
 }
+
+// UpdateUrl updates an existing shortened URL owned by the given user.
+// Only fields included in the request are changed; ownership is verified before any update.
+// If newShortcode is nil the existing shortcode is kept; otherwise the new value is validated.
+// expiresAt replaces the current expiry (pass nil to remove the expiry).
+func (h *UrlHandler) UpdateUrl(ctx context.Context, urlID, userID int64, longUrl string, newShortcode *string, expiresAt *time.Time) (*bizmodels.ShortenedUrl, error) {
+	existing, err := h.urls.FindByID(ctx, urlID)
+	if err != nil {
+		return nil, fmt.Errorf("UrlHandler.UpdateUrl: %w", err)
+	}
+
+	if existing.UserID != userID {
+		return nil, fmt.Errorf("UrlHandler.UpdateUrl: %w", businesslogic.ErrUnauthorized)
+	}
+
+	if err := businesslogic.ValidateLongUrl(longUrl, h.maxUrlLen); err != nil {
+		return nil, err
+	}
+
+	shortcode := existing.Shortcode
+	if newShortcode != nil {
+		if err := businesslogic.ValidateCustomShortcode(*newShortcode, h.minShortcodeLen, h.maxShortcodeLen); err != nil {
+			return nil, err
+		}
+		shortcode = *newShortcode
+	}
+
+	record := &bizmodels.ShortenedUrl{
+		ID:        urlID,
+		UserID:    userID,
+		Shortcode: shortcode,
+		LongUrl:   longUrl,
+		ExpiresAt: expiresAt,
+	}
+
+	updated, err := h.urls.Update(ctx, record)
+	if err != nil {
+		return nil, fmt.Errorf("UrlHandler.UpdateUrl: %w", err)
+	}
+	return updated, nil
+}

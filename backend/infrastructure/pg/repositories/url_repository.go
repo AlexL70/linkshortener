@@ -68,3 +68,37 @@ func (r *urlRepository) Create(ctx context.Context, url *bizmodels.ShortenedUrl)
 
 	return pgmappings.ShortenedUrlToBusinessModel(db), nil
 }
+
+func (r *urlRepository) FindByID(ctx context.Context, id int64) (*bizmodels.ShortenedUrl, error) {
+	db := new(pgmodels.ShortenedUrl)
+	err := r.db.NewSelect().
+		Model(db).
+		Where("su.id = ?", id).
+		Scan(ctx)
+	if err != nil {
+		if isNotFound(err) {
+			return nil, fmt.Errorf("UrlRepository.FindByID: %w", businesslogic.ErrNotFound)
+		}
+		return nil, fmt.Errorf("UrlRepository.FindByID: %w", err)
+	}
+	return pgmappings.ShortenedUrlToBusinessModel(db), nil
+}
+
+func (r *urlRepository) Update(ctx context.Context, url *bizmodels.ShortenedUrl) (*bizmodels.ShortenedUrl, error) {
+	db := pgmappings.ShortenedUrlToDbModel(url)
+	db.UpdatedAt = time.Now()
+
+	if _, err := r.db.NewUpdate().
+		Model(db).
+		Column("shortcode", "long_url", "expires_at", "updated_at").
+		Where("id = ?", db.ID).
+		Returning("*").
+		Exec(ctx); err != nil {
+		if isUniqueViolation(err) {
+			return nil, fmt.Errorf("UrlRepository.Update: %w", businesslogic.ErrConflict)
+		}
+		return nil, fmt.Errorf("UrlRepository.Update: %w", err)
+	}
+
+	return pgmappings.ShortenedUrlToBusinessModel(db), nil
+}
