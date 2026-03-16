@@ -81,16 +81,21 @@ const editLongUrl = ref('')
 const editShortcode = ref('')
 const editExpiresAt = ref('')
 const editHasExpiry = ref(false)
+const fetchingEditId = ref<number | null>(null)
 
-function openEditDialog(url: UrlItem) {
-  editingUrl.value = url
-  editLongUrl.value = url.long_url
-  editShortcode.value = url.shortcode
-  editExpiresAt.value = url.expires_at
-    ? toDatetimeLocalValue(url.expires_at)
-    : ''
-  editHasExpiry.value = !!url.expires_at
+async function openEditDialog(url: UrlItem) {
+  fetchingEditId.value = url.id
   urlsStore.clearUpdateError()
+  await urlsStore.refreshItems()
+  const freshUrl = urlsStore.items.find(item => item.id === url.id) ?? url
+  editingUrl.value = freshUrl
+  editLongUrl.value = freshUrl.long_url
+  editShortcode.value = freshUrl.shortcode
+  editExpiresAt.value = freshUrl.expires_at
+    ? toDatetimeLocalValue(freshUrl.expires_at)
+    : ''
+  editHasExpiry.value = !!freshUrl.expires_at
+  fetchingEditId.value = null
   editDialogOpen.value = true
 }
 
@@ -318,8 +323,9 @@ onMounted(() => {
                 {{ url.expires_at ? formatDate(url.expires_at) : '—' }}
               </TableCell>
               <TableCell class="text-right">
-                <Button variant="ghost" size="sm" @click.stop="openEditDialog(url)">
-                  Edit
+                <Button variant="ghost" size="sm" :disabled="fetchingEditId !== null"
+                  @click.stop="openEditDialog(url)">
+                  {{ fetchingEditId === url.id ? 'Loading…' : 'Edit' }}
                 </Button>
               </TableCell>
             </TableRow>
@@ -342,7 +348,8 @@ onMounted(() => {
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger as-child>
-                  <Button variant="ghost" size="icon" aria-label="Edit link" @click.stop="openEditDialog(url)">
+                  <Button variant="ghost" size="icon" aria-label="Edit link" :disabled="fetchingEditId !== null"
+                    @click.stop="openEditDialog(url)">
                     <Pencil class="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>

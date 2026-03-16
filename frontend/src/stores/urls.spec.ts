@@ -488,3 +488,45 @@ describe('clearUpdateError', () => {
     expect(store.updateError).toBeNull()
   })
 })
+
+// ── refreshItems ──────────────────────────────────────────────────────────────
+
+describe('refreshItems', () => {
+  it('silently updates items without touching the loading flag', async () => {
+    const fresh = makeUrlItem({ long_url: 'https://fresh.example.com', last_updated: '2024-06-01T00:00:00Z' })
+    vi.spyOn(DefaultService, 'listUserUrls').mockResolvedValue(makeListResponse([fresh]) as never)
+
+    const store = useUrlsStore()
+    await store.refreshItems()
+
+    expect(store.items).toHaveLength(1)
+    expect(store.items[0].long_url).toBe('https://fresh.example.com')
+    expect(store.loading).toBe(false)
+  })
+
+  it('does not update items on an error response', async () => {
+    vi.spyOn(DefaultService, 'listUserUrls').mockResolvedValue({ status: 401, title: 'Unauthorized' } as never)
+
+    const store = useUrlsStore()
+    store.items.push(makeUrlItem())
+
+    await store.refreshItems()
+
+    expect(store.items).toHaveLength(1)
+    expect(store.loading).toBe(false)
+  })
+
+  it('swallows network errors without surfacing them to the error state', async () => {
+    vi.spyOn(DefaultService, 'listUserUrls').mockRejectedValue(new Error('Network Error'))
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const store = useUrlsStore()
+    store.items.push(makeUrlItem())
+
+    await store.refreshItems()
+
+    expect(store.items).toHaveLength(1)
+    expect(store.error).toBeNull()
+    expect(store.loading).toBe(false)
+  })
+})

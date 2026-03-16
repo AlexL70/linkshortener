@@ -147,5 +147,24 @@ export const useUrlsStore = defineStore('urls', () => {
     updateError.value = null
   }
 
-  return { items, total, page, pageSize, loading, error, creating, createError, updating, updateError, fetchUrls, reset, createUrl, clearCreateError, updateUrl, clearUpdateError }
+  async function refreshItems() {
+    try {
+      const response = await DefaultService.listUserUrls({
+        page: page.value,
+        pageSize: pageSize.value > 0 ? pageSize.value : undefined,
+      })
+      if ('status' in response && typeof response.status === 'number') {
+        return
+      }
+      const data = response as { items: UrlItem[] | null; total: number; page: number; page_size: number }
+      items.value = data.items ?? []
+      total.value = data.total
+      page.value = data.page
+      pageSize.value = data.page_size
+    } catch (err) {
+      console.error('refreshItems: request failed', err)
+    }
+  }
+
+  return { items, total, page, pageSize, loading, error, creating, createError, updating, updateError, fetchUrls, reset, createUrl, clearCreateError, updateUrl, clearUpdateError, refreshItems }
 })
