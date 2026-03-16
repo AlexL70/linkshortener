@@ -1,5 +1,7 @@
 # Logging Hook Script for GitHub Copilot Events
-# Captures all Copilot interactions including messages, responses, and session details
+# Buffers SESSIONSTART and USERPROMPTSUBMITTED events per session.
+# Events are only written to the final log when tool use is detected
+# (PRETOOLUSE), ensuring pure ask/question-mode sessions produce no log output.
 
 param(
     [Parameter(Mandatory=$false)]
@@ -100,38 +102,70 @@ if (Test-Path "/.dockerenv") {
     }
 }
 
-# Build structured log entry for JSONL
-$StructuredLog = @{
-    timestamp = $Timestamp
-    event = $Event.ToUpper()
-    hostname = $Hostname
-    user = $UserName
-    pid = $ProcessId
-    shell = $ShellVersion
-    workingDir = $WorkingDir.Path
-    git = @{
-        branch = $GitBranch
-        commit = $GitCommit
-        status = $GitStatus
+# ---------------------------------------------------------------------------
+# Per-session buffering setup
+# ---------------------------------------------------------------------------
+# Extract session_id from the payload (field name differs between event types).
+$SessionId = $null
+if ($Payload) {
+    if ($Payload -match '"session_id"\s*:\s*"([^"]+)"') {
+        $SessionId = $Matches[1]
+    } elseif ($Payload -match '"sessionId"\s*:\s*"([^"]+)"') {
+        $SessionId = $Matches[1]
     }
-    ci = @{
-        platform = $CIPlatform
-        buildId = $CIBuildId
-        jobId = $CIJobId
-        agentName = $CIAgentName
-        container = $ContainerInfo
-    }
-    payload = $Payload
 }
 
-# Save structured log to JSONL
-$StructuredLog | ConvertTo-Json -Compress -Depth 10 | Add-Content -Path $ConversationFile -Encoding UTF8
+# Sanitise the ID so it is safe to use in a filename, then derive temp-file paths.
+if ($SessionId) {
+    $SafeId = ($SessionId -replace '[^a-zA-Z0-9_-]', '') 
+    if ($SafeId.Length -gt 64) { $SafeId = $SafeId.Substring(0, 64) }
+    $JsonlBuffer  = Join-Path $env:TEMP "copilot-hook-$SafeId.jsonl"
+    $LogBuffer    = Join-Path $env:TEMP "copilot-hook-$SafeId.log"
+    # Presence of this file means the session has had at least one tool-use event.
+    $ActiveMarker = Join-Path $env:TEMP "copilot-hook-$SafeId.active"
+} else {
+    # Unknown session ID: fall back to direct logging so nothing is lost.
+    $JsonlBuffer  = $null
+    $LogBuffer    = $null
+    $ActiveMarker = $null
+}
 
 # Separator for readability
 $Separator = "================================================================================"
 
-# Build human-readable log entry
-$LogEntry = @"
+# ---------------------------------------------------------------------------
+# Helper: build the structured JSONL object for this event.
+# ---------------------------------------------------------------------------
+function Build-StructuredLog {
+    return @{
+        timestamp = $Timestamp
+        event     = $Event.ToUpper()
+        hostname  = $Hostname
+        user      = $UserName
+        pid       = $ProcessId
+        shell     = $ShellVersion
+        workingDir = $WorkingDir.Path
+        git = @{
+            branch = $GitBranch
+            commit = $GitCommit
+            status = $GitStatus
+        }
+        ci = @{
+            platform  = $CIPlatform
+            buildId   = $CIBuildId
+            jobId     = $CIJobId
+            agentName = $CIAgentName
+            container = $ContainerInfo
+        }
+        payload = $Payload
+    }
+}
+
+# ---------------------------------------------------------------------------
+# Helper: build the human-readable log entry for this event.
+# ---------------------------------------------------------------------------
+function Build-LogEntry {
+    return @"
 
 $Separator
 COPILOT EVENT: $($Event.ToUpper())
@@ -164,12 +198,92 @@ $Payload
 $Separator
 
 "@
+}
 
-# Append to log file
-Add-Content -Path $LogFile -Value $LogEntry -Encoding UTF8
+# ---------------------------------------------------------------------------
+# Helper: append the current event to the supplied destination files.
+# ---------------------------------------------------------------------------
+function Append-Event {
+    param([string]$DestJsonl, [string]$DestLog)
+    (Build-StructuredLog) | ConvertTo-Json -Compress -Depth 10 | Add-Content -Path $DestJsonl -Encoding UTF8
+    Add-Content -Path $DestLog -Value (Build-LogEntry) -Encoding UTF8
+}
+
+# ---------------------------------------------------------------------------
+# Helper: flush session buffers to the final log files and mark session active.
+# ---------------------------------------------------------------------------
+function Flush-SessionBuffers {
+    if (Test-Path $JsonlBuffer) {
+        Get-Content $JsonlBuffer | Add-Content -Path $ConversationFile -Encoding UTF8
+        Remove-Item $JsonlBuffer -Force
+    }
+    if (Test-Path $LogBuffer) {
+        Get-Content $LogBuffer | Add-Content -Path $LogFile -Encoding UTF8
+        Remove-Item $LogBuffer -Force
+    }
+    New-Item -ItemType File -Path $ActiveMarker -Force | Out-Null
+}
+
+# ---------------------------------------------------------------------------
+# Helper: remove all temp files for this session (called on SESSIONEND).
+# ---------------------------------------------------------------------------
+function Cleanup-Session {
+    foreach ($f in @($JsonlBuffer, $LogBuffer, $ActiveMarker)) {
+        if ($f -and (Test-Path $f)) { Remove-Item $f -Force }
+    }
+}
+
+# ---------------------------------------------------------------------------
+# Event routing
+# ---------------------------------------------------------------------------
+$EventUpper = $Event.ToUpper()
+
+switch ($EventUpper) {
+
+    { $_ -in @("SESSIONSTART", "USERPROMPTSUBMITTED") } {
+        if (-not $ActiveMarker) {
+            # Unknown session ID — log directly so nothing is lost.
+            Append-Event $ConversationFile $LogFile
+        } elseif (Test-Path $ActiveMarker) {
+            # Session already has tool use — log directly.
+            Append-Event $ConversationFile $LogFile
+        } else {
+            # Session has not yet used any tools — buffer and wait.
+            Append-Event $JsonlBuffer $LogBuffer
+        }
+    }
+
+    "PRETOOLUSE" {
+        # First tool use in this session: flush buffered events before logging this one.
+        if ($ActiveMarker -and -not (Test-Path $ActiveMarker)) {
+            Flush-SessionBuffers
+        }
+        Append-Event $ConversationFile $LogFile
+    }
+
+    { $_ -in @("POSTTOOLUSE", "AGENTSTOP") } {
+        # Only log if the session has had tool use (PRETOOLUSE already fired).
+        if (-not $ActiveMarker -or (Test-Path $ActiveMarker)) {
+            Append-Event $ConversationFile $LogFile
+        }
+    }
+
+    "SESSIONEND" {
+        # Only log if the session had tool use; then clean up all temp files.
+        if (-not $ActiveMarker -or (Test-Path $ActiveMarker)) {
+            Append-Event $ConversationFile $LogFile
+        }
+        if ($ActiveMarker) { Cleanup-Session }
+    }
+
+    default {
+        # Unknown / future events: log directly so nothing is silently lost.
+        Append-Event $ConversationFile $LogFile
+    }
+}
 
 # Output for visibility
-Write-Host "Copilot $Event event logged to: $LogFile"
-Write-Host "Structured conversation data: $ConversationFile"
+Write-Host "Copilot $Event event processed (session: $($SessionId ?? 'unknown'))."
+Write-Host "Log: $LogFile | JSONL: $ConversationFile"
 
 exit 0
