@@ -346,6 +346,32 @@ MAX_SHORTCODE_RETRIES=10
   - **URL Format:** `domain.com/r/{6-char-shortcode}` = max 20 characters (e.g., `example.com/r/abc123`)
 - **User Input:** Trim whitespace, validate UTF-8 encoding
 
+## 6. Deployment Strategy (MVP)
+
+Caddy is the single external entry point, listening on ports 80 and 443. It handles TLS automatically via Let's Encrypt (no manual certificate management required), reverse-proxies all backend API routes to the Go process on `localhost:8080`, and serves the compiled Vue SPA static files directly. No other service or port is exposed to the public internet.
+
+### Caddyfile
+
+```caddy
+yourdomain.com {
+    # Serve Vue SPA static files
+    root * /opt/linkshortener/dist
+
+    # Proxy backend routes
+    reverse_proxy /r/* localhost:8080
+    reverse_proxy /api/* localhost:8080
+    reverse_proxy /auth/* localhost:8080
+    reverse_proxy /openapi.json localhost:8080
+    reverse_proxy /docs/* localhost:8080
+
+    # Fall through to SPA for all other paths (Vue Router)
+    try_files {path} /index.html
+    file_server
+}
+```
+
+> **Note:** Exact deployment tooling (Docker, systemd, etc.) and directory layout are to be decided later. The Caddyfile above shows the routing strategy; paths like `/opt/linkshortener/dist` are illustrative.
+
 ## 8. Super Admin
 
 ### Overview
@@ -745,4 +771,4 @@ When ready to move beyond MVP:
 - **Database Indexing:** Indexes on `user_id` and `shortcode`.
 - **Monitoring:** Use Go's pprof to track memory, goroutines, and connection pool health.
 - **Anomaly Alerts:** Email/Slack notifications for suspicious activity patterns.
-- **SSL/TLS:** Configure HTTPS with Let's Encrypt for production security.
+- **SSL/TLS:** Caddy automatically provisions and renews HTTPS certificates via Let's Encrypt — no manual certbot setup required.
