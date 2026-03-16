@@ -63,10 +63,6 @@
             "readOnly": true,
             "type": "string"
           },
-          "created_at": {
-            "format": "date-time",
-            "type": "string"
-          },
           "expires_at": {
             "format": "date-time",
             "type": "string"
@@ -89,8 +85,7 @@
           "id",
           "shortcode",
           "long_url",
-          "short_url",
-          "created_at"
+          "short_url"
         ],
         "type": "object"
       },
@@ -260,6 +255,10 @@
             "format": "date-time",
             "type": "string"
           },
+          "last_updated": {
+            "format": "date-time",
+            "type": "string"
+          },
           "long_url": {
             "minLength": 1,
             "type": "string"
@@ -269,7 +268,8 @@
           }
         },
         "required": [
-          "long_url"
+          "long_url",
+          "last_updated"
         ],
         "type": "object"
       },
@@ -285,10 +285,6 @@
             "readOnly": true,
             "type": "string"
           },
-          "created_at": {
-            "format": "date-time",
-            "type": "string"
-          },
           "expires_at": {
             "format": "date-time",
             "type": "string"
@@ -296,6 +292,10 @@
           "id": {
             "format": "int64",
             "type": "integer"
+          },
+          "last_updated": {
+            "format": "date-time",
+            "type": "string"
           },
           "long_url": {
             "type": "string"
@@ -305,10 +305,6 @@
           },
           "shortcode": {
             "type": "string"
-          },
-          "updated_at": {
-            "format": "date-time",
-            "type": "string"
           }
         },
         "required": [
@@ -316,18 +312,13 @@
           "shortcode",
           "long_url",
           "short_url",
-          "created_at",
-          "updated_at"
+          "last_updated"
         ],
         "type": "object"
       },
       "UrlItem": {
         "additionalProperties": false,
         "properties": {
-          "created_at": {
-            "format": "date-time",
-            "type": "string"
-          },
           "expires_at": {
             "format": "date-time",
             "type": "string"
@@ -336,14 +327,14 @@
             "format": "int64",
             "type": "integer"
           },
+          "last_updated": {
+            "format": "date-time",
+            "type": "string"
+          },
           "long_url": {
             "type": "string"
           },
           "shortcode": {
-            "type": "string"
-          },
-          "updated_at": {
-            "format": "date-time",
             "type": "string"
           }
         },
@@ -351,8 +342,7 @@
           "id",
           "shortcode",
           "long_url",
-          "created_at",
-          "updated_at"
+          "last_updated"
         ],
         "type": "object"
       }

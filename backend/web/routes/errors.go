@@ -17,6 +17,8 @@ func MapError(err error) error {
 		return huma.Error404NotFound("resource not found")
 	case errors.Is(err, businesslogic.ErrConflict):
 		return huma.Error409Conflict("resource already exists")
+	case errors.Is(err, businesslogic.ErrVersionConflict):
+		return huma.Error409Conflict("This item was modified by another user. Refresh and try again.")
 	case errors.Is(err, businesslogic.ErrValidation):
 		return huma.Error400BadRequest(err.Error())
 	case errors.Is(err, businesslogic.ErrExpired):

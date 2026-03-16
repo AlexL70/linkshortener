@@ -8,12 +8,11 @@ import (
 // UrlToViewModel converts a business-layer ShortenedUrl to a UrlItem viewmodel.
 func UrlToViewModel(m *bizmodels.ShortenedUrl) *viewmodels.UrlItem {
 	return &viewmodels.UrlItem{
-		ID:        m.ID,
-		Shortcode: m.Shortcode,
-		LongUrl:   m.LongUrl,
-		ExpiresAt: m.ExpiresAt,
-		CreatedAt: m.CreatedAt,
-		UpdatedAt: m.UpdatedAt,
+		ID:          m.ID,
+		Shortcode:   m.Shortcode,
+		LongUrl:     m.LongUrl,
+		ExpiresAt:   m.ExpiresAt,
+		LastUpdated: m.LastUpdated,
 	}
 }
 
@@ -40,7 +39,6 @@ func CreateUrlToResponse(m *bizmodels.ShortenedUrl, baseUrl string) *viewmodels.
 		LongUrl:   m.LongUrl,
 		ShortUrl:  baseUrl + "/r/" + m.Shortcode,
 		ExpiresAt: m.ExpiresAt,
-		CreatedAt: m.CreatedAt,
 	}
 }
 
@@ -48,12 +46,11 @@ func CreateUrlToResponse(m *bizmodels.ShortenedUrl, baseUrl string) *viewmodels.
 // shortUrl is constructed as baseUrl + "/r/" + shortcode.
 func UpdateUrlToResponse(m *bizmodels.ShortenedUrl, baseUrl string) *viewmodels.UpdateUrlResponseBody {
 	return &viewmodels.UpdateUrlResponseBody{
-		ID:        m.ID,
-		Shortcode: m.Shortcode,
-		LongUrl:   m.LongUrl,
-		ShortUrl:  baseUrl + "/r/" + m.Shortcode,
-		ExpiresAt: m.ExpiresAt,
-		CreatedAt: m.CreatedAt,
-		UpdatedAt: m.UpdatedAt,
+		ID:          m.ID,
+		Shortcode:   m.Shortcode,
+		LongUrl:     m.LongUrl,
+		ShortUrl:    baseUrl + "/r/" + m.Shortcode,
+		ExpiresAt:   m.ExpiresAt,
+		LastUpdated: m.LastUpdated,
 	}
 }

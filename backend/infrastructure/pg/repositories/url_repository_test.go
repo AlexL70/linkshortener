@@ -185,7 +185,7 @@ func TestCreate_Success(t *testing.T) {
 	assert.Equal(t, "cr0001", created.Shortcode)
 	assert.Equal(t, "https://create-test.com", created.LongUrl)
 	assert.Equal(t, user.ID, created.UserID)
-	assert.False(t, created.CreatedAt.IsZero())
+	assert.False(t, created.LastUpdated.IsZero())
 }
 
 func TestCreate_WithExpiry_Success(t *testing.T) {
@@ -288,11 +288,16 @@ func TestUpdate_Success(t *testing.T) {
 	id := insertTestURL(t, db, user.ID, "up0001", "https://original.com")
 
 	urlRepo := repositories.NewUrlRepository(db)
+	// Fetch the URL to get the current LastUpdated for OCC.
+	existing, err := urlRepo.FindByID(ctx, id)
+	require.NoError(t, err)
+
 	input := &bizmodels.ShortenedUrl{
-		ID:        id,
-		UserID:    user.ID,
-		Shortcode: "up0001",
-		LongUrl:   "https://updated.com",
+		ID:          id,
+		UserID:      user.ID,
+		Shortcode:   "up0001",
+		LongUrl:     "https://updated.com",
+		LastUpdated: existing.LastUpdated,
 	}
 	updated, err := urlRepo.Update(ctx, input)
 	require.NoError(t, err)
@@ -300,7 +305,7 @@ func TestUpdate_Success(t *testing.T) {
 	assert.Equal(t, id, updated.ID)
 	assert.Equal(t, "https://updated.com", updated.LongUrl)
 	assert.Nil(t, updated.ExpiresAt)
-	assert.False(t, updated.UpdatedAt.IsZero())
+	assert.False(t, updated.LastUpdated.IsZero())
 }
 
 func TestUpdate_ChangeShortcode_Success(t *testing.T) {
@@ -317,11 +322,15 @@ func TestUpdate_ChangeShortcode_Success(t *testing.T) {
 	id := insertTestURL(t, db, user.ID, "old001", "https://example.com")
 
 	urlRepo := repositories.NewUrlRepository(db)
+	existing, err := urlRepo.FindByID(ctx, id)
+	require.NoError(t, err)
+
 	input := &bizmodels.ShortenedUrl{
-		ID:        id,
-		UserID:    user.ID,
-		Shortcode: "new001",
-		LongUrl:   "https://example.com",
+		ID:          id,
+		UserID:      user.ID,
+		Shortcode:   "new001",
+		LongUrl:     "https://example.com",
+		LastUpdated: existing.LastUpdated,
 	}
 	updated, err := urlRepo.Update(ctx, input)
 	require.NoError(t, err)
@@ -343,13 +352,75 @@ func TestUpdate_DuplicateShortcode_ReturnsConflict(t *testing.T) {
 	id := insertTestURL(t, db, user.ID, "other2", "https://other.com")
 
 	urlRepo := repositories.NewUrlRepository(db)
+	existing, err := urlRepo.FindByID(ctx, id)
+	require.NoError(t, err)
+
 	input := &bizmodels.ShortenedUrl{
-		ID:        id,
-		UserID:    user.ID,
-		Shortcode: "taken2", // conflict with existing row
-		LongUrl:   "https://other.com",
+		ID:          id,
+		UserID:      user.ID,
+		Shortcode:   "taken2", // conflict with existing row
+		LongUrl:     "https://other.com",
+		LastUpdated: existing.LastUpdated,
 	}
 	_, err = urlRepo.Update(ctx, input)
 	require.Error(t, err)
 	assert.ErrorIs(t, err, businesslogic.ErrConflict)
+}
+
+func TestUpdate_VersionMismatch_ReturnsVersionConflict(t *testing.T) {
+	db := openTestDB(t)
+	defer db.Close() //nolint:errcheck
+
+	ctx := context.Background()
+	userRepo := repositories.NewUserRepository(db)
+	up := &bizmodels.UserProvider{Provider: bizmodels.ProviderGoogle, ProviderUserID: "upd-occ-1", ProviderEmail: "updocc1@example.com"}
+	user, err := userRepo.CreateUserWithProvider(ctx, "updoccuser1", up)
+	require.NoError(t, err)
+	defer cleanUsers(t, db, user.ID)
+
+	id := insertTestURL(t, db, user.ID, "occ001", "https://occ-test.com")
+
+	urlRepo := repositories.NewUrlRepository(db)
+	// Use a stale (non-matching) LastUpdated to simulate a version conflict.
+	staleVersion := time.Now().Add(-1 * time.Hour)
+	input := &bizmodels.ShortenedUrl{
+		ID:          id,
+		UserID:      user.ID,
+		Shortcode:   "occ001",
+		LongUrl:     "https://updated.com",
+		LastUpdated: staleVersion,
+	}
+	_, err = urlRepo.Update(ctx, input)
+	require.Error(t, err)
+	assert.ErrorIs(t, err, businesslogic.ErrVersionConflict)
+}
+
+func TestUpdate_DeletedBeforeUpdate_ReturnsNotFound(t *testing.T) {
+	db := openTestDB(t)
+	defer db.Close() //nolint:errcheck
+
+	ctx := context.Background()
+	userRepo := repositories.NewUserRepository(db)
+	up := &bizmodels.UserProvider{Provider: bizmodels.ProviderGoogle, ProviderUserID: "upd-del-1", ProviderEmail: "upddel1@example.com"}
+	user, err := userRepo.CreateUserWithProvider(ctx, "upddeluser1", up)
+	require.NoError(t, err)
+	defer cleanUsers(t, db, user.ID)
+
+	id := insertTestURL(t, db, user.ID, "del001", "https://del-test.com")
+
+	// Delete the URL directly so it no longer exists.
+	_, err = db.NewDelete().TableExpr("shortened_urls").Where("id = ?", id).Exec(ctx)
+	require.NoError(t, err)
+
+	urlRepo := repositories.NewUrlRepository(db)
+	input := &bizmodels.ShortenedUrl{
+		ID:          id,
+		UserID:      user.ID,
+		Shortcode:   "del001",
+		LongUrl:     "https://updated.com",
+		LastUpdated: time.Now(),
+	}
+	_, err = urlRepo.Update(ctx, input)
+	require.Error(t, err)
+	assert.ErrorIs(t, err, businesslogic.ErrNotFound)
 }

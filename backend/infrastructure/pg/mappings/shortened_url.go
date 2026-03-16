@@ -8,13 +8,12 @@ import (
 // ShortenedUrlToBusinessModel converts a DB ShortenedUrl to a business-layer ShortenedUrl.
 func ShortenedUrlToBusinessModel(db *pgmodels.ShortenedUrl) *bizmodels.ShortenedUrl {
 	return &bizmodels.ShortenedUrl{
-		ID:        db.ID,
-		UserID:    db.UserID,
-		Shortcode: db.Shortcode,
-		LongUrl:   db.LongUrl,
-		ExpiresAt: db.ExpiresAt,
-		CreatedAt: db.CreatedAt,
-		UpdatedAt: db.UpdatedAt,
+		ID:          db.ID,
+		UserID:      db.UserID,
+		Shortcode:   db.Shortcode,
+		LongUrl:     db.LongUrl,
+		ExpiresAt:   db.ExpiresAt,
+		LastUpdated: db.UpdatedAt,
 	}
 }
 
@@ -26,8 +25,7 @@ func ShortenedUrlToDbModel(biz *bizmodels.ShortenedUrl) *pgmodels.ShortenedUrl {
 		Shortcode: biz.Shortcode,
 		LongUrl:   biz.LongUrl,
 		ExpiresAt: biz.ExpiresAt,
-		CreatedAt: biz.CreatedAt,
-		UpdatedAt: biz.UpdatedAt,
+		UpdatedAt: biz.LastUpdated,
 	}
 }
 

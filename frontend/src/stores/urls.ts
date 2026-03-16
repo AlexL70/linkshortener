@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { DefaultService } from '@/lib/api/services/DefaultService'
+import { ApiError } from '@/lib/api/core/ApiError'
 import type { UrlItem } from '@/lib/api/models/UrlItem'
 import type { CreateUrlResponseBody } from '@/lib/api/models/CreateUrlResponseBody'
 import type { UpdateUrlResponseBody } from '@/lib/api/models/UpdateUrlResponseBody'
@@ -100,9 +101,14 @@ export const useUrlsStore = defineStore('urls', () => {
     longUrl: string
     shortcode?: string
     expiresAt?: string
+    lastUpdated: string
   }): Promise<UpdateUrlResponseBody | null> {
     updating.value = true
     updateError.value = null
+    const onVersionConflict = async () => {
+      updateError.value = 'This item was recently changed by someone else. Please refresh and try again.'
+      await fetchUrls(page.value, pageSize.value > 0 ? pageSize.value : undefined)
+    }
     try {
       const response = await DefaultService.updateUrl({
         id: params.id,
@@ -110,17 +116,27 @@ export const useUrlsStore = defineStore('urls', () => {
           long_url: params.longUrl,
           shortcode: params.shortcode,
           expires_at: params.expiresAt,
+          last_updated: params.lastUpdated,
         },
       })
       if ('status' in response && typeof response.status === 'number') {
-        updateError.value = (response as { title?: string }).title ?? 'Failed to update URL'
+        const errResponse = response as { status: number; title?: string }
+        if (errResponse.status === 409) {
+          await onVersionConflict()
+        } else {
+          updateError.value = errResponse.title ?? 'Failed to update URL'
+        }
         return null
       }
       await fetchUrls(page.value, pageSize.value > 0 ? pageSize.value : undefined)
       return response as UpdateUrlResponseBody
     } catch (err) {
       console.error('updateUrl: request failed', err)
-      updateError.value = 'An unexpected error occurred while updating your URL.'
+      if (err instanceof ApiError && err.status === 409) {
+        await onVersionConflict()
+      } else {
+        updateError.value = 'An unexpected error occurred while updating your URL.'
+      }
       return null
     } finally {
       updating.value = false
@@ -131,5 +147,24 @@ export const useUrlsStore = defineStore('urls', () => {
     updateError.value = null
   }
 
-  return { items, total, page, pageSize, loading, error, creating, createError, updating, updateError, fetchUrls, reset, createUrl, clearCreateError, updateUrl, clearUpdateError }
+  async function refreshItems() {
+    try {
+      const response = await DefaultService.listUserUrls({
+        page: page.value,
+        pageSize: pageSize.value > 0 ? pageSize.value : undefined,
+      })
+      if ('status' in response && typeof response.status === 'number') {
+        return
+      }
+      const data = response as { items: UrlItem[] | null; total: number; page: number; page_size: number }
+      items.value = data.items ?? []
+      total.value = data.total
+      page.value = data.page
+      pageSize.value = data.page_size
+    } catch (err) {
+      console.error('refreshItems: request failed', err)
+    }
+  }
+
+  return { items, total, page, pageSize, loading, error, creating, createError, updating, updateError, fetchUrls, reset, createUrl, clearCreateError, updateUrl, clearUpdateError, refreshItems }
 })

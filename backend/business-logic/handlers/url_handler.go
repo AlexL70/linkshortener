@@ -102,7 +102,8 @@ func (h *UrlHandler) CreateUrl(ctx context.Context, userID int64, longUrl string
 // Only fields included in the request are changed; ownership is verified before any update.
 // If newShortcode is nil the existing shortcode is kept; otherwise the new value is validated.
 // expiresAt replaces the current expiry (pass nil to remove the expiry).
-func (h *UrlHandler) UpdateUrl(ctx context.Context, urlID, userID int64, longUrl string, newShortcode *string, expiresAt *time.Time) (*bizmodels.ShortenedUrl, error) {
+// lastUpdated is the version the caller last read; it is used for optimistic concurrency control.
+func (h *UrlHandler) UpdateUrl(ctx context.Context, urlID, userID int64, longUrl string, newShortcode *string, expiresAt *time.Time, lastUpdated time.Time) (*bizmodels.ShortenedUrl, error) {
 	existing, err := h.urls.FindByID(ctx, urlID)
 	if err != nil {
 		return nil, fmt.Errorf("UrlHandler.UpdateUrl: %w", err)
@@ -125,11 +126,12 @@ func (h *UrlHandler) UpdateUrl(ctx context.Context, urlID, userID int64, longUrl
 	}
 
 	record := &bizmodels.ShortenedUrl{
-		ID:        urlID,
-		UserID:    userID,
-		Shortcode: shortcode,
-		LongUrl:   longUrl,
-		ExpiresAt: expiresAt,
+		ID:          urlID,
+		UserID:      userID,
+		Shortcode:   shortcode,
+		LongUrl:     longUrl,
+		ExpiresAt:   expiresAt,
+		LastUpdated: lastUpdated,
 	}
 
 	updated, err := h.urls.Update(ctx, record)

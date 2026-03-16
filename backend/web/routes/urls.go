@@ -72,7 +72,7 @@ func RegisterUrlRoutes(api huma.API, h *handlers.UrlHandler) {
 			return nil, huma.NewError(http.StatusUnauthorized, "unauthorized")
 		}
 
-		updated, err := h.UpdateUrl(ctx, input.ID, claims.UserID, input.Body.LongUrl, input.Body.Shortcode, input.Body.ExpiresAt)
+		updated, err := h.UpdateUrl(ctx, input.ID, claims.UserID, input.Body.LongUrl, input.Body.Shortcode, input.Body.ExpiresAt, input.Body.LastUpdated)
 		if err != nil {
 			return nil, MapError(err)
 		}

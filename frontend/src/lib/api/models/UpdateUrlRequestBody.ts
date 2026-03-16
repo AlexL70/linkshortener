@@ -6,4 +6,5 @@ export type UpdateUrlRequestBody = {
     long_url: string;
     shortcode?: string;
     expires_at?: string;
+    last_updated: string;
 };

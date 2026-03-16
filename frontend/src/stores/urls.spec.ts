@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useUrlsStore } from './urls'
 import { DefaultService } from '@/lib/api/services/DefaultService'
+import { ApiError } from '@/lib/api/core/ApiError'
 import type { UrlItem } from '@/lib/api/models/UrlItem'
 import type { CreateUrlResponseBody } from '@/lib/api/models/CreateUrlResponseBody'
 
@@ -12,8 +13,7 @@ function makeUrlItem(overrides: Partial<UrlItem> = {}): UrlItem {
     id: 1,
     shortcode: 'abc123',
     long_url: 'https://example.com',
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z',
+    last_updated: '2024-01-01T00:00:00Z',
     ...overrides,
   }
 }
@@ -204,7 +204,6 @@ function makeCreateUrlResponse(overrides: Partial<CreateUrlResponseBody> = {}): 
     shortcode: 'abc123',
     long_url: 'https://example.com',
     short_url: 'https://s.example.com/r/abc123',
-    created_at: '2024-06-01T00:00:00Z',
     ...overrides,
   }
 }
@@ -331,8 +330,7 @@ function makeUpdateUrlResponse() {
     id: 99,
     shortcode: 'abc123',
     long_url: 'https://updated.com',
-    created_at: '2024-06-01T00:00:00Z',
-    updated_at: '2024-06-02T00:00:00Z',
+    last_updated: '2024-06-02T00:00:00Z',
   }
 }
 
@@ -347,7 +345,7 @@ describe('updateUrl — success', () => {
     )
 
     const store = useUrlsStore()
-    const result = await store.updateUrl({ id: 99, longUrl: 'https://updated.com' })
+    const result = await store.updateUrl({ id: 99, longUrl: 'https://updated.com', lastUpdated: '2024-01-01T00:00:00Z' })
 
     expect(result).toEqual(updated)
     expect(store.updating).toBe(false)
@@ -364,7 +362,7 @@ describe('updateUrl — success', () => {
     )
 
     const store = useUrlsStore()
-    await store.updateUrl({ id: 5, longUrl: 'https://updated.com', shortcode: 'new-sc', expiresAt: '2025-01-01T00:00:00Z' })
+    await store.updateUrl({ id: 5, longUrl: 'https://updated.com', shortcode: 'new-sc', expiresAt: '2025-01-01T00:00:00Z', lastUpdated: '2024-01-01T00:00:00Z' })
 
     expect(spy).toHaveBeenCalledWith({
       id: 5,
@@ -372,6 +370,7 @@ describe('updateUrl — success', () => {
         long_url: 'https://updated.com',
         shortcode: 'new-sc',
         expires_at: '2025-01-01T00:00:00Z',
+        last_updated: '2024-01-01T00:00:00Z',
       },
     })
   })
@@ -383,7 +382,7 @@ describe('updateUrl — success', () => {
     )
 
     const store = useUrlsStore()
-    const updatePromise = store.updateUrl({ id: 1, longUrl: 'https://example.com' })
+    const updatePromise = store.updateUrl({ id: 1, longUrl: 'https://example.com', lastUpdated: '2024-01-01T00:00:00Z' })
 
     expect(store.updating).toBe(true)
     resolveFn(makeUpdateUrlResponse())
@@ -402,7 +401,7 @@ describe('updateUrl — API error response', () => {
     )
 
     const store = useUrlsStore()
-    const result = await store.updateUrl({ id: 99, longUrl: 'https://example.com' })
+    const result = await store.updateUrl({ id: 99, longUrl: 'https://example.com', lastUpdated: '2024-01-01T00:00:00Z' })
 
     expect(result).toBeNull()
     expect(store.updateError).toBe('Not Found')
@@ -415,9 +414,26 @@ describe('updateUrl — API error response', () => {
     )
 
     const store = useUrlsStore()
-    await store.updateUrl({ id: 99, longUrl: 'https://example.com' })
+    await store.updateUrl({ id: 99, longUrl: 'https://example.com', lastUpdated: '2024-01-01T00:00:00Z' })
 
     expect(store.updateError).toBe('Failed to update URL')
+  })
+
+  it('sets the version conflict message and refreshes the list on 409 conflict', async () => {
+    vi.spyOn(DefaultService, 'updateUrl').mockResolvedValue(
+      { status: 409, title: 'This item was modified by another user. Refresh and try again.' } as never,
+    )
+    vi.spyOn(DefaultService, 'listUserUrls').mockResolvedValue(
+      makeListResponse([makeUrlItem()]) as never,
+    )
+
+    const store = useUrlsStore()
+    const result = await store.updateUrl({ id: 1, longUrl: 'https://example.com', lastUpdated: '2024-01-01T00:00:00Z' })
+
+    expect(result).toBeNull()
+    expect(store.updateError).toBe('This item was recently changed by someone else. Please refresh and try again.')
+    expect(store.items).toHaveLength(1)
+    expect(store.updating).toBe(false)
   })
 })
 
@@ -429,10 +445,31 @@ describe('updateUrl — network error', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {})
 
     const store = useUrlsStore()
-    const result = await store.updateUrl({ id: 1, longUrl: 'https://example.com' })
+    const result = await store.updateUrl({ id: 1, longUrl: 'https://example.com', lastUpdated: '2024-01-01T00:00:00Z' })
 
     expect(result).toBeNull()
     expect(store.updateError).toBe('An unexpected error occurred while updating your URL.')
+    expect(store.updating).toBe(false)
+  })
+
+  it('sets the version conflict message when ApiError with status 409 is thrown', async () => {
+    const apiErr = new ApiError(
+      { method: 'PATCH', url: '/user/urls/1' },
+      { url: '/user/urls/1', ok: false, status: 409, statusText: 'Conflict', body: {} },
+      'Generic Error: status: 409; status text: Conflict; body: {}',
+    )
+    vi.spyOn(DefaultService, 'updateUrl').mockRejectedValue(apiErr)
+    vi.spyOn(DefaultService, 'listUserUrls').mockResolvedValue(
+      makeListResponse([makeUrlItem()]) as never,
+    )
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const store = useUrlsStore()
+    const result = await store.updateUrl({ id: 1, longUrl: 'https://example.com', lastUpdated: '2024-01-01T00:00:00Z' })
+
+    expect(result).toBeNull()
+    expect(store.updateError).toBe('This item was recently changed by someone else. Please refresh and try again.')
+    expect(store.items).toHaveLength(1)
     expect(store.updating).toBe(false)
   })
 })
@@ -444,10 +481,52 @@ describe('clearUpdateError', () => {
     vi.spyOn(DefaultService, 'updateUrl').mockResolvedValue({ status: 404, title: 'Not Found' } as never)
 
     const store = useUrlsStore()
-    await store.updateUrl({ id: 1, longUrl: 'bad' })
+    await store.updateUrl({ id: 1, longUrl: 'bad', lastUpdated: '2024-01-01T00:00:00Z' })
     expect(store.updateError).not.toBeNull()
 
     store.clearUpdateError()
     expect(store.updateError).toBeNull()
+  })
+})
+
+// ── refreshItems ──────────────────────────────────────────────────────────────
+
+describe('refreshItems', () => {
+  it('silently updates items without touching the loading flag', async () => {
+    const fresh = makeUrlItem({ long_url: 'https://fresh.example.com', last_updated: '2024-06-01T00:00:00Z' })
+    vi.spyOn(DefaultService, 'listUserUrls').mockResolvedValue(makeListResponse([fresh]) as never)
+
+    const store = useUrlsStore()
+    await store.refreshItems()
+
+    expect(store.items).toHaveLength(1)
+    expect(store.items[0].long_url).toBe('https://fresh.example.com')
+    expect(store.loading).toBe(false)
+  })
+
+  it('does not update items on an error response', async () => {
+    vi.spyOn(DefaultService, 'listUserUrls').mockResolvedValue({ status: 401, title: 'Unauthorized' } as never)
+
+    const store = useUrlsStore()
+    store.items.push(makeUrlItem())
+
+    await store.refreshItems()
+
+    expect(store.items).toHaveLength(1)
+    expect(store.loading).toBe(false)
+  })
+
+  it('swallows network errors without surfacing them to the error state', async () => {
+    vi.spyOn(DefaultService, 'listUserUrls').mockRejectedValue(new Error('Network Error'))
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const store = useUrlsStore()
+    store.items.push(makeUrlItem())
+
+    await store.refreshItems()
+
+    expect(store.items).toHaveLength(1)
+    expect(store.error).toBeNull()
+    expect(store.loading).toBe(false)
   })
 })

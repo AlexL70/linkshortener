@@ -8,5 +8,4 @@ export type CreateUrlResponseBody = {
   long_url: string
   short_url: string
   expires_at?: string
-  created_at: string
 }
