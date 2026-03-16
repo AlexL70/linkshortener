@@ -7,6 +7,7 @@ package mocks
 import (
 	context "context"
 	reflect "reflect"
+	"time"
 
 	models "github.com/AlexL70/linkshortener/backend/business-logic/models"
 	gomock "github.com/golang/mock/gomock"
@@ -79,6 +80,20 @@ func (m *MockUrlRepository) FindByUserID(ctx context.Context, userID int64, page
 func (mr *MockUrlRepositoryMockRecorder) FindByUserID(ctx, userID, page, pageSize interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByUserID", reflect.TypeOf((*MockUrlRepository)(nil).FindByUserID), ctx, userID, page, pageSize)
+}
+
+// Delete mocks base method.
+func (m *MockUrlRepository) Delete(ctx context.Context, id, userID int64, lastUpdated time.Time) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Delete", ctx, id, userID, lastUpdated)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Delete indicates an expected call of Delete.
+func (mr *MockUrlRepositoryMockRecorder) Delete(ctx, id, userID, lastUpdated interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockUrlRepository)(nil).Delete), ctx, id, userID, lastUpdated)
 }
 
 // Update mocks base method.

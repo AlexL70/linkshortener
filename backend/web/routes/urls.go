@@ -82,6 +82,24 @@ func RegisterUrlRoutes(api huma.API, h *handlers.UrlHandler) {
 			Body: webmappers.UpdateUrlToResponse(updated, baseUrl),
 		}, nil
 	})
+
+	huma.Register(api, huma.Operation{
+		OperationID:   "delete-shortened-url",
+		Method:        http.MethodDelete,
+		Path:          "/user/urls/{id}",
+		Summary:       "Delete an existing shortened URL",
+		DefaultStatus: http.StatusNoContent,
+	}, func(ctx context.Context, input *viewmodels.DeleteUrlInput) (*struct{}, error) {
+		claims := GetJWTClaimsFromContext(ctx)
+		if claims == nil {
+			return nil, huma.NewError(http.StatusUnauthorized, "unauthorized")
+		}
+
+		if err := h.DeleteUrl(ctx, input.ID, claims.UserID, input.LastUpdated); err != nil {
+			return nil, MapError(err)
+		}
+		return nil, nil
+	})
 }
 
 // resolvePageSize returns the caller-supplied page size when positive, otherwise

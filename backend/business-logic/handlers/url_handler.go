@@ -140,3 +140,13 @@ func (h *UrlHandler) UpdateUrl(ctx context.Context, urlID, userID int64, longUrl
 	}
 	return updated, nil
 }
+
+// DeleteUrl deletes the shortened URL with the given ID, verifying ownership.
+// lastUpdated is the version the caller last read; it is used for optimistic concurrency control.
+func (h *UrlHandler) DeleteUrl(ctx context.Context, urlID, userID int64, lastUpdated time.Time) error {
+	err := h.urls.Delete(ctx, urlID, userID, lastUpdated)
+	if err != nil {
+		return fmt.Errorf("UrlHandler.DeleteUrl: %w", err)
+	}
+	return nil
+}

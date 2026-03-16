@@ -120,6 +120,32 @@ func (r *urlRepository) Update(ctx context.Context, url *bizmodels.ShortenedUrl)
 	return pgmappings.ShortenedUrlToBusinessModel(db), nil
 }
 
+func (r *urlRepository) Delete(ctx context.Context, id, userID int64, lastUpdated time.Time) error {
+	result, err := r.db.NewDelete().
+		Model((*pgmodels.ShortenedUrl)(nil)).
+		Where("id = ? AND user_id = ? AND updated_at = ?", id, userID, lastUpdated).
+		Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("UrlRepository.Delete: %w", err)
+	}
+
+	n, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("UrlRepository.Delete rows-affected: %w", err)
+	}
+	if n == 0 {
+		exists, checkErr := r.exists(ctx, id)
+		if checkErr != nil {
+			return fmt.Errorf("UrlRepository.Delete exists-check: %w", checkErr)
+		}
+		if !exists {
+			return businesslogic.ErrNotFound
+		}
+		return businesslogic.ErrVersionConflict
+	}
+	return nil
+}
+
 // exists reports whether a ShortenedUrl with the given ID exists in the database.
 func (r *urlRepository) exists(ctx context.Context, id int64) (bool, error) {
 	count, err := r.db.NewSelect().

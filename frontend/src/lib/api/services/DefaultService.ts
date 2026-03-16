@@ -67,15 +67,15 @@ export class DefaultService {
     }
     /**
      * Create a new shortened URL
-     * @returns CreateUrlResponseBody Created
      * @returns ErrorModel Error
+     * @returns CreateUrlResponseBody Created
      * @throws ApiError
      */
-    public static createUrl({
+    public static createShortenedUrl({
         requestBody,
     }: {
         requestBody?: CreateUrlRequestBody,
-    }): CancelablePromise<CreateUrlResponseBody | ErrorModel> {
+    }): CancelablePromise<ErrorModel | CreateUrlResponseBody> {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/user/urls',
@@ -84,12 +84,35 @@ export class DefaultService {
         });
     }
     /**
+     * Delete an existing shortened URL
+     * @returns ErrorModel Error
+     * @throws ApiError
+     */
+    public static deleteShortenedUrl({
+        id,
+        lastUpdated,
+    }: {
+        id: number,
+        lastUpdated: string,
+    }): CancelablePromise<ErrorModel> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/user/urls/{id}',
+            path: {
+                'id': id,
+            },
+            query: {
+                'last_updated': lastUpdated,
+            },
+        });
+    }
+    /**
      * Update an existing shortened URL
      * @returns UpdateUrlResponseBody OK
      * @returns ErrorModel Error
      * @throws ApiError
      */
-    public static updateUrl({
+    public static updateShortenedUrl({
         id,
         requestBody,
     }: {

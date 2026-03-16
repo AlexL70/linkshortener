@@ -29,7 +29,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { ChevronDown, ChevronUp, Pencil } from 'lucide-vue-next'
+import { ChevronDown, ChevronUp, Pencil, Trash2 } from 'lucide-vue-next'
 import { toDatetimeLocalValue } from '@/lib/utils'
 
 const urlsStore = useUrlsStore()
@@ -120,6 +120,38 @@ async function submitEdit() {
   })
   if (result !== null) {
     editDialogOpen.value = false
+  }
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── Delete Link dialog ────────────────────────────────────────────────────────
+const deleteDialogOpen = ref(false)
+const deletingUrl = ref<UrlItem | null>(null)
+const fetchingDeleteId = ref<number | null>(null)
+
+async function openDeleteDialog(url: UrlItem) {
+  fetchingDeleteId.value = url.id
+  urlsStore.clearDeleteError()
+  await urlsStore.refreshItems()
+  const freshUrl = urlsStore.items.find(item => item.id === url.id) ?? url
+  deletingUrl.value = freshUrl
+  fetchingDeleteId.value = null
+  deleteDialogOpen.value = true
+}
+
+function onDeleteDialogOpenChange(open: boolean) {
+  if (!open) {
+    urlsStore.clearDeleteError()
+    deletingUrl.value = null
+  }
+  deleteDialogOpen.value = open
+}
+
+async function submitDelete() {
+  if (!deletingUrl.value) return
+  const success = await urlsStore.deleteUrl(deletingUrl.value.id, deletingUrl.value.last_updated)
+  if (success) {
+    deleteDialogOpen.value = false
   }
 }
 // ─────────────────────────────────────────────────────────────────────────────
@@ -278,6 +310,43 @@ onMounted(() => {
       </DialogContent>
     </Dialog>
 
+    <!-- Delete Link confirmation dialog -->
+    <Dialog :open="deleteDialogOpen" @update:open="onDeleteDialogOpenChange">
+      <DialogContent class="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Delete short link</DialogTitle>
+          <DialogDescription>
+            This action cannot be undone. Please confirm you want to permanently delete the following link.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div class="flex flex-col gap-3 py-2">
+          <div class="flex flex-col gap-1">
+            <span class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Shortcode</span>
+            <span class="font-mono font-semibold text-sm">{{ deletingUrl?.shortcode }}</span>
+          </div>
+          <div class="flex flex-col gap-1">
+            <span class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Destination URL</span>
+            <span class="text-sm break-all">{{ deletingUrl?.long_url }}</span>
+          </div>
+        </div>
+
+        <div v-if="urlsStore.deleteError"
+          class="rounded-md bg-destructive/10 border border-destructive/30 px-3 py-2 text-destructive text-sm">
+          {{ urlsStore.deleteError }}
+        </div>
+
+        <DialogFooter class="flex gap-2 pt-2">
+          <DialogClose as-child>
+            <Button type="button" variant="outline" :disabled="urlsStore.deleting">Cancel</Button>
+          </DialogClose>
+          <Button type="button" variant="destructive" :disabled="urlsStore.deleting" @click="submitDelete">
+            {{ urlsStore.deleting ? 'Deleting…' : 'Delete' }}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
     <!-- Error state -->
     <div v-if="urlsStore.error"
       class="rounded-md bg-destructive/10 border border-destructive/30 px-4 py-3 text-destructive text-sm">
@@ -323,9 +392,13 @@ onMounted(() => {
                 {{ url.expires_at ? formatDate(url.expires_at) : '—' }}
               </TableCell>
               <TableCell class="text-right">
-                <Button variant="ghost" size="sm" :disabled="fetchingEditId !== null"
+                <Button variant="ghost" size="sm" :disabled="fetchingEditId !== null || fetchingDeleteId !== null"
                   @click.stop="openEditDialog(url)">
                   {{ fetchingEditId === url.id ? 'Loading…' : 'Edit' }}
+                </Button>
+                <Button variant="ghost" size="sm" class="text-destructive hover:text-destructive"
+                  :disabled="fetchingEditId !== null || fetchingDeleteId !== null" @click.stop="openDeleteDialog(url)">
+                  {{ fetchingDeleteId === url.id ? 'Loading…' : 'Delete' }}
                 </Button>
               </TableCell>
             </TableRow>
@@ -348,12 +421,25 @@ onMounted(() => {
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger as-child>
-                  <Button variant="ghost" size="icon" aria-label="Edit link" :disabled="fetchingEditId !== null"
-                    @click.stop="openEditDialog(url)">
+                  <Button variant="ghost" size="icon" aria-label="Edit link"
+                    :disabled="fetchingEditId !== null || fetchingDeleteId !== null" @click.stop="openEditDialog(url)">
                     <Pencil class="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>Edit</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger as-child>
+                  <Button variant="ghost" size="icon" aria-label="Delete link"
+                    class="text-destructive hover:text-destructive"
+                    :disabled="fetchingEditId !== null || fetchingDeleteId !== null"
+                    @click.stop="openDeleteDialog(url)">
+                    <Trash2 class="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Delete</TooltipContent>
               </Tooltip>
             </TooltipProvider>
             <ChevronUp v-if="expandedId === String(url.id)" class="h-4 w-4 text-muted-foreground" />

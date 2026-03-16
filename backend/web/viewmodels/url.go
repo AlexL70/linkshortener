@@ -88,3 +88,10 @@ type UpdateUrlResponseBody struct {
 	ExpiresAt   *time.Time `json:"expires_at,omitempty"`
 	LastUpdated time.Time  `json:"last_updated"`
 }
+
+// DeleteUrlInput is the Huma input for DELETE /user/urls/{id}.
+// LastUpdated is required for optimistic concurrency control.
+type DeleteUrlInput struct {
+	ID          int64     `path:"id"`
+	LastUpdated time.Time `query:"last_updated" required:"true"`
+}

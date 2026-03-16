@@ -77,8 +77,8 @@ func TestListUserUrls_ValidJWT_ReturnsURLs(t *testing.T) {
 	now := time.Now().Truncate(time.Second)
 	user := &bizmodels.User{ID: 1, UserName: "alice"}
 	urls := []*bizmodels.ShortenedUrl{
-		{ID: 10, UserID: 1, Shortcode: "aaa111", LongUrl: "https://a.com",  LastUpdated: now},
-		{ID: 11, UserID: 1, Shortcode: "bbb222", LongUrl: "https://b.com",  LastUpdated: now},
+		{ID: 10, UserID: 1, Shortcode: "aaa111", LongUrl: "https://a.com", LastUpdated: now},
+		{ID: 11, UserID: 1, Shortcode: "bbb222", LongUrl: "https://b.com", LastUpdated: now},
 	}
 
 	h := newUrlHandlerForTest(t, func(m *mocks.MockUrlRepository) {
@@ -272,7 +272,7 @@ func TestCreateUrl_ValidRequest_Returns201(t *testing.T) {
 	os.Setenv("APP_BASE_URL", "https://short.example.com")
 	now := time.Now().Truncate(time.Second)
 	user := &bizmodels.User{ID: 10, UserName: "alice"}
-	createdUrl := &bizmodels.ShortenedUrl{ID: 42, UserID: 10, Shortcode: "ab1234", LongUrl: "https://example.com",  LastUpdated: now}
+	createdUrl := &bizmodels.ShortenedUrl{ID: 42, UserID: 10, Shortcode: "ab1234", LongUrl: "https://example.com", LastUpdated: now}
 
 	h := newUrlHandlerForTest(t,
 		func(m *mocks.MockUrlRepository) {
@@ -305,7 +305,7 @@ func TestCreateUrl_CustomShortcode_Returns201(t *testing.T) {
 	os.Setenv("APP_BASE_URL", "https://short.example.com")
 	now := time.Now().Truncate(time.Second)
 	user := &bizmodels.User{ID: 11, UserName: "bob"}
-	createdUrl := &bizmodels.ShortenedUrl{ID: 43, UserID: 11, Shortcode: "my-sc1", LongUrl: "https://example.com",  LastUpdated: now}
+	createdUrl := &bizmodels.ShortenedUrl{ID: 43, UserID: 11, Shortcode: "my-sc1", LongUrl: "https://example.com", LastUpdated: now}
 
 	h := newUrlHandlerForTest(t,
 		func(m *mocks.MockUrlRepository) {
@@ -393,8 +393,8 @@ func TestUpdateUrl_ValidRequest_Returns200(t *testing.T) {
 	os.Setenv("APP_BASE_URL", "https://short.example.com")
 	now := time.Now().Truncate(time.Second)
 	user := &bizmodels.User{ID: 20, UserName: "alice"}
-	existing := &bizmodels.ShortenedUrl{ID: 5, UserID: 20, Shortcode: "old-sc", LongUrl: "https://old.com",  LastUpdated: now}
-	updatedUrl := &bizmodels.ShortenedUrl{ID: 5, UserID: 20, Shortcode: "old-sc", LongUrl: "https://new.com",  LastUpdated: now}
+	existing := &bizmodels.ShortenedUrl{ID: 5, UserID: 20, Shortcode: "old-sc", LongUrl: "https://old.com", LastUpdated: now}
+	updatedUrl := &bizmodels.ShortenedUrl{ID: 5, UserID: 20, Shortcode: "old-sc", LongUrl: "https://new.com", LastUpdated: now}
 
 	h := newUrlHandlerForTest(t,
 		func(m *mocks.MockUrlRepository) {
@@ -449,7 +449,7 @@ func TestUpdateUrl_NotFound_Returns404(t *testing.T) {
 func TestUpdateUrl_WrongOwner_Returns403(t *testing.T) {
 	now := time.Now().Truncate(time.Second)
 	user := &bizmodels.User{ID: 22, UserName: "carol"}
-	existing := &bizmodels.ShortenedUrl{ID: 6, UserID: 99, Shortcode: "abc123", LongUrl: "https://example.com",  LastUpdated: now}
+	existing := &bizmodels.ShortenedUrl{ID: 6, UserID: 99, Shortcode: "abc123", LongUrl: "https://example.com", LastUpdated: now}
 
 	h := newUrlHandlerForTest(t,
 		func(m *mocks.MockUrlRepository) {
@@ -475,7 +475,7 @@ func TestUpdateUrl_WrongOwner_Returns403(t *testing.T) {
 func TestUpdateUrl_InvalidUrl_Returns400(t *testing.T) {
 	now := time.Now().Truncate(time.Second)
 	user := &bizmodels.User{ID: 23, UserName: "dave"}
-	existing := &bizmodels.ShortenedUrl{ID: 7, UserID: 23, Shortcode: "abc123", LongUrl: "https://example.com",  LastUpdated: now}
+	existing := &bizmodels.ShortenedUrl{ID: 7, UserID: 23, Shortcode: "abc123", LongUrl: "https://example.com", LastUpdated: now}
 
 	h := newUrlHandlerForTest(t,
 		func(m *mocks.MockUrlRepository) {
@@ -514,7 +514,7 @@ func TestUpdateUrl_NilClaims_Returns401(t *testing.T) {
 func TestUpdateUrl_VersionConflict_Returns409(t *testing.T) {
 	now := time.Now().Truncate(time.Second)
 	user := &bizmodels.User{ID: 24, UserName: "eve"}
-	existing := &bizmodels.ShortenedUrl{ID: 8, UserID: 24, Shortcode: "abc123", LongUrl: "https://example.com",  LastUpdated: now}
+	existing := &bizmodels.ShortenedUrl{ID: 8, UserID: 24, Shortcode: "abc123", LongUrl: "https://example.com", LastUpdated: now}
 
 	h := newUrlHandlerForTest(t,
 		func(m *mocks.MockUrlRepository) {
@@ -537,4 +537,118 @@ func TestUpdateUrl_VersionConflict_Returns409(t *testing.T) {
 	newUrlTestRouter(h, bl).ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusConflict, w.Code)
+}
+
+// ── DELETE /user/urls/{id} (delete-shortened-url) ─────────────────────────────
+
+func TestDeleteUrl_NoAuth_Returns401(t *testing.T) {
+	h := newUrlHandlerForTest(t, nil, nil)
+	bl := routes.NewTokenBlacklist()
+
+	req := httptest.NewRequest(http.MethodDelete, "/user/urls/1?last_updated=2024-01-01T00:00:00Z", nil)
+	w := httptest.NewRecorder()
+
+	newUrlTestRouter(h, bl).ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusUnauthorized, w.Code)
+}
+
+func TestDeleteUrl_ValidRequest_Returns204(t *testing.T) {
+	now := time.Now().Truncate(time.Second)
+	user := &bizmodels.User{ID: 30, UserName: "alice"}
+
+	h := newUrlHandlerForTest(t,
+		func(m *mocks.MockUrlRepository) {
+			m.EXPECT().Delete(gomock.Any(), int64(10), int64(30), gomock.Any()).Return(nil)
+		},
+		nil,
+	)
+	bl := routes.NewTokenBlacklist()
+	token, err := routes.CreateJWT(user)
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodDelete, "/user/urls/10?last_updated="+now.UTC().Format(time.RFC3339), nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	w := httptest.NewRecorder()
+
+	newUrlTestRouter(h, bl).ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusNoContent, w.Code)
+}
+
+func TestDeleteUrl_NotFound_Returns404(t *testing.T) {
+	user := &bizmodels.User{ID: 31, UserName: "bob"}
+
+	h := newUrlHandlerForTest(t,
+		func(m *mocks.MockUrlRepository) {
+			m.EXPECT().Delete(gomock.Any(), int64(99), int64(31), gomock.Any()).Return(businesslogic.ErrNotFound)
+		},
+		nil,
+	)
+	bl := routes.NewTokenBlacklist()
+	token, err := routes.CreateJWT(user)
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodDelete, "/user/urls/99?last_updated=2024-01-01T00:00:00Z", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	w := httptest.NewRecorder()
+
+	newUrlTestRouter(h, bl).ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusNotFound, w.Code)
+}
+
+func TestDeleteUrl_VersionConflict_Returns409(t *testing.T) {
+	user := &bizmodels.User{ID: 32, UserName: "carol"}
+
+	h := newUrlHandlerForTest(t,
+		func(m *mocks.MockUrlRepository) {
+			m.EXPECT().Delete(gomock.Any(), int64(5), int64(32), gomock.Any()).Return(businesslogic.ErrVersionConflict)
+		},
+		nil,
+	)
+	bl := routes.NewTokenBlacklist()
+	token, err := routes.CreateJWT(user)
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodDelete, "/user/urls/5?last_updated=2024-01-01T00:00:00Z", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	w := httptest.NewRecorder()
+
+	newUrlTestRouter(h, bl).ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusConflict, w.Code)
+}
+
+func TestDeleteUrl_NilClaims_Returns401(t *testing.T) {
+	h := newUrlHandlerForTest(t, nil, nil)
+
+	req := httptest.NewRequest(http.MethodDelete, "/user/urls/1?last_updated=2024-01-01T00:00:00Z", nil)
+	w := httptest.NewRecorder()
+
+	newUrlTestRouterNoAuth(h).ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusUnauthorized, w.Code)
+}
+
+func TestDeleteUrl_RepoError_Returns500(t *testing.T) {
+	user := &bizmodels.User{ID: 33, UserName: "dave"}
+
+	h := newUrlHandlerForTest(t,
+		func(m *mocks.MockUrlRepository) {
+			m.EXPECT().Delete(gomock.Any(), int64(7), int64(33), gomock.Any()).Return(errors.New("db failure"))
+		},
+		nil,
+	)
+	bl := routes.NewTokenBlacklist()
+	token, err := routes.CreateJWT(user)
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodDelete, "/user/urls/7?last_updated=2024-01-01T00:00:00Z", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	w := httptest.NewRecorder()
+
+	newUrlTestRouter(h, bl).ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
 }

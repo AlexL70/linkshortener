@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humagin"
@@ -102,6 +103,10 @@ func (stubUrlRepo) Create(_ context.Context, _ *bizmodels.ShortenedUrl) (*bizmod
 
 func (stubUrlRepo) Update(_ context.Context, _ *bizmodels.ShortenedUrl) (*bizmodels.ShortenedUrl, error) {
 	return nil, nil
+}
+
+func (stubUrlRepo) Delete(_ context.Context, _, _ int64, _ time.Time) error {
+	return nil
 }
 
 var _ bizinterfaces.UrlRepository = stubUrlRepo{}

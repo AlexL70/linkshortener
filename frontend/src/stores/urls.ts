@@ -26,6 +26,8 @@ export const useUrlsStore = defineStore('urls', () => {
   const createError = ref<string | null>(null)
   const updating = ref(false)
   const updateError = ref<string | null>(null)
+  const deleting = ref(false)
+  const deleteError = ref<string | null>(null)
 
   async function fetchUrls(requestedPage = 1, requestedPageSize = 0) {
     loading.value = true
@@ -70,7 +72,7 @@ export const useUrlsStore = defineStore('urls', () => {
     creating.value = true
     createError.value = null
     try {
-      const response = await DefaultService.createUrl({
+      const response = await DefaultService.createShortenedUrl({
         requestBody: {
           long_url: params.longUrl,
           shortcode: params.shortcode,
@@ -110,7 +112,7 @@ export const useUrlsStore = defineStore('urls', () => {
       await fetchUrls(page.value, pageSize.value > 0 ? pageSize.value : undefined)
     }
     try {
-      const response = await DefaultService.updateUrl({
+      const response = await DefaultService.updateShortenedUrl({
         id: params.id,
         requestBody: {
           long_url: params.longUrl,
@@ -147,6 +149,43 @@ export const useUrlsStore = defineStore('urls', () => {
     updateError.value = null
   }
 
+  async function deleteUrl(id: number, lastUpdated: string): Promise<boolean> {
+    deleting.value = true
+    deleteError.value = null
+    const onVersionConflict = async () => {
+      deleteError.value = 'This item was recently changed by someone else. Please refresh and try again.'
+      await fetchUrls(page.value, pageSize.value > 0 ? pageSize.value : undefined)
+    }
+    try {
+      const response = await DefaultService.deleteShortenedUrl({ id, lastUpdated })
+      if (response && 'status' in response && typeof (response as { status: number }).status === 'number') {
+        const errResponse = response as { status: number; title?: string }
+        if (errResponse.status === 409) {
+          await onVersionConflict()
+        } else {
+          deleteError.value = errResponse.title ?? 'Failed to delete URL'
+        }
+        return false
+      }
+      await fetchUrls(page.value, pageSize.value > 0 ? pageSize.value : undefined)
+      return true
+    } catch (err) {
+      console.error('deleteUrl: request failed', err)
+      if (err instanceof ApiError && err.status === 409) {
+        await onVersionConflict()
+      } else {
+        deleteError.value = 'An unexpected error occurred while deleting your URL.'
+      }
+      return false
+    } finally {
+      deleting.value = false
+    }
+  }
+
+  function clearDeleteError() {
+    deleteError.value = null
+  }
+
   async function refreshItems() {
     try {
       const response = await DefaultService.listUserUrls({
@@ -166,5 +205,5 @@ export const useUrlsStore = defineStore('urls', () => {
     }
   }
 
-  return { items, total, page, pageSize, loading, error, creating, createError, updating, updateError, fetchUrls, reset, createUrl, clearCreateError, updateUrl, clearUpdateError, refreshItems }
+  return { items, total, page, pageSize, loading, error, creating, createError, updating, updateError, deleting, deleteError, fetchUrls, reset, createUrl, clearCreateError, updateUrl, clearUpdateError, deleteUrl, clearDeleteError, refreshItems }
 })

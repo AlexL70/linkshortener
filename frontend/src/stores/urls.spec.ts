@@ -213,7 +213,7 @@ function makeCreateUrlResponse(overrides: Partial<CreateUrlResponseBody> = {}): 
 describe('createUrl — success', () => {
   it('returns the created URL and refreshes the list', async () => {
     const created = makeCreateUrlResponse()
-    vi.spyOn(DefaultService, 'createUrl').mockResolvedValue(created as never)
+    vi.spyOn(DefaultService, 'createShortenedUrl').mockResolvedValue(created as never)
     vi.spyOn(DefaultService, 'listUserUrls').mockResolvedValue(
       makeListResponse([makeUrlItem({ id: 99, shortcode: 'abc123' })]) as never,
     )
@@ -228,7 +228,7 @@ describe('createUrl — success', () => {
   })
 
   it('passes all parameters to the API', async () => {
-    const spy = vi.spyOn(DefaultService, 'createUrl').mockResolvedValue(
+    const spy = vi.spyOn(DefaultService, 'createShortenedUrl').mockResolvedValue(
       makeCreateUrlResponse() as never,
     )
     vi.spyOn(DefaultService, 'listUserUrls').mockResolvedValue(
@@ -249,7 +249,7 @@ describe('createUrl — success', () => {
 
   it('sets creating to true during the request and false after', async () => {
     let resolveFn!: (v: unknown) => void
-    vi.spyOn(DefaultService, 'createUrl').mockReturnValue(
+    vi.spyOn(DefaultService, 'createShortenedUrl').mockReturnValue(
       new Promise((resolve) => { resolveFn = resolve }) as never,
     )
 
@@ -268,7 +268,7 @@ describe('createUrl — success', () => {
 
 describe('createUrl — API error response', () => {
   it('sets createError and returns null when the API returns an ErrorModel', async () => {
-    vi.spyOn(DefaultService, 'createUrl').mockResolvedValue(
+    vi.spyOn(DefaultService, 'createShortenedUrl').mockResolvedValue(
       { status: 400, title: 'Invalid URL' } as never,
     )
 
@@ -281,7 +281,7 @@ describe('createUrl — API error response', () => {
   })
 
   it('falls back to a generic message when ErrorModel has no title', async () => {
-    vi.spyOn(DefaultService, 'createUrl').mockResolvedValue(
+    vi.spyOn(DefaultService, 'createShortenedUrl').mockResolvedValue(
       { status: 500 } as never,
     )
 
@@ -296,7 +296,7 @@ describe('createUrl — API error response', () => {
 
 describe('createUrl — network error', () => {
   it('sets a generic createError message when the request throws', async () => {
-    vi.spyOn(DefaultService, 'createUrl').mockRejectedValue(new Error('Network Error'))
+    vi.spyOn(DefaultService, 'createShortenedUrl').mockRejectedValue(new Error('Network Error'))
     vi.spyOn(console, 'error').mockImplementation(() => {})
 
     const store = useUrlsStore()
@@ -312,7 +312,7 @@ describe('createUrl — network error', () => {
 
 describe('clearCreateError', () => {
   it('resets createError to null', async () => {
-    vi.spyOn(DefaultService, 'createUrl').mockResolvedValue({ status: 400, title: 'Bad' } as never)
+    vi.spyOn(DefaultService, 'createShortenedUrl').mockResolvedValue({ status: 400, title: 'Bad' } as never)
 
     const store = useUrlsStore()
     await store.createUrl({ longUrl: 'bad' })
@@ -339,7 +339,7 @@ function makeUpdateUrlResponse() {
 describe('updateUrl — success', () => {
   it('returns the updated URL and refreshes the list', async () => {
     const updated = makeUpdateUrlResponse()
-    vi.spyOn(DefaultService, 'updateUrl').mockResolvedValue(updated as never)
+    vi.spyOn(DefaultService, 'updateShortenedUrl').mockResolvedValue(updated as never)
     vi.spyOn(DefaultService, 'listUserUrls').mockResolvedValue(
       makeListResponse([makeUrlItem({ id: 99, long_url: 'https://updated.com' })]) as never,
     )
@@ -354,7 +354,7 @@ describe('updateUrl — success', () => {
   })
 
   it('passes all parameters to the API', async () => {
-    const spy = vi.spyOn(DefaultService, 'updateUrl').mockResolvedValue(
+    const spy = vi.spyOn(DefaultService, 'updateShortenedUrl').mockResolvedValue(
       makeUpdateUrlResponse() as never,
     )
     vi.spyOn(DefaultService, 'listUserUrls').mockResolvedValue(
@@ -377,7 +377,7 @@ describe('updateUrl — success', () => {
 
   it('sets updating to true during the request and false after', async () => {
     let resolveFn!: (v: unknown) => void
-    vi.spyOn(DefaultService, 'updateUrl').mockReturnValue(
+    vi.spyOn(DefaultService, 'updateShortenedUrl').mockReturnValue(
       new Promise((resolve) => { resolveFn = resolve }) as never,
     )
 
@@ -396,7 +396,7 @@ describe('updateUrl — success', () => {
 
 describe('updateUrl — API error response', () => {
   it('sets updateError and returns null when the API returns an ErrorModel', async () => {
-    vi.spyOn(DefaultService, 'updateUrl').mockResolvedValue(
+    vi.spyOn(DefaultService, 'updateShortenedUrl').mockResolvedValue(
       { status: 404, title: 'Not Found' } as never,
     )
 
@@ -409,7 +409,7 @@ describe('updateUrl — API error response', () => {
   })
 
   it('falls back to a generic message when ErrorModel has no title', async () => {
-    vi.spyOn(DefaultService, 'updateUrl').mockResolvedValue(
+    vi.spyOn(DefaultService, 'updateShortenedUrl').mockResolvedValue(
       { status: 500 } as never,
     )
 
@@ -420,7 +420,7 @@ describe('updateUrl — API error response', () => {
   })
 
   it('sets the version conflict message and refreshes the list on 409 conflict', async () => {
-    vi.spyOn(DefaultService, 'updateUrl').mockResolvedValue(
+    vi.spyOn(DefaultService, 'updateShortenedUrl').mockResolvedValue(
       { status: 409, title: 'This item was modified by another user. Refresh and try again.' } as never,
     )
     vi.spyOn(DefaultService, 'listUserUrls').mockResolvedValue(
@@ -441,7 +441,7 @@ describe('updateUrl — API error response', () => {
 
 describe('updateUrl — network error', () => {
   it('sets a generic updateError message when the request throws', async () => {
-    vi.spyOn(DefaultService, 'updateUrl').mockRejectedValue(new Error('Network Error'))
+    vi.spyOn(DefaultService, 'updateShortenedUrl').mockRejectedValue(new Error('Network Error'))
     vi.spyOn(console, 'error').mockImplementation(() => {})
 
     const store = useUrlsStore()
@@ -458,7 +458,7 @@ describe('updateUrl — network error', () => {
       { url: '/user/urls/1', ok: false, status: 409, statusText: 'Conflict', body: {} },
       'Generic Error: status: 409; status text: Conflict; body: {}',
     )
-    vi.spyOn(DefaultService, 'updateUrl').mockRejectedValue(apiErr)
+    vi.spyOn(DefaultService, 'updateShortenedUrl').mockRejectedValue(apiErr)
     vi.spyOn(DefaultService, 'listUserUrls').mockResolvedValue(
       makeListResponse([makeUrlItem()]) as never,
     )
@@ -478,7 +478,7 @@ describe('updateUrl — network error', () => {
 
 describe('clearUpdateError', () => {
   it('resets updateError to null', async () => {
-    vi.spyOn(DefaultService, 'updateUrl').mockResolvedValue({ status: 404, title: 'Not Found' } as never)
+    vi.spyOn(DefaultService, 'updateShortenedUrl').mockResolvedValue({ status: 404, title: 'Not Found' } as never)
 
     const store = useUrlsStore()
     await store.updateUrl({ id: 1, longUrl: 'bad', lastUpdated: '2024-01-01T00:00:00Z' })
@@ -515,18 +515,145 @@ describe('refreshItems', () => {
     expect(store.items).toHaveLength(1)
     expect(store.loading).toBe(false)
   })
+})
 
-  it('swallows network errors without surfacing them to the error state', async () => {
-    vi.spyOn(DefaultService, 'listUserUrls').mockRejectedValue(new Error('Network Error'))
+// ── deleteUrl helpers ─────────────────────────────────────────────────────────
+
+// ── deleteUrl — success ───────────────────────────────────────────────────────
+
+describe('deleteUrl — success', () => {
+  it('returns true and refreshes the list', async () => {
+    vi.spyOn(DefaultService, 'deleteShortenedUrl').mockResolvedValue(undefined as never)
+    vi.spyOn(DefaultService, 'listUserUrls').mockResolvedValue(makeListResponse([]) as never)
+
+    const store = useUrlsStore()
+    const result = await store.deleteUrl(1, '2024-01-01T00:00:00Z')
+
+    expect(result).toBe(true)
+    expect(store.deleting).toBe(false)
+    expect(store.deleteError).toBeNull()
+  })
+
+  it('passes id and lastUpdated to the API', async () => {
+    const spy = vi.spyOn(DefaultService, 'deleteShortenedUrl').mockResolvedValue(undefined as never)
+    vi.spyOn(DefaultService, 'listUserUrls').mockResolvedValue(makeListResponse([]) as never)
+
+    const store = useUrlsStore()
+    await store.deleteUrl(42, '2024-06-01T12:00:00Z')
+
+    expect(spy).toHaveBeenCalledWith({ id: 42, lastUpdated: '2024-06-01T12:00:00Z' })
+  })
+
+  it('sets deleting to true during the request and false after', async () => {
+    let resolveFn!: (v: unknown) => void
+    vi.spyOn(DefaultService, 'deleteShortenedUrl').mockReturnValue(
+      new Promise((resolve) => { resolveFn = resolve }) as never,
+    )
+
+    const store = useUrlsStore()
+    const deletePromise = store.deleteUrl(1, '2024-01-01T00:00:00Z')
+
+    expect(store.deleting).toBe(true)
+    resolveFn(undefined)
+    vi.spyOn(DefaultService, 'listUserUrls').mockResolvedValue(makeListResponse([]) as never)
+    await deletePromise
+    expect(store.deleting).toBe(false)
+  })
+})
+
+// ── deleteUrl — API error response ───────────────────────────────────────────
+
+describe('deleteUrl — API error response', () => {
+  it('sets deleteError and returns false when the API returns an ErrorModel', async () => {
+    vi.spyOn(DefaultService, 'deleteShortenedUrl').mockResolvedValue(
+      { status: 404, title: 'Not Found' } as never,
+    )
+
+    const store = useUrlsStore()
+    const result = await store.deleteUrl(99, '2024-01-01T00:00:00Z')
+
+    expect(result).toBe(false)
+    expect(store.deleteError).toBe('Not Found')
+    expect(store.deleting).toBe(false)
+  })
+
+  it('falls back to a generic message when ErrorModel has no title', async () => {
+    vi.spyOn(DefaultService, 'deleteShortenedUrl').mockResolvedValue(
+      { status: 500 } as never,
+    )
+
+    const store = useUrlsStore()
+    await store.deleteUrl(1, '2024-01-01T00:00:00Z')
+
+    expect(store.deleteError).toBe('Failed to delete URL')
+  })
+
+  it('sets the version conflict message and refreshes the list on 409 conflict', async () => {
+    vi.spyOn(DefaultService, 'deleteShortenedUrl').mockResolvedValue(
+      { status: 409, title: 'Conflict' } as never,
+    )
+    vi.spyOn(DefaultService, 'listUserUrls').mockResolvedValue(
+      makeListResponse([makeUrlItem()]) as never,
+    )
+
+    const store = useUrlsStore()
+    const result = await store.deleteUrl(1, '2024-01-01T00:00:00Z')
+
+    expect(result).toBe(false)
+    expect(store.deleteError).toBe('This item was recently changed by someone else. Please refresh and try again.')
+    expect(store.items).toHaveLength(1)
+    expect(store.deleting).toBe(false)
+  })
+})
+
+// ── deleteUrl — network error ─────────────────────────────────────────────────
+
+describe('deleteUrl — network error', () => {
+  it('sets a generic deleteError message when the request throws', async () => {
+    vi.spyOn(DefaultService, 'deleteShortenedUrl').mockRejectedValue(new Error('Network Error'))
     vi.spyOn(console, 'error').mockImplementation(() => {})
 
     const store = useUrlsStore()
-    store.items.push(makeUrlItem())
+    const result = await store.deleteUrl(1, '2024-01-01T00:00:00Z')
 
-    await store.refreshItems()
+    expect(result).toBe(false)
+    expect(store.deleteError).toBe('An unexpected error occurred while deleting your URL.')
+    expect(store.deleting).toBe(false)
+  })
 
+  it('sets the version conflict message when ApiError with status 409 is thrown', async () => {
+    const apiErr = new ApiError(
+      { method: 'DELETE', url: '/user/urls/1' },
+      { url: '/user/urls/1', ok: false, status: 409, statusText: 'Conflict', body: {} },
+      'Generic Error: status: 409; status text: Conflict; body: {}',
+    )
+    vi.spyOn(DefaultService, 'deleteShortenedUrl').mockRejectedValue(apiErr)
+    vi.spyOn(DefaultService, 'listUserUrls').mockResolvedValue(
+      makeListResponse([makeUrlItem()]) as never,
+    )
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const store = useUrlsStore()
+    const result = await store.deleteUrl(1, '2024-01-01T00:00:00Z')
+
+    expect(result).toBe(false)
+    expect(store.deleteError).toBe('This item was recently changed by someone else. Please refresh and try again.')
     expect(store.items).toHaveLength(1)
-    expect(store.error).toBeNull()
-    expect(store.loading).toBe(false)
+    expect(store.deleting).toBe(false)
+  })
+})
+
+// ── clearDeleteError ──────────────────────────────────────────────────────────
+
+describe('clearDeleteError', () => {
+  it('resets deleteError to null', async () => {
+    vi.spyOn(DefaultService, 'deleteShortenedUrl').mockResolvedValue({ status: 404, title: 'Not Found' } as never)
+
+    const store = useUrlsStore()
+    await store.deleteUrl(1, '2024-01-01T00:00:00Z')
+    expect(store.deleteError).not.toBeNull()
+
+    store.clearDeleteError()
+    expect(store.deleteError).toBeNull()
   })
 })

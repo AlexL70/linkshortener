@@ -3,9 +3,14 @@
 /* tslint:disable */
 /* eslint-disable */
 export type CreateUrlResponseBody = {
-  id: number
-  shortcode: string
-  long_url: string
-  short_url: string
-  expires_at?: string
-}
+    /**
+     * A URL to the JSON Schema for this object.
+     */
+    readonly $schema?: string;
+    expires_at?: string;
+    id: number;
+    long_url: string;
+    short_url: string;
+    shortcode: string;
+};
+

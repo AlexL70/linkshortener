@@ -3,7 +3,12 @@
 /* tslint:disable */
 /* eslint-disable */
 export type CreateUrlRequestBody = {
-  long_url: string
-  shortcode?: string
-  expires_at?: string
-}
+    /**
+     * A URL to the JSON Schema for this object.
+     */
+    readonly $schema?: string;
+    expires_at?: string;
+    long_url: string;
+    shortcode?: string;
+};
+

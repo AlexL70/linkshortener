@@ -2,6 +2,7 @@ package interfaces
 
 import (
 	"context"
+	"time"
 
 	bizmodels "github.com/AlexL70/linkshortener/backend/business-logic/models"
 )
@@ -20,4 +21,10 @@ type UrlRepository interface {
 
 	// Update persists changes to an existing shortened URL and returns the updated record.
 	Update(ctx context.Context, url *bizmodels.ShortenedUrl) (*bizmodels.ShortenedUrl, error)
+
+	// Delete removes the shortened URL with the given ID when it is owned by userID and
+	// its updated_at timestamp matches lastUpdated (optimistic concurrency check).
+	// Returns ErrNotFound if the record does not exist and ErrVersionConflict if it was
+	// modified since lastUpdated.
+	Delete(ctx context.Context, id, userID int64, lastUpdated time.Time) error
 }
