@@ -4,15 +4,16 @@ This file contains coding standards, conventions, and constraints that all AI ag
 
 ### Topic-specific instruction files
 
-| File                                                                             | Scope      | Description                                                                              |
-| -------------------------------------------------------------------------------- | ---------- | ---------------------------------------------------------------------------------------- |
-| [ai-instructions/app-auth.md](ai-instructions/app-auth.md)                       | Full-stack | Authentication: OAuth2/OIDC providers, JWT, route guards, sign-in modal UX               |
-| [ai-instructions/app-environment.md](ai-instructions/app-environment.md)         | Full-stack | Environment variables: loading algorithm, LINKSHORTENER_ENV, config validation           |
-| [ai-instructions/frontend-components.md](ai-instructions/frontend-components.md) | Frontend   | UI components: shadcn/vue-only policy, no custom components without explicit instruction |
-| [ai-instructions/frontend-ui-ux.md](ai-instructions/frontend-ui-ux.md)           | Frontend   | UI/UX design: consistency, accessibility, responsiveness, navigation, visual hierarchy   |
-| [ai-instructions/backend-dblayer.md](ai-instructions/backend-dblayer.md)         | Backend    | DB layer: Bun ORM, models, migrations, repositories, mappings, click batching            |
-| [ai-instructions/backend-business.md](ai-instructions/backend-business.md)       | Backend    | Business logic: models, interfaces, handlers, viewmodels, mappers, URL shortening rules  |
-| [ai-instructions/backend-web.md](ai-instructions/backend-web.md)                 | Backend    | Web layer: Huma registration, viewmodels, mappers, error translation, no business logic  |
+| File                                                                               | Scope      | Description                                                                                                |
+| ---------------------------------------------------------------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------- |
+| [ai-instructions/app-auth.md](ai-instructions/app-auth.md)                         | Full-stack | Authentication: OAuth2/OIDC providers, JWT, route guards, sign-in modal UX                                 |
+| [ai-instructions/app-environment.md](ai-instructions/app-environment.md)           | Full-stack | Environment variables: loading algorithm, LINKSHORTENER_ENV, config validation                             |
+| [ai-instructions/app-locking-strategy.md](ai-instructions/app-locking-strategy.md) | Full-stack | Optimistic concurrency control: LastUpdated field, atomic OCC check, ErrVersionConflict, frontend handling |
+| [ai-instructions/frontend-components.md](ai-instructions/frontend-components.md)   | Frontend   | UI components: shadcn/vue-only policy, no custom components without explicit instruction                   |
+| [ai-instructions/frontend-ui-ux.md](ai-instructions/frontend-ui-ux.md)             | Frontend   | UI/UX design: consistency, accessibility, responsiveness, navigation, visual hierarchy                     |
+| [ai-instructions/backend-dblayer.md](ai-instructions/backend-dblayer.md)           | Backend    | DB layer: Bun ORM, models, migrations, repositories, mappings, click batching                              |
+| [ai-instructions/backend-business.md](ai-instructions/backend-business.md)         | Backend    | Business logic: models, interfaces, handlers, viewmodels, mappers, URL shortening rules                    |
+| [ai-instructions/backend-web.md](ai-instructions/backend-web.md)                   | Backend    | Web layer: Huma registration, viewmodels, mappers, error translation, no business logic                    |
 
 !!!CRITICAL "Important"!!!
 **All agents must adhere to these instructions without exception.** Whenever you do any development of new features, bug fixes, refactoring, or any other code changes, you MUST check .md files in the `/ai-instructions/` directory for any relevant guidelines. If you find there any rules relevant to the task you are doing, you MUST follow them as well as the general rules in this file. If you find any contradictions between different instruction files, you MUST report them immediately and start a discussion about how to handle the situation. If you are unsure about any rule or how to apply it, you MUST ask for clarification before proceeding.
