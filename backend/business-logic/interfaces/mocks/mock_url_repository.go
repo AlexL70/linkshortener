@@ -110,3 +110,18 @@ func (mr *MockUrlRepositoryMockRecorder) Update(ctx, url interface{}) *gomock.Ca
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockUrlRepository)(nil).Update), ctx, url)
 }
+
+// FindByShortcode mocks base method.
+func (m *MockUrlRepository) FindByShortcode(ctx context.Context, shortcode string) (*models.ShortenedUrl, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindByShortcode", ctx, shortcode)
+	ret0, _ := ret[0].(*models.ShortenedUrl)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindByShortcode indicates an expected call of FindByShortcode.
+func (mr *MockUrlRepositoryMockRecorder) FindByShortcode(ctx, shortcode interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByShortcode", reflect.TypeOf((*MockUrlRepository)(nil).FindByShortcode), ctx, shortcode)
+}

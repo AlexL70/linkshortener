@@ -157,3 +157,19 @@ func (r *urlRepository) exists(ctx context.Context, id int64) (bool, error) {
 	}
 	return count > 0, nil
 }
+
+func (r *urlRepository) FindByShortcode(ctx context.Context, shortcode string) (*bizmodels.ShortenedUrl, error) {
+	db := new(pgmodels.ShortenedUrl)
+	err := r.db.NewSelect().
+		Model(db).
+		Column("su.id", "su.user_id", "su.shortcode", "su.long_url", "su.expires_at", "su.created_at", "su.updated_at").
+		Where("su.shortcode = ?", shortcode).
+		Scan(ctx)
+	if err != nil {
+		if isNotFound(err) {
+			return nil, fmt.Errorf("UrlRepository.FindByShortcode: %w", businesslogic.ErrNotFound)
+		}
+		return nil, fmt.Errorf("UrlRepository.FindByShortcode: %w", err)
+	}
+	return pgmappings.ShortenedUrlToBusinessModel(db), nil
+}

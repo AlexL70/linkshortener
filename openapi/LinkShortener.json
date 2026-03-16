@@ -417,6 +417,46 @@
         "summary": "Complete new-user registration after OAuth callback"
       }
     },
+    "/r/{shortcode}": {
+      "get": {
+        "operationId": "redirect-shortcode",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "shortcode",
+            "required": true,
+            "schema": {
+              "maxLength": 6,
+              "minLength": 1,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Found",
+            "headers": {
+              "Location": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Redirect to the long URL for a given shortcode"
+      }
+    },
     "/user/urls": {
       "get": {
         "operationId": "list-user-urls",

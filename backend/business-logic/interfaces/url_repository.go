@@ -27,4 +27,8 @@ type UrlRepository interface {
 	// Returns ErrNotFound if the record does not exist and ErrVersionConflict if it was
 	// modified since lastUpdated.
 	Delete(ctx context.Context, id, userID int64, lastUpdated time.Time) error
+
+	// FindByShortcode returns the shortened URL matching the given shortcode,
+	// or ErrNotFound if no such record exists.
+	FindByShortcode(ctx context.Context, shortcode string) (*bizmodels.ShortenedUrl, error)
 }

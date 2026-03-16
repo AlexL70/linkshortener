@@ -47,6 +47,7 @@ func main() {
 	urlHandler := handlers.NewUrlHandler(stubUrlRepo{}, stubShortcodeGenerator{}, 2048, 6, 6, 10)
 	routes.RegisterAuthRoutes(router, api, authHandler, routes.NewTokenBlacklist())
 	routes.RegisterUrlRoutes(api, urlHandler)
+	routes.RegisterRedirectRoute(router, api, urlHandler)
 
 	specBytes, err := json.MarshalIndent(api.OpenAPI(), "", "  ")
 	if err != nil {
@@ -107,6 +108,10 @@ func (stubUrlRepo) Update(_ context.Context, _ *bizmodels.ShortenedUrl) (*bizmod
 
 func (stubUrlRepo) Delete(_ context.Context, _, _ int64, _ time.Time) error {
 	return nil
+}
+
+func (stubUrlRepo) FindByShortcode(_ context.Context, _ string) (*bizmodels.ShortenedUrl, error) {
+	return nil, nil
 }
 
 var _ bizinterfaces.UrlRepository = stubUrlRepo{}

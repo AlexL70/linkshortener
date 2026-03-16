@@ -95,7 +95,7 @@ New providers (GitHub, Apple, LinkedIn, etc.) can be added by:
 - Adding new login button to frontend
 - No database schema changes required (already supports unlimited providers per user)
 
-## 2. Database (PostgreSQL): Schema
+## 2. Database (PostgreSQL 18.3): Schema
 
 - **Users Table:**
   - `id` (SERIAL PRIMARY KEY)
@@ -229,9 +229,9 @@ maxConcurrent := os.Getenv("MAX_CONCURRENT_REQUESTS")  // default: 100
 engine.Use(limiter.Middleware(maxConcurrent))
 ```
 
-### PostgreSQL Configuration (1-2GB RAM)
+### PostgreSQL Configuration (PostgreSQL 18.3, 1-2GB RAM)
 
-Add to `postgresql.conf`:
+Apply via docker-compose command arguments or `postgresql.conf`:
 
 ```ini
 # Memory Settings (total ~800MB for 4GB system)
@@ -260,9 +260,8 @@ log_connections = off               # Disable connection logging
 # Temp Files
 temp_file_limit = 1GB               # Prevent runaway query temp files
 
-# Autovacuum (aggressive for small datasets)
+# Autovacuum
 autovacuum = on
-autovacuum_min_maint_tuples = 50
 ```
 
 ### Application-Level Optimizations

@@ -388,3 +388,34 @@ func TestUpdate_DeletedBeforeUpdate_ReturnsNotFound(t *testing.T) {
 	require.Error(t, err)
 	assert.ErrorIs(t, err, businesslogic.ErrNotFound)
 }
+
+// ── FindByShortcode ───────────────────────────────────────────────────────────
+
+func TestFindByShortcode_Success(t *testing.T) {
+	db := testutil.OpenTestDB(t)
+
+	ctx := context.Background()
+	userRepo := repositories.NewUserRepository(db)
+	up := &bizmodels.UserProvider{Provider: bizmodels.ProviderGoogle, ProviderUserID: "fbs-sub-1", ProviderEmail: "fbs1@example.com"}
+	user, err := userRepo.CreateUserWithProvider(ctx, "fbsuser1", up)
+	require.NoError(t, err)
+
+	insertTestURL(t, db, user.ID, "find01", "https://findme.com")
+
+	urlRepo := repositories.NewUrlRepository(db)
+	got, err := urlRepo.FindByShortcode(ctx, "find01")
+	require.NoError(t, err)
+	assert.Equal(t, "find01", got.Shortcode)
+	assert.Equal(t, "https://findme.com", got.LongUrl)
+	assert.Equal(t, user.ID, got.UserID)
+}
+
+func TestFindByShortcode_NotFound_ReturnsErrNotFound(t *testing.T) {
+	db := testutil.OpenTestDB(t)
+	ctx := context.Background()
+
+	urlRepo := repositories.NewUrlRepository(db)
+	_, err := urlRepo.FindByShortcode(ctx, "none99")
+	require.Error(t, err)
+	assert.ErrorIs(t, err, businesslogic.ErrNotFound)
+}

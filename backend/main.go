@@ -84,6 +84,7 @@ func main() {
 
 	routes.RegisterAuthRoutes(router, api, authHandler, blacklist)
 	routes.RegisterUrlRoutes(api, urlHandler)
+	routes.RegisterRedirectRoute(router, api, urlHandler)
 
 	port := os.Getenv("PORT")
 	slog.Info("starting server", "port", port)

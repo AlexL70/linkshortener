@@ -150,3 +150,19 @@ func (h *UrlHandler) DeleteUrl(ctx context.Context, urlID, userID int64, lastUpd
 	}
 	return nil
 }
+
+// ResolveShortcode looks up a URL by its shortcode and checks whether it has expired.
+// Returns ErrNotFound if the shortcode does not exist and ErrExpired if the link has expired.
+func (h *UrlHandler) ResolveShortcode(ctx context.Context, shortcode string) (*bizmodels.ShortenedUrl, error) {
+	url, err := h.urls.FindByShortcode(ctx, shortcode)
+	if err != nil {
+		return nil, fmt.Errorf("UrlHandler.ResolveShortcode: %w", err)
+	}
+
+	if url.ExpiresAt != nil && url.ExpiresAt.Before(time.Now()) {
+		slog.InfoContext(ctx, "redirect: link has expired", "shortcode", shortcode, "url_id", url.ID, "expires_at", url.ExpiresAt)
+		return nil, fmt.Errorf("UrlHandler.ResolveShortcode: %w", businesslogic.ErrExpired)
+	}
+
+	return url, nil
+}

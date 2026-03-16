@@ -390,3 +390,66 @@ func TestDeleteUrl_RepoError_Wraps(t *testing.T) {
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "db connection lost")
 }
+
+// ── ResolveShortcode ──────────────────────────────────────────────────────────
+
+func TestResolveShortcode_Success(t *testing.T) {
+	h, repo, _ := newUrlHandler(t)
+	ctx := context.Background()
+	future := time.Now().Add(24 * time.Hour)
+	want := &bizmodels.ShortenedUrl{ID: 1, UserID: 5, Shortcode: "abc123", LongUrl: "https://example.com", ExpiresAt: &future}
+
+	repo.EXPECT().FindByShortcode(ctx, "abc123").Return(want, nil)
+
+	got, err := h.ResolveShortcode(ctx, "abc123")
+	require.NoError(t, err)
+	assert.Equal(t, want, got)
+}
+
+func TestResolveShortcode_NoExpiry_Success(t *testing.T) {
+	h, repo, _ := newUrlHandler(t)
+	ctx := context.Background()
+	want := &bizmodels.ShortenedUrl{ID: 2, UserID: 5, Shortcode: "noexp1", LongUrl: "https://example.com"}
+
+	repo.EXPECT().FindByShortcode(ctx, "noexp1").Return(want, nil)
+
+	got, err := h.ResolveShortcode(ctx, "noexp1")
+	require.NoError(t, err)
+	assert.Equal(t, want, got)
+}
+
+func TestResolveShortcode_NotFound_ReturnsNotFound(t *testing.T) {
+	h, repo, _ := newUrlHandler(t)
+	ctx := context.Background()
+
+	repo.EXPECT().FindByShortcode(ctx, "unknwn").Return(nil, businesslogic.ErrNotFound)
+
+	_, err := h.ResolveShortcode(ctx, "unknwn")
+	require.Error(t, err)
+	assert.ErrorIs(t, err, businesslogic.ErrNotFound)
+}
+
+func TestResolveShortcode_Expired_ReturnsExpired(t *testing.T) {
+	h, repo, _ := newUrlHandler(t)
+	ctx := context.Background()
+	past := time.Now().Add(-1 * time.Hour)
+	url := &bizmodels.ShortenedUrl{ID: 3, UserID: 5, Shortcode: "exprd1", LongUrl: "https://example.com", ExpiresAt: &past}
+
+	repo.EXPECT().FindByShortcode(ctx, "exprd1").Return(url, nil)
+
+	_, err := h.ResolveShortcode(ctx, "exprd1")
+	require.Error(t, err)
+	assert.ErrorIs(t, err, businesslogic.ErrExpired)
+}
+
+func TestResolveShortcode_RepoError_Wraps(t *testing.T) {
+	h, repo, _ := newUrlHandler(t)
+	ctx := context.Background()
+	dbErr := errors.New("db connection lost")
+
+	repo.EXPECT().FindByShortcode(ctx, "abc123").Return(nil, dbErr)
+
+	_, err := h.ResolveShortcode(ctx, "abc123")
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "db connection lost")
+}

@@ -95,3 +95,8 @@ type DeleteUrlInput struct {
 	ID          int64     `path:"id"`
 	LastUpdated time.Time `query:"last_updated" required:"true"`
 }
+
+// RedirectInput is the Huma input for GET /r/{shortcode}.
+type RedirectInput struct {
+	Shortcode string `path:"shortcode" minLength:"1" maxLength:"6"`
+}
