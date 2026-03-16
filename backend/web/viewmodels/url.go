@@ -73,7 +73,7 @@ type UpdateUrlRequestBody struct {
 	LongUrl     string     `json:"long_url" required:"true" minLength:"1"`
 	Shortcode   *string    `json:"shortcode,omitempty"`
 	ExpiresAt   *time.Time `json:"expires_at,omitempty"`
-	LastUpdated time.Time  `json:"last_updated" validate:"required"`
+	LastUpdated time.Time  `json:"last_updated" required:"true"`
 }
 
 // UpdateUrlResponse is the Huma output for PATCH /user/urls/{id}.

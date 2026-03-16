@@ -124,7 +124,7 @@ func (r *urlRepository) Update(ctx context.Context, url *bizmodels.ShortenedUrl)
 func (r *urlRepository) exists(ctx context.Context, id int64) (bool, error) {
 	count, err := r.db.NewSelect().
 		Model((*pgmodels.ShortenedUrl)(nil)).
-		Where("su.id = ?", id).
+		Where("id = ?", id).
 		Count(ctx)
 	if err != nil {
 		return false, err
