@@ -86,19 +86,48 @@ func (r *urlRepository) FindByID(ctx context.Context, id int64) (*bizmodels.Shor
 
 func (r *urlRepository) Update(ctx context.Context, url *bizmodels.ShortenedUrl) (*bizmodels.ShortenedUrl, error) {
 	db := pgmappings.ShortenedUrlToDbModel(url)
+	lastUpdated := db.UpdatedAt // client-provided version for OCC check
 	db.UpdatedAt = time.Now()
 
-	if _, err := r.db.NewUpdate().
+	result, err := r.db.NewUpdate().
 		Model(db).
 		Column("shortcode", "long_url", "expires_at", "updated_at").
-		Where("id = ?", db.ID).
+		Where("id = ? AND updated_at = ?", db.ID, lastUpdated).
 		Returning("*").
-		Exec(ctx); err != nil {
+		Exec(ctx)
+	if err != nil {
 		if isUniqueViolation(err) {
 			return nil, fmt.Errorf("UrlRepository.Update: %w", businesslogic.ErrConflict)
 		}
 		return nil, fmt.Errorf("UrlRepository.Update: %w", err)
 	}
 
+	n, err := result.RowsAffected()
+	if err != nil {
+		return nil, fmt.Errorf("UrlRepository.Update rows-affected: %w", err)
+	}
+	if n == 0 {
+		exists, checkErr := r.exists(ctx, url.ID)
+		if checkErr != nil {
+			return nil, fmt.Errorf("UrlRepository.Update exists-check: %w", checkErr)
+		}
+		if !exists {
+			return nil, businesslogic.ErrNotFound
+		}
+		return nil, businesslogic.ErrVersionConflict
+	}
+
 	return pgmappings.ShortenedUrlToBusinessModel(db), nil
+}
+
+// exists reports whether a ShortenedUrl with the given ID exists in the database.
+func (r *urlRepository) exists(ctx context.Context, id int64) (bool, error) {
+	count, err := r.db.NewSelect().
+		Model((*pgmodels.ShortenedUrl)(nil)).
+		Where("su.id = ?", id).
+		Count(ctx)
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
 }

@@ -24,12 +24,12 @@ type ListUrlsResponseBody struct {
 
 // UrlItem represents a single shortened URL in the list response.
 type UrlItem struct {
-	ID        int64      `json:"id"`
-	Shortcode string     `json:"shortcode"`
-	LongUrl   string     `json:"long_url"`
-	ExpiresAt *time.Time `json:"expires_at,omitempty"`
-	CreatedAt time.Time  `json:"created_at"`
-	UpdatedAt time.Time  `json:"updated_at"`
+	ID          int64      `json:"id"`
+	Shortcode   string     `json:"shortcode"`
+	LongUrl     string     `json:"long_url"`
+	ExpiresAt   *time.Time `json:"expires_at,omitempty"`
+	CreatedAt   time.Time  `json:"created_at"`
+	LastUpdated time.Time  `json:"last_updated"`
 }
 
 // CreateUrlInput is the Huma input for POST /user/urls.
@@ -68,10 +68,12 @@ type UpdateUrlInput struct {
 // UpdateUrlRequestBody is the JSON request body for updating an existing shortened URL.
 // LongUrl is required. Shortcode, when provided, replaces the current one.
 // ExpiresAt, when null, clears the current expiry; when provided, sets a new one.
+// LastUpdated is required for optimistic concurrency control.
 type UpdateUrlRequestBody struct {
-	LongUrl   string     `json:"long_url" required:"true" minLength:"1"`
-	Shortcode *string    `json:"shortcode,omitempty"`
-	ExpiresAt *time.Time `json:"expires_at,omitempty"`
+	LongUrl     string     `json:"long_url" required:"true" minLength:"1"`
+	Shortcode   *string    `json:"shortcode,omitempty"`
+	ExpiresAt   *time.Time `json:"expires_at,omitempty"`
+	LastUpdated time.Time  `json:"last_updated" validate:"required"`
 }
 
 // UpdateUrlResponse is the Huma output for PATCH /user/urls/{id}.
@@ -81,11 +83,11 @@ type UpdateUrlResponse struct {
 
 // UpdateUrlResponseBody is the JSON payload returned when a URL is successfully updated.
 type UpdateUrlResponseBody struct {
-	ID        int64      `json:"id"`
-	Shortcode string     `json:"shortcode"`
-	LongUrl   string     `json:"long_url"`
-	ShortUrl  string     `json:"short_url"`
-	ExpiresAt *time.Time `json:"expires_at,omitempty"`
-	CreatedAt time.Time  `json:"created_at"`
-	UpdatedAt time.Time  `json:"updated_at"`
+	ID          int64      `json:"id"`
+	Shortcode   string     `json:"shortcode"`
+	LongUrl     string     `json:"long_url"`
+	ShortUrl    string     `json:"short_url"`
+	ExpiresAt   *time.Time `json:"expires_at,omitempty"`
+	CreatedAt   time.Time  `json:"created_at"`
+	LastUpdated time.Time  `json:"last_updated"`
 }

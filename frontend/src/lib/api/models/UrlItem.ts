@@ -8,6 +8,6 @@ export type UrlItem = {
     id: number;
     long_url: string;
     shortcode: string;
-    updated_at: string;
+    last_updated: string;
 };
 

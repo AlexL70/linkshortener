@@ -100,6 +100,7 @@ export const useUrlsStore = defineStore('urls', () => {
     longUrl: string
     shortcode?: string
     expiresAt?: string
+    lastUpdated: string
   }): Promise<UpdateUrlResponseBody | null> {
     updating.value = true
     updateError.value = null
@@ -110,10 +111,17 @@ export const useUrlsStore = defineStore('urls', () => {
           long_url: params.longUrl,
           shortcode: params.shortcode,
           expires_at: params.expiresAt,
+          last_updated: params.lastUpdated,
         },
       })
       if ('status' in response && typeof response.status === 'number') {
-        updateError.value = (response as { title?: string }).title ?? 'Failed to update URL'
+        const errResponse = response as { status: number; title?: string }
+        if (errResponse.status === 409) {
+          updateError.value = 'This item was recently changed by someone else. Please refresh and try again.'
+          await fetchUrls(page.value, pageSize.value > 0 ? pageSize.value : undefined)
+        } else {
+          updateError.value = errResponse.title ?? 'Failed to update URL'
+        }
         return null
       }
       await fetchUrls(page.value, pageSize.value > 0 ? pageSize.value : undefined)

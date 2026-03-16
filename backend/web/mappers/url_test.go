@@ -21,7 +21,7 @@ func TestUrlToViewModel_AllFields(t *testing.T) {
 		LongUrl:   "https://example.com",
 		ExpiresAt: &exp,
 		CreatedAt: now,
-		UpdatedAt: now,
+		LastUpdated: now,
 	}
 
 	vm := mappers.UrlToViewModel(m)
@@ -33,7 +33,7 @@ func TestUrlToViewModel_AllFields(t *testing.T) {
 	require.NotNil(t, vm.ExpiresAt)
 	assert.Equal(t, exp, *vm.ExpiresAt)
 	assert.Equal(t, now, vm.CreatedAt)
-	assert.Equal(t, now, vm.UpdatedAt)
+	assert.Equal(t, now, vm.LastUpdated)
 }
 
 func TestUrlToViewModel_NoExpiry(t *testing.T) {
@@ -43,7 +43,7 @@ func TestUrlToViewModel_NoExpiry(t *testing.T) {
 		Shortcode: "xyz789",
 		LongUrl:   "https://no-expiry.com",
 		CreatedAt: now,
-		UpdatedAt: now,
+		LastUpdated: now,
 	}
 
 	vm := mappers.UrlToViewModel(m)
@@ -55,8 +55,8 @@ func TestUrlToViewModel_NoExpiry(t *testing.T) {
 func TestListUrlsToResponse_MultipleItems(t *testing.T) {
 	now := time.Now()
 	urls := []*bizmodels.ShortenedUrl{
-		{ID: 1, Shortcode: "aaa111", LongUrl: "https://a.com", CreatedAt: now, UpdatedAt: now},
-		{ID: 2, Shortcode: "bbb222", LongUrl: "https://b.com", CreatedAt: now, UpdatedAt: now},
+		{ID: 1, Shortcode: "aaa111", LongUrl: "https://a.com", CreatedAt: now, LastUpdated: now},
+		{ID: 2, Shortcode: "bbb222", LongUrl: "https://b.com", CreatedAt: now, LastUpdated: now},
 	}
 
 	body := mappers.ListUrlsToResponse(urls, 10, 2, 5)
@@ -90,7 +90,7 @@ func TestCreateUrlToResponse_AllFields(t *testing.T) {
 		LongUrl:   "https://long.example.com/path",
 		ExpiresAt: &exp,
 		CreatedAt: now,
-		UpdatedAt: now,
+		LastUpdated: now,
 	}
 
 	body := mappers.CreateUrlToResponse(m, "https://short.example.com")
@@ -112,7 +112,7 @@ func TestCreateUrlToResponse_NoExpiry(t *testing.T) {
 		Shortcode: "noexp1",
 		LongUrl:   "https://example.com",
 		CreatedAt: now,
-		UpdatedAt: now,
+		LastUpdated: now,
 	}
 
 	body := mappers.CreateUrlToResponse(m, "https://s.example.com")
@@ -134,7 +134,7 @@ func TestUpdateUrlToResponse_AllFields(t *testing.T) {
 		LongUrl:   "https://updated.com",
 		ExpiresAt: &exp,
 		CreatedAt: now,
-		UpdatedAt: now,
+		LastUpdated: now,
 	}
 
 	body := mappers.UpdateUrlToResponse(m, "https://short.example.com")
@@ -147,7 +147,7 @@ func TestUpdateUrlToResponse_AllFields(t *testing.T) {
 	require.NotNil(t, body.ExpiresAt)
 	assert.Equal(t, exp, *body.ExpiresAt)
 	assert.Equal(t, now, body.CreatedAt)
-	assert.Equal(t, now, body.UpdatedAt)
+	assert.Equal(t, now, body.LastUpdated)
 }
 
 func TestUpdateUrlToResponse_NoExpiry(t *testing.T) {
@@ -157,7 +157,7 @@ func TestUpdateUrlToResponse_NoExpiry(t *testing.T) {
 		Shortcode: "noexp2",
 		LongUrl:   "https://no-expiry.com",
 		CreatedAt: now,
-		UpdatedAt: now,
+		LastUpdated: now,
 	}
 
 	body := mappers.UpdateUrlToResponse(m, "https://short.example.com")

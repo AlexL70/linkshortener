@@ -29,6 +29,7 @@ func TestMapError_KnownSentinels(t *testing.T) {
 	}{
 		{"ErrNotFound", businesslogic.ErrNotFound, http.StatusNotFound},
 		{"ErrConflict", businesslogic.ErrConflict, http.StatusConflict},
+		{"ErrVersionConflict", businesslogic.ErrVersionConflict, http.StatusConflict},
 		{"ErrValidation", businesslogic.ErrValidation, http.StatusBadRequest},
 		{"ErrExpired", businesslogic.ErrExpired, http.StatusGone},
 		{"ErrUnauthorized", businesslogic.ErrUnauthorized, http.StatusForbidden},

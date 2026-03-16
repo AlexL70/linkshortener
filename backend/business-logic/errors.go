@@ -26,4 +26,8 @@ var (
 
 	// ErrNotImplemented is returned when a feature or provider is not yet supported.
 	ErrNotImplemented = errors.New("not implemented")
+
+	// ErrVersionConflict is returned when an entity was modified by another user
+	// since it was last read. The caller should ask the user to refresh and retry.
+	ErrVersionConflict = errors.New("version conflict")
 )

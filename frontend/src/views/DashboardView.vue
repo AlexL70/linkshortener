@@ -111,6 +111,7 @@ async function submitEdit() {
     expiresAt: editHasExpiry.value && editExpiresAt.value
       ? new Date(editExpiresAt.value).toISOString()
       : undefined,
+    lastUpdated: editingUrl.value.last_updated,
   })
   if (result !== null) {
     editDialogOpen.value = false

@@ -9,5 +9,5 @@ export type UpdateUrlResponseBody = {
     long_url: string;
     short_url: string;
     shortcode: string;
-    updated_at: string;
+    last_updated: string;
 };
