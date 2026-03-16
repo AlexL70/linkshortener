@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useUrlsStore } from './urls'
 import { DefaultService } from '@/lib/api/services/DefaultService'
+import { ApiError } from '@/lib/api/core/ApiError'
 import type { UrlItem } from '@/lib/api/models/UrlItem'
 import type { CreateUrlResponseBody } from '@/lib/api/models/CreateUrlResponseBody'
 
@@ -448,6 +449,27 @@ describe('updateUrl — network error', () => {
 
     expect(result).toBeNull()
     expect(store.updateError).toBe('An unexpected error occurred while updating your URL.')
+    expect(store.updating).toBe(false)
+  })
+
+  it('sets the version conflict message when ApiError with status 409 is thrown', async () => {
+    const apiErr = new ApiError(
+      { method: 'PATCH', url: '/user/urls/1' },
+      { url: '/user/urls/1', ok: false, status: 409, statusText: 'Conflict', body: {} },
+      'Generic Error: status: 409; status text: Conflict; body: {}',
+    )
+    vi.spyOn(DefaultService, 'updateUrl').mockRejectedValue(apiErr)
+    vi.spyOn(DefaultService, 'listUserUrls').mockResolvedValue(
+      makeListResponse([makeUrlItem()]) as never,
+    )
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const store = useUrlsStore()
+    const result = await store.updateUrl({ id: 1, longUrl: 'https://example.com', lastUpdated: '2024-01-01T00:00:00Z' })
+
+    expect(result).toBeNull()
+    expect(store.updateError).toBe('This item was recently changed by someone else. Please refresh and try again.')
+    expect(store.items).toHaveLength(1)
     expect(store.updating).toBe(false)
   })
 })

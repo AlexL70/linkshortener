@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { DefaultService } from '@/lib/api/services/DefaultService'
+import { ApiError } from '@/lib/api/core/ApiError'
 import type { UrlItem } from '@/lib/api/models/UrlItem'
 import type { CreateUrlResponseBody } from '@/lib/api/models/CreateUrlResponseBody'
 import type { UpdateUrlResponseBody } from '@/lib/api/models/UpdateUrlResponseBody'
@@ -104,6 +105,10 @@ export const useUrlsStore = defineStore('urls', () => {
   }): Promise<UpdateUrlResponseBody | null> {
     updating.value = true
     updateError.value = null
+    const onVersionConflict = async () => {
+      updateError.value = 'This item was recently changed by someone else. Please refresh and try again.'
+      await fetchUrls(page.value, pageSize.value > 0 ? pageSize.value : undefined)
+    }
     try {
       const response = await DefaultService.updateUrl({
         id: params.id,
@@ -117,8 +122,7 @@ export const useUrlsStore = defineStore('urls', () => {
       if ('status' in response && typeof response.status === 'number') {
         const errResponse = response as { status: number; title?: string }
         if (errResponse.status === 409) {
-          updateError.value = 'This item was recently changed by someone else. Please refresh and try again.'
-          await fetchUrls(page.value, pageSize.value > 0 ? pageSize.value : undefined)
+          await onVersionConflict()
         } else {
           updateError.value = errResponse.title ?? 'Failed to update URL'
         }
@@ -128,7 +132,11 @@ export const useUrlsStore = defineStore('urls', () => {
       return response as UpdateUrlResponseBody
     } catch (err) {
       console.error('updateUrl: request failed', err)
-      updateError.value = 'An unexpected error occurred while updating your URL.'
+      if (err instanceof ApiError && err.status === 409) {
+        await onVersionConflict()
+      } else {
+        updateError.value = 'An unexpected error occurred while updating your URL.'
+      }
       return null
     } finally {
       updating.value = false
