@@ -13,7 +13,6 @@ func ShortenedUrlToBusinessModel(db *pgmodels.ShortenedUrl) *bizmodels.Shortened
 		Shortcode:   db.Shortcode,
 		LongUrl:     db.LongUrl,
 		ExpiresAt:   db.ExpiresAt,
-		CreatedAt:   db.CreatedAt,
 		LastUpdated: db.UpdatedAt,
 	}
 }
@@ -26,7 +25,6 @@ func ShortenedUrlToDbModel(biz *bizmodels.ShortenedUrl) *pgmodels.ShortenedUrl {
 		Shortcode: biz.Shortcode,
 		LongUrl:   biz.LongUrl,
 		ExpiresAt: biz.ExpiresAt,
-		CreatedAt: biz.CreatedAt,
 		UpdatedAt: biz.LastUpdated,
 	}
 }

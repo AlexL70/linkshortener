@@ -3,7 +3,6 @@
 /* tslint:disable */
 /* eslint-disable */
 export type UpdateUrlResponseBody = {
-    created_at: string;
     expires_at?: string;
     id: number;
     long_url: string;

@@ -63,10 +63,6 @@
             "readOnly": true,
             "type": "string"
           },
-          "created_at": {
-            "format": "date-time",
-            "type": "string"
-          },
           "expires_at": {
             "format": "date-time",
             "type": "string"
@@ -89,8 +85,7 @@
           "id",
           "shortcode",
           "long_url",
-          "short_url",
-          "created_at"
+          "short_url"
         ],
         "type": "object"
       },
@@ -290,10 +285,6 @@
             "readOnly": true,
             "type": "string"
           },
-          "created_at": {
-            "format": "date-time",
-            "type": "string"
-          },
           "expires_at": {
             "format": "date-time",
             "type": "string"
@@ -321,7 +312,6 @@
           "shortcode",
           "long_url",
           "short_url",
-          "created_at",
           "last_updated"
         ],
         "type": "object"
@@ -329,10 +319,6 @@
       "UrlItem": {
         "additionalProperties": false,
         "properties": {
-          "created_at": {
-            "format": "date-time",
-            "type": "string"
-          },
           "expires_at": {
             "format": "date-time",
             "type": "string"
@@ -356,7 +342,6 @@
           "id",
           "shortcode",
           "long_url",
-          "created_at",
           "last_updated"
         ],
         "type": "object"

@@ -294,7 +294,6 @@ onMounted(() => {
               <TableHead>Short URL</TableHead>
               <TableHead>Long URL</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Created</TableHead>
               <TableHead>Expires</TableHead>
               <TableHead />
             </TableRow>
@@ -315,7 +314,6 @@ onMounted(() => {
                 <Badge v-if="isExpired(url.expires_at)" variant="destructive">Expired</Badge>
                 <Badge v-else variant="secondary">Active</Badge>
               </TableCell>
-              <TableCell class="whitespace-nowrap text-sm">{{ formatDate(url.created_at) }}</TableCell>
               <TableCell class="whitespace-nowrap text-sm text-muted-foreground">
                 {{ url.expires_at ? formatDate(url.expires_at) : '—' }}
               </TableCell>
@@ -363,7 +361,6 @@ onMounted(() => {
               {{ url.long_url }}
             </a>
             <div class="mt-2 flex gap-4 text-xs text-muted-foreground">
-              <span>Created {{ formatDate(url.created_at) }}</span>
               <span v-if="url.expires_at">Expires {{ formatDate(url.expires_at) }}</span>
               <span v-else>No expiry</span>
             </div>

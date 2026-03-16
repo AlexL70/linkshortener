@@ -12,7 +12,6 @@ function makeUrlItem(overrides: Partial<UrlItem> = {}): UrlItem {
     id: 1,
     shortcode: 'abc123',
     long_url: 'https://example.com',
-    created_at: '2024-01-01T00:00:00Z',
     last_updated: '2024-01-01T00:00:00Z',
     ...overrides,
   }
@@ -204,7 +203,6 @@ function makeCreateUrlResponse(overrides: Partial<CreateUrlResponseBody> = {}): 
     shortcode: 'abc123',
     long_url: 'https://example.com',
     short_url: 'https://s.example.com/r/abc123',
-    created_at: '2024-06-01T00:00:00Z',
     ...overrides,
   }
 }
@@ -331,7 +329,6 @@ function makeUpdateUrlResponse() {
     id: 99,
     shortcode: 'abc123',
     long_url: 'https://updated.com',
-    created_at: '2024-06-01T00:00:00Z',
     last_updated: '2024-06-02T00:00:00Z',
   }
 }

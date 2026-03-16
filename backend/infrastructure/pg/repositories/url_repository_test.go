@@ -185,7 +185,7 @@ func TestCreate_Success(t *testing.T) {
 	assert.Equal(t, "cr0001", created.Shortcode)
 	assert.Equal(t, "https://create-test.com", created.LongUrl)
 	assert.Equal(t, user.ID, created.UserID)
-	assert.False(t, created.CreatedAt.IsZero())
+	assert.False(t, created.LastUpdated.IsZero())
 }
 
 func TestCreate_WithExpiry_Success(t *testing.T) {

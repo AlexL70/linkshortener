@@ -15,12 +15,11 @@ func TestUrlToViewModel_AllFields(t *testing.T) {
 	now := time.Now().Truncate(time.Second)
 	exp := now.Add(24 * time.Hour)
 	m := &bizmodels.ShortenedUrl{
-		ID:        42,
-		UserID:    7,
-		Shortcode: "abc123",
-		LongUrl:   "https://example.com",
-		ExpiresAt: &exp,
-		CreatedAt: now,
+		ID:          42,
+		UserID:      7,
+		Shortcode:   "abc123",
+		LongUrl:     "https://example.com",
+		ExpiresAt:   &exp,
 		LastUpdated: now,
 	}
 
@@ -32,17 +31,15 @@ func TestUrlToViewModel_AllFields(t *testing.T) {
 	assert.Equal(t, "https://example.com", vm.LongUrl)
 	require.NotNil(t, vm.ExpiresAt)
 	assert.Equal(t, exp, *vm.ExpiresAt)
-	assert.Equal(t, now, vm.CreatedAt)
 	assert.Equal(t, now, vm.LastUpdated)
 }
 
 func TestUrlToViewModel_NoExpiry(t *testing.T) {
 	now := time.Now()
 	m := &bizmodels.ShortenedUrl{
-		ID:        1,
-		Shortcode: "xyz789",
-		LongUrl:   "https://no-expiry.com",
-		CreatedAt: now,
+		ID:          1,
+		Shortcode:   "xyz789",
+		LongUrl:     "https://no-expiry.com",
 		LastUpdated: now,
 	}
 
@@ -55,8 +52,8 @@ func TestUrlToViewModel_NoExpiry(t *testing.T) {
 func TestListUrlsToResponse_MultipleItems(t *testing.T) {
 	now := time.Now()
 	urls := []*bizmodels.ShortenedUrl{
-		{ID: 1, Shortcode: "aaa111", LongUrl: "https://a.com", CreatedAt: now, LastUpdated: now},
-		{ID: 2, Shortcode: "bbb222", LongUrl: "https://b.com", CreatedAt: now, LastUpdated: now},
+		{ID: 1, Shortcode: "aaa111", LongUrl: "https://a.com", LastUpdated: now},
+		{ID: 2, Shortcode: "bbb222", LongUrl: "https://b.com", LastUpdated: now},
 	}
 
 	body := mappers.ListUrlsToResponse(urls, 10, 2, 5)
@@ -84,12 +81,11 @@ func TestCreateUrlToResponse_AllFields(t *testing.T) {
 	now := time.Now().Truncate(time.Second)
 	exp := now.Add(48 * time.Hour)
 	m := &bizmodels.ShortenedUrl{
-		ID:        99,
-		UserID:    5,
-		Shortcode: "cr0001",
-		LongUrl:   "https://long.example.com/path",
-		ExpiresAt: &exp,
-		CreatedAt: now,
+		ID:          99,
+		UserID:      5,
+		Shortcode:   "cr0001",
+		LongUrl:     "https://long.example.com/path",
+		ExpiresAt:   &exp,
 		LastUpdated: now,
 	}
 
@@ -102,16 +98,14 @@ func TestCreateUrlToResponse_AllFields(t *testing.T) {
 	assert.Equal(t, "https://short.example.com/r/cr0001", body.ShortUrl)
 	require.NotNil(t, body.ExpiresAt)
 	assert.Equal(t, exp, *body.ExpiresAt)
-	assert.Equal(t, now, body.CreatedAt)
 }
 
 func TestCreateUrlToResponse_NoExpiry(t *testing.T) {
 	now := time.Now().Truncate(time.Second)
 	m := &bizmodels.ShortenedUrl{
-		ID:        5,
-		Shortcode: "noexp1",
-		LongUrl:   "https://example.com",
-		CreatedAt: now,
+		ID:          5,
+		Shortcode:   "noexp1",
+		LongUrl:     "https://example.com",
 		LastUpdated: now,
 	}
 
@@ -128,12 +122,11 @@ func TestUpdateUrlToResponse_AllFields(t *testing.T) {
 	now := time.Now().Truncate(time.Second)
 	exp := now.Add(24 * time.Hour)
 	m := &bizmodels.ShortenedUrl{
-		ID:        10,
-		UserID:    3,
-		Shortcode: "upd001",
-		LongUrl:   "https://updated.com",
-		ExpiresAt: &exp,
-		CreatedAt: now,
+		ID:          10,
+		UserID:      3,
+		Shortcode:   "upd001",
+		LongUrl:     "https://updated.com",
+		ExpiresAt:   &exp,
 		LastUpdated: now,
 	}
 
@@ -146,17 +139,15 @@ func TestUpdateUrlToResponse_AllFields(t *testing.T) {
 	assert.Equal(t, "https://short.example.com/r/upd001", body.ShortUrl)
 	require.NotNil(t, body.ExpiresAt)
 	assert.Equal(t, exp, *body.ExpiresAt)
-	assert.Equal(t, now, body.CreatedAt)
 	assert.Equal(t, now, body.LastUpdated)
 }
 
 func TestUpdateUrlToResponse_NoExpiry(t *testing.T) {
 	now := time.Now().Truncate(time.Second)
 	m := &bizmodels.ShortenedUrl{
-		ID:        11,
-		Shortcode: "noexp2",
-		LongUrl:   "https://no-expiry.com",
-		CreatedAt: now,
+		ID:          11,
+		Shortcode:   "noexp2",
+		LongUrl:     "https://no-expiry.com",
 		LastUpdated: now,
 	}
 

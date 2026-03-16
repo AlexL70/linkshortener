@@ -12,7 +12,6 @@ func UrlToViewModel(m *bizmodels.ShortenedUrl) *viewmodels.UrlItem {
 		Shortcode:   m.Shortcode,
 		LongUrl:     m.LongUrl,
 		ExpiresAt:   m.ExpiresAt,
-		CreatedAt:   m.CreatedAt,
 		LastUpdated: m.LastUpdated,
 	}
 }
@@ -40,7 +39,6 @@ func CreateUrlToResponse(m *bizmodels.ShortenedUrl, baseUrl string) *viewmodels.
 		LongUrl:   m.LongUrl,
 		ShortUrl:  baseUrl + "/r/" + m.Shortcode,
 		ExpiresAt: m.ExpiresAt,
-		CreatedAt: m.CreatedAt,
 	}
 }
 
@@ -53,7 +51,6 @@ func UpdateUrlToResponse(m *bizmodels.ShortenedUrl, baseUrl string) *viewmodels.
 		LongUrl:     m.LongUrl,
 		ShortUrl:    baseUrl + "/r/" + m.Shortcode,
 		ExpiresAt:   m.ExpiresAt,
-		CreatedAt:   m.CreatedAt,
 		LastUpdated: m.LastUpdated,
 	}
 }

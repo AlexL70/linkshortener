@@ -9,6 +9,5 @@ type ShortenedUrl struct {
 	Shortcode   string
 	LongUrl     string
 	ExpiresAt   *time.Time
-	CreatedAt   time.Time
 	LastUpdated time.Time
 }

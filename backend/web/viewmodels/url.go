@@ -28,7 +28,6 @@ type UrlItem struct {
 	Shortcode   string     `json:"shortcode"`
 	LongUrl     string     `json:"long_url"`
 	ExpiresAt   *time.Time `json:"expires_at,omitempty"`
-	CreatedAt   time.Time  `json:"created_at"`
 	LastUpdated time.Time  `json:"last_updated"`
 }
 
@@ -56,7 +55,6 @@ type CreateUrlResponseBody struct {
 	LongUrl   string     `json:"long_url"`
 	ShortUrl  string     `json:"short_url"`
 	ExpiresAt *time.Time `json:"expires_at,omitempty"`
-	CreatedAt time.Time  `json:"created_at"`
 }
 
 // UpdateUrlInput is the Huma input for PATCH /user/urls/{id}.
@@ -88,6 +86,5 @@ type UpdateUrlResponseBody struct {
 	LongUrl     string     `json:"long_url"`
 	ShortUrl    string     `json:"short_url"`
 	ExpiresAt   *time.Time `json:"expires_at,omitempty"`
-	CreatedAt   time.Time  `json:"created_at"`
 	LastUpdated time.Time  `json:"last_updated"`
 }
