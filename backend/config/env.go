@@ -92,12 +92,13 @@ var secretVars = map[string]bool{
 //
 // LINKSHORTENER_ENV itself is always taken from the OS; .env files cannot override it.
 func LoadEnv() error {
-	return loadEnv("..")
+	return LoadEnvFrom("..")
 }
 
-// loadEnv is the testable core of LoadEnv; base is the directory that contains
-// the .env files (normally "..").
-func loadEnv(base string) error {
+// LoadEnvFrom is the core of LoadEnv; base is the directory that contains
+// the .env files (normally ".."). Exported so test helpers in other packages
+// can load dev env files from an arbitrary path.
+func LoadEnvFrom(base string) error {
 	envName := os.Getenv("LINKSHORTENER_ENV")
 	if envName != string(EnvDev) && envName != string(EnvProd) {
 		return fmt.Errorf("LINKSHORTENER_ENV must be \"dev\" or \"prod\", got %q", envName)

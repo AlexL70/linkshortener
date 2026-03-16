@@ -165,7 +165,7 @@ func TestLoadEnv_InvalidEnvName(t *testing.T) {
 	defer restore()
 
 	os.Setenv("LINKSHORTENER_ENV", "staging")
-	if err := loadEnv(t.TempDir()); err == nil {
+	if err := LoadEnvFrom(t.TempDir()); err == nil {
 		t.Error("expected error for invalid LINKSHORTENER_ENV, got nil")
 	}
 }
@@ -175,7 +175,7 @@ func TestLoadEnv_EmptyEnvName(t *testing.T) {
 	defer restore()
 
 	os.Unsetenv("LINKSHORTENER_ENV")
-	if err := loadEnv(t.TempDir()); err == nil {
+	if err := LoadEnvFrom(t.TempDir()); err == nil {
 		t.Error("expected error for empty LINKSHORTENER_ENV, got nil")
 	}
 }
@@ -191,7 +191,7 @@ func TestLoadEnv_ProdSkipsFiles(t *testing.T) {
 	os.Setenv("LINKSHORTENER_ENV", "prod")
 	os.Unsetenv(testVar)
 
-	if err := loadEnv(dir); err != nil {
+	if err := LoadEnvFrom(dir); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if got := os.Getenv(testVar); got != "" {
@@ -215,7 +215,7 @@ func TestLoadEnv_DevReadsBaseAndDevFile(t *testing.T) {
 	os.Unsetenv(devVar)
 	os.Unsetenv(overrideVar)
 
-	if err := loadEnv(dir); err != nil {
+	if err := LoadEnvFrom(dir); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if got := os.Getenv(baseVar); got != "base_value" {
@@ -241,7 +241,7 @@ func TestLoadEnv_DevOSValueWins(t *testing.T) {
 	os.Setenv("LINKSHORTENER_ENV", "dev")
 	os.Setenv(testVar, "from_os")
 
-	if err := loadEnv(dir); err != nil {
+	if err := LoadEnvFrom(dir); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if got := os.Getenv(testVar); got != "from_os" {
@@ -258,7 +258,7 @@ func TestLoadEnv_DevCannotOverrideLINKSHORTENER_ENV(t *testing.T) {
 
 	os.Setenv("LINKSHORTENER_ENV", "dev")
 
-	if err := loadEnv(dir); err != nil {
+	if err := LoadEnvFrom(dir); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if got := os.Getenv("LINKSHORTENER_ENV"); got != "dev" {
@@ -272,7 +272,7 @@ func TestLoadEnv_MissingFilesAreOk(t *testing.T) {
 
 	os.Setenv("LINKSHORTENER_ENV", "dev")
 	// Use an empty temp dir — no .env or .env.dev files present.
-	if err := loadEnv(t.TempDir()); err != nil {
+	if err := LoadEnvFrom(t.TempDir()); err != nil {
 		t.Errorf("missing .env files should be silently ignored, got: %v", err)
 	}
 }

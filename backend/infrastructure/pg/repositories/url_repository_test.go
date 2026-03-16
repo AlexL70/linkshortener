@@ -13,6 +13,7 @@ import (
 	bizmodels "github.com/AlexL70/linkshortener/backend/business-logic/models"
 	pgmodels "github.com/AlexL70/linkshortener/backend/infrastructure/pg/models"
 	"github.com/AlexL70/linkshortener/backend/infrastructure/pg/repositories"
+	"github.com/AlexL70/linkshortener/backend/testutil"
 )
 
 // insertTestURL inserts a ShortenedUrl row directly via Bun for test setup.
@@ -33,8 +34,7 @@ func insertTestURL(t *testing.T, db *bun.DB, userID int64, shortcode, longURL st
 }
 
 func TestFindByUserID_ReturnsPaginatedURLs(t *testing.T) {
-	db := openTestDB(t)
-	defer db.Close() //nolint:errcheck
+	db := testutil.OpenTestDB(t)
 
 	ctx := context.Background()
 	userRepo := repositories.NewUserRepository(db)
@@ -45,7 +45,6 @@ func TestFindByUserID_ReturnsPaginatedURLs(t *testing.T) {
 	}
 	user, err := userRepo.CreateUserWithProvider(ctx, "urllstuser1", up)
 	require.NoError(t, err)
-	defer cleanUsers(t, db, user.ID)
 
 	insertTestURL(t, db, user.ID, "aaa111", "https://a.com")
 	insertTestURL(t, db, user.ID, "bbb222", "https://b.com")
@@ -59,8 +58,7 @@ func TestFindByUserID_ReturnsPaginatedURLs(t *testing.T) {
 }
 
 func TestFindByUserID_EmptyList(t *testing.T) {
-	db := openTestDB(t)
-	defer db.Close() //nolint:errcheck
+	db := testutil.OpenTestDB(t)
 
 	ctx := context.Background()
 	userRepo := repositories.NewUserRepository(db)
@@ -71,7 +69,6 @@ func TestFindByUserID_EmptyList(t *testing.T) {
 	}
 	user, err := userRepo.CreateUserWithProvider(ctx, "urlemptyuser", up)
 	require.NoError(t, err)
-	defer cleanUsers(t, db, user.ID)
 
 	urlRepo := repositories.NewUrlRepository(db)
 	urls, total, err := urlRepo.FindByUserID(ctx, user.ID, 1, 20)
@@ -81,8 +78,7 @@ func TestFindByUserID_EmptyList(t *testing.T) {
 }
 
 func TestFindByUserID_PaginationOffset(t *testing.T) {
-	db := openTestDB(t)
-	defer db.Close() //nolint:errcheck
+	db := testutil.OpenTestDB(t)
 
 	ctx := context.Background()
 	userRepo := repositories.NewUserRepository(db)
@@ -93,7 +89,6 @@ func TestFindByUserID_PaginationOffset(t *testing.T) {
 	}
 	user, err := userRepo.CreateUserWithProvider(ctx, "urlpageuser", up)
 	require.NoError(t, err)
-	defer cleanUsers(t, db, user.ID)
 
 	for _, sc := range []string{"pg0001", "pg0002", "pg0003", "pg0004", "pg0005"} {
 		insertTestURL(t, db, user.ID, sc, "https://paginate.com/"+sc)
@@ -117,8 +112,7 @@ func TestFindByUserID_PaginationOffset(t *testing.T) {
 }
 
 func TestFindByUserID_IsolatedToOwner(t *testing.T) {
-	db := openTestDB(t)
-	defer db.Close() //nolint:errcheck
+	db := testutil.OpenTestDB(t)
 
 	ctx := context.Background()
 	userRepo := repositories.NewUserRepository(db)
@@ -126,12 +120,10 @@ func TestFindByUserID_IsolatedToOwner(t *testing.T) {
 	up1 := &bizmodels.UserProvider{Provider: bizmodels.ProviderGoogle, ProviderUserID: "iso-sub-1", ProviderEmail: "iso1@example.com"}
 	user1, err := userRepo.CreateUserWithProvider(ctx, "isoluser1", up1)
 	require.NoError(t, err)
-	defer cleanUsers(t, db, user1.ID)
 
 	up2 := &bizmodels.UserProvider{Provider: bizmodels.ProviderGoogle, ProviderUserID: "iso-sub-2", ProviderEmail: "iso2@example.com"}
 	user2, err := userRepo.CreateUserWithProvider(ctx, "isoluser2", up2)
 	require.NoError(t, err)
-	defer cleanUsers(t, db, user2.ID)
 
 	insertTestURL(t, db, user1.ID, "u1abc1", "https://user1.com")
 	insertTestURL(t, db, user2.ID, "u2xyz1", "https://user2.com")
@@ -151,27 +143,16 @@ func TestFindByUserID_IsolatedToOwner(t *testing.T) {
 	assert.Equal(t, user2.ID, urls2[0].UserID)
 }
 
-// openTestDB opens a *bun.DB from the DATABASE_URL environment variable.
-// Tests are skipped when DATABASE_URL is not set (re-declared locally to keep this
-// file self-contained; the function is also present in user_repository_test.go but
-// that file is in the same package so we cannot re-declare it there — the shared
-// helper lives in the existing file and this call will reuse it).
-//
-// openTestDB and cleanUsers are defined in user_repository_test.go and are
-// accessible here since both files share the repositories_test package.
-
 // ── Create ────────────────────────────────────────────────────────────────────
 
 func TestCreate_Success(t *testing.T) {
-	db := openTestDB(t)
-	defer db.Close() //nolint:errcheck
+	db := testutil.OpenTestDB(t)
 
 	ctx := context.Background()
 	userRepo := repositories.NewUserRepository(db)
 	up := &bizmodels.UserProvider{Provider: bizmodels.ProviderGoogle, ProviderUserID: "create-sub-1", ProviderEmail: "create1@example.com"}
 	user, err := userRepo.CreateUserWithProvider(ctx, "createuser1", up)
 	require.NoError(t, err)
-	defer cleanUsers(t, db, user.ID)
 
 	urlRepo := repositories.NewUrlRepository(db)
 	input := &bizmodels.ShortenedUrl{
@@ -189,15 +170,13 @@ func TestCreate_Success(t *testing.T) {
 }
 
 func TestCreate_WithExpiry_Success(t *testing.T) {
-	db := openTestDB(t)
-	defer db.Close() //nolint:errcheck
+	db := testutil.OpenTestDB(t)
 
 	ctx := context.Background()
 	userRepo := repositories.NewUserRepository(db)
 	up := &bizmodels.UserProvider{Provider: bizmodels.ProviderGoogle, ProviderUserID: "create-sub-exp", ProviderEmail: "createexp@example.com"}
 	user, err := userRepo.CreateUserWithProvider(ctx, "createuserexp", up)
 	require.NoError(t, err)
-	defer cleanUsers(t, db, user.ID)
 
 	exp := time.Now().Add(24 * time.Hour).Truncate(time.Second)
 	urlRepo := repositories.NewUrlRepository(db)
@@ -214,15 +193,13 @@ func TestCreate_WithExpiry_Success(t *testing.T) {
 }
 
 func TestCreate_DuplicateShortcode_ReturnsConflict(t *testing.T) {
-	db := openTestDB(t)
-	defer db.Close() //nolint:errcheck
+	db := testutil.OpenTestDB(t)
 
 	ctx := context.Background()
 	userRepo := repositories.NewUserRepository(db)
 	up := &bizmodels.UserProvider{Provider: bizmodels.ProviderGoogle, ProviderUserID: "create-sub-dup", ProviderEmail: "createdup@example.com"}
 	user, err := userRepo.CreateUserWithProvider(ctx, "createuserdup", up)
 	require.NoError(t, err)
-	defer cleanUsers(t, db, user.ID)
 
 	urlRepo := repositories.NewUrlRepository(db)
 	input := &bizmodels.ShortenedUrl{UserID: user.ID, Shortcode: "dup001", LongUrl: "https://dup.com"}
@@ -238,15 +215,13 @@ func TestCreate_DuplicateShortcode_ReturnsConflict(t *testing.T) {
 // ── FindByID ──────────────────────────────────────────────────────────────────
 
 func TestFindByID_Success(t *testing.T) {
-	db := openTestDB(t)
-	defer db.Close() //nolint:errcheck
+	db := testutil.OpenTestDB(t)
 
 	ctx := context.Background()
 	userRepo := repositories.NewUserRepository(db)
 	up := &bizmodels.UserProvider{Provider: bizmodels.ProviderGoogle, ProviderUserID: "fbi-sub-1", ProviderEmail: "fbi1@example.com"}
 	user, err := userRepo.CreateUserWithProvider(ctx, "fbiuser1", up)
 	require.NoError(t, err)
-	defer cleanUsers(t, db, user.ID)
 
 	id := insertTestURL(t, db, user.ID, "fbi001", "https://findbyid.com")
 
@@ -261,8 +236,7 @@ func TestFindByID_Success(t *testing.T) {
 }
 
 func TestFindByID_NotFound_ReturnsErrNotFound(t *testing.T) {
-	db := openTestDB(t)
-	defer db.Close() //nolint:errcheck
+	db := testutil.OpenTestDB(t)
 
 	ctx := context.Background()
 	urlRepo := repositories.NewUrlRepository(db)
@@ -275,15 +249,13 @@ func TestFindByID_NotFound_ReturnsErrNotFound(t *testing.T) {
 // ── Update ────────────────────────────────────────────────────────────────────
 
 func TestUpdate_Success(t *testing.T) {
-	db := openTestDB(t)
-	defer db.Close() //nolint:errcheck
+	db := testutil.OpenTestDB(t)
 
 	ctx := context.Background()
 	userRepo := repositories.NewUserRepository(db)
 	up := &bizmodels.UserProvider{Provider: bizmodels.ProviderGoogle, ProviderUserID: "upd-sub-1", ProviderEmail: "upd1@example.com"}
 	user, err := userRepo.CreateUserWithProvider(ctx, "upduser1", up)
 	require.NoError(t, err)
-	defer cleanUsers(t, db, user.ID)
 
 	id := insertTestURL(t, db, user.ID, "up0001", "https://original.com")
 
@@ -309,15 +281,13 @@ func TestUpdate_Success(t *testing.T) {
 }
 
 func TestUpdate_ChangeShortcode_Success(t *testing.T) {
-	db := openTestDB(t)
-	defer db.Close() //nolint:errcheck
+	db := testutil.OpenTestDB(t)
 
 	ctx := context.Background()
 	userRepo := repositories.NewUserRepository(db)
 	up := &bizmodels.UserProvider{Provider: bizmodels.ProviderGoogle, ProviderUserID: "upd-sub-2", ProviderEmail: "upd2@example.com"}
 	user, err := userRepo.CreateUserWithProvider(ctx, "upduser2", up)
 	require.NoError(t, err)
-	defer cleanUsers(t, db, user.ID)
 
 	id := insertTestURL(t, db, user.ID, "old001", "https://example.com")
 
@@ -338,15 +308,13 @@ func TestUpdate_ChangeShortcode_Success(t *testing.T) {
 }
 
 func TestUpdate_DuplicateShortcode_ReturnsConflict(t *testing.T) {
-	db := openTestDB(t)
-	defer db.Close() //nolint:errcheck
+	db := testutil.OpenTestDB(t)
 
 	ctx := context.Background()
 	userRepo := repositories.NewUserRepository(db)
 	up := &bizmodels.UserProvider{Provider: bizmodels.ProviderGoogle, ProviderUserID: "upd-sub-3", ProviderEmail: "upd3@example.com"}
 	user, err := userRepo.CreateUserWithProvider(ctx, "upduser3", up)
 	require.NoError(t, err)
-	defer cleanUsers(t, db, user.ID)
 
 	insertTestURL(t, db, user.ID, "taken2", "https://taken.com")
 	id := insertTestURL(t, db, user.ID, "other2", "https://other.com")
@@ -368,15 +336,13 @@ func TestUpdate_DuplicateShortcode_ReturnsConflict(t *testing.T) {
 }
 
 func TestUpdate_VersionMismatch_ReturnsVersionConflict(t *testing.T) {
-	db := openTestDB(t)
-	defer db.Close() //nolint:errcheck
+	db := testutil.OpenTestDB(t)
 
 	ctx := context.Background()
 	userRepo := repositories.NewUserRepository(db)
 	up := &bizmodels.UserProvider{Provider: bizmodels.ProviderGoogle, ProviderUserID: "upd-occ-1", ProviderEmail: "updocc1@example.com"}
 	user, err := userRepo.CreateUserWithProvider(ctx, "updoccuser1", up)
 	require.NoError(t, err)
-	defer cleanUsers(t, db, user.ID)
 
 	id := insertTestURL(t, db, user.ID, "occ001", "https://occ-test.com")
 
@@ -396,20 +362,18 @@ func TestUpdate_VersionMismatch_ReturnsVersionConflict(t *testing.T) {
 }
 
 func TestUpdate_DeletedBeforeUpdate_ReturnsNotFound(t *testing.T) {
-	db := openTestDB(t)
-	defer db.Close() //nolint:errcheck
+	db := testutil.OpenTestDB(t)
 
 	ctx := context.Background()
 	userRepo := repositories.NewUserRepository(db)
 	up := &bizmodels.UserProvider{Provider: bizmodels.ProviderGoogle, ProviderUserID: "upd-del-1", ProviderEmail: "upddel1@example.com"}
 	user, err := userRepo.CreateUserWithProvider(ctx, "upddeluser1", up)
 	require.NoError(t, err)
-	defer cleanUsers(t, db, user.ID)
 
 	id := insertTestURL(t, db, user.ID, "del001", "https://del-test.com")
 
 	// Delete the URL directly so it no longer exists.
-	_, err = db.NewDelete().TableExpr("shortened_urls").Where("id = ?", id).Exec(ctx)
+	_, err = db.NewDelete().TableExpr("\"ShortenedUrls\"").Where("id = ?", id).Exec(ctx)
 	require.NoError(t, err)
 
 	urlRepo := repositories.NewUrlRepository(db)
