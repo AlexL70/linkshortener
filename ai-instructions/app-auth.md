@@ -36,7 +36,8 @@ Do not replace or supplement any of these with alternative libraries without exp
 ### 2.3 JWT Tokens
 
 - JWT tokens are **stateless** — do not store server-side session state after the OAuth callback completes.
-- Required claims: `user_id`, `user_name`, `sub`, `iat`, `exp`.
+- Required claims: `user_id`, `user_name`, `provider_email`, `sub`, `iat`, `exp`.
+  - `provider_email` is the email address returned by the OAuth provider at the time of login. It is included so the frontend can display it in the account deletion confirmation dialog without a separate API round-trip.
 - All protected endpoints must be guarded by JWT middleware validating the `Authorization: Bearer <token>` header.
 - JWT secret must be read from the `JWT_SECRET` environment variable at startup. Never hardcode it.
 
@@ -46,6 +47,10 @@ Do not replace or supplement any of these with alternative libraries without exp
 - `GET /auth/callback` — public; completes the OAuth2 flow and returns a JWT.
 - `POST /auth/logout` — JWT-protected; invalidates (blacklists if needed) the token.
 - These endpoints have non-standard response shapes and **may** be registered as bare Gin routes (bypassing Huma), as permitted by `AGENTS.md` §4.6.
+
+### 2.5 Account Management Endpoints
+
+- `DELETE /user/account` — JWT-protected; permanently deletes the authenticated user's account and all associated data. Must be registered as a Huma operation (standard JSON response shape). The business handler must enforce that the super-admin account (identified by `SUPER_ADMIN_EMAIL`) cannot be deleted via this endpoint — return `ErrUnauthorized` (maps to `403 Forbidden`) if the requesting user is the super-admin.
 
 ### 2.5 New-User Registration
 
@@ -61,7 +66,8 @@ Do not replace or supplement any of these with alternative libraries without exp
 
 - All auth state (JWT token, logged-in user info) must live in the Pinia auth store.
 - The JWT token may be persisted to `localStorage` **only** through the auth store's actions. No component may access `localStorage` directly.
-- Expose actions: `login(provider)`, `logout()`, `handleCallback()`, `isAuthenticated` (computed getter).
+- Expose actions: `login(provider)`, `logout()`, `handleCallback()`, `deleteAccount()`, `isAuthenticated` (computed getter).
+- The store must expose the `providerEmail` (decoded from the `provider_email` JWT claim) as a readable getter. This value is used by the account deletion confirmation dialog.
 
 ### 3.2 Sign-In / Sign-Up UX
 
@@ -84,6 +90,7 @@ Guards must be implemented using Vue Router's `beforeEach` global navigation gua
 
 - After a successful OAuth2 callback (new or returning user), the frontend must redirect the user to `/dashboard`.
 - After logout, redirect the user to `/` (home page).
+- After a successful account deletion (`deleteAccount()` action), clear all auth store state (JWT and user info), then redirect the user to `/` (home page). A brief informational message acknowledging the deletion must be displayed (e.g., a toast notification).
 
 ---
 
@@ -93,3 +100,4 @@ Guards must be implemented using Vue Router's `beforeEach` global navigation gua
 - Never log JWT tokens, OAuth secrets, or raw authorization codes — not even at DEBUG level.
 - Never expose internal auth errors (e.g., OAuth exchange failures) in API responses. Log server-side, return a generic error to the client.
 - Provider client IDs and secrets must be read from environment variables; never hardcode them.
+- The super-admin account must never be self-deletable. `DELETE /user/account` must return `403 Forbidden` when called by the user whose `provider_email` matches `SUPER_ADMIN_EMAIL`. This check belongs in the business handler, not the web layer.

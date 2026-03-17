@@ -77,6 +77,7 @@ Any schema change must start with updating the struct in `infrastructure/pg/mode
 - Interface methods must operate exclusively on business logic model types (from `business-logic/models/`) — never on Bun model structs or raw SQL types.
 - Name interfaces descriptively: e.g., `UrlRepository`, `UserRepository`, `ClickRepository`.
 - Handlers and other business logic code must depend only on these interfaces, never on concrete implementations.
+- `UserRepository` must include a `DeleteUser(ctx context.Context, userID int64) error` method. The implementation deletes only the row in the `Users` table; all child records (`UserProviders`, `ShortenedUrls`, `UrlClicks`, `UserQuotas`, `UserAnomalies`) are removed automatically by the database-level `ON DELETE CASCADE` constraints. The repository implementation must **not** manually delete child records.
 
 ---
 

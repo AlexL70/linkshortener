@@ -43,6 +43,7 @@
   - **Success states:** Briefly display a confirmation (e.g., toast notification) when an action completes successfully.
   - **Error states:** Clearly surface error messages adjacent to the failing element, with guidance on how to resolve the issue.
 - Destructive actions (delete, revoke) must require explicit confirmation before proceeding (e.g., a confirmation dialog).
+- For permanent, irreversible account deletion specifically, a stronger typed confirmation is required: the dialog must display the user's registered provider email address so they can see exactly which account will be deleted, and the user must type that email address (case-insensitive match) into a text field before the "Confirm deletion" button becomes enabled. The frontend reads the email from the auth store (`providerEmail` getter). Do not enable the confirmation button until the typed value matches.
 - Links and buttons must have clear, action-oriented labels (`Create short link`, `Delete`, `Sign out`) — never generic ones (`Click here`, `Submit`).
 
 ---

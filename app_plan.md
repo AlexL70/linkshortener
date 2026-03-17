@@ -46,11 +46,12 @@ The initial idea for this project was to create a simple URL shortener applicati
   - `/auth/login/{provider}`: **PUBLIC** - Initiate OAuth2/OIDC flow with specified provider
   - `/auth/callback`: **PUBLIC** - OAuth2/OIDC callback endpoint to complete authentication
   - `/auth/logout`: Invalidate JWT token (JWT protected)
+  - `DELETE /user/account`: Permanently delete the authenticated user's account and all associated data (JWT protected)
 
 **Endpoint Protection Summary:**
 
 - **Public (No JWT Required):** `/r/{shortcode}`, `/auth/login/{provider}`, `/auth/callback`
-- **Protected (JWT Required):** All other endpoints (`/shorten`, `/user/urls`, `/user/urls/*`, `/auth/logout`, etc.)
+- **Protected (JWT Required):** All other endpoints (`/shorten`, `/user/urls`, `/user/urls/*`, `/auth/logout`, `/user/account`, etc.)
 
 ### Authentication Flow & JWT Management
 
@@ -94,6 +95,37 @@ New providers (GitHub, Apple, LinkedIn, etc.) can be added by:
 - Adding new provider config to backend
 - Adding new login button to frontend
 - No database schema changes required (already supports unlimited providers per user)
+
+### Account Deletion Flow
+
+Users may permanently delete their account at any time from the profile/settings page. This removes all personally identifiable information and all data owned by the user from the system.
+
+**What gets deleted (cascade):**
+
+- The `Users` row for the user
+- All `UserProviders` rows (OAuth credentials) — via `ON DELETE CASCADE`
+- All `ShortenedUrls` rows owned by the user — via `ON DELETE CASCADE`
+- All `UrlClicks` rows for those URLs — via `ON DELETE CASCADE`
+- All `UserQuotas` rows for the user — via `ON DELETE CASCADE`
+- All `UserAnomalies` rows for the user — via `ON DELETE CASCADE`
+
+**No schema changes required:** All child tables already carry `ON DELETE CASCADE` foreign keys to `Users`.
+
+**Backend flow:**
+
+1. Receive `DELETE /user/account` with a valid JWT.
+2. Reject the request with `403 Forbidden` if the authenticated user is the super-admin (identified by `SUPER_ADMIN_EMAIL`) — the super-admin account must not be self-deletable to prevent accidental system lockout.
+3. Delete the `Users` row; the database cascade handles all child records.
+4. After deletion the JWT is effectively orphaned — any subsequent request with the same token will receive `401 Unauthorized` because the user no longer exists.
+
+**Frontend flow:**
+
+1. User navigates to the profile/settings page and clicks "Delete my account".
+2. A confirmation dialog is shown explaining that all data will be permanently deleted and this action cannot be undone. The dialog displays the provider email address associated with the account so the user can see exactly which account will be deleted.
+3. The user must type their provider email address (exact match, case-insensitive) into a confirmation input field and then click a destructively styled "Confirm deletion" button. The frontend retrieves the email from the auth store (it is already available from the JWT claims / user profile) and compares it against the typed value before enabling the button.
+4. The frontend calls `DELETE /user/account`.
+5. On success (`204 No Content`): the auth store is cleared (JWT removed), and the user is redirected to the home/login page with a brief informational message acknowledging the deletion.
+6. On error: a user-friendly error message is displayed without exposing server internals.
 
 ## 2. Database (PostgreSQL 18.3): Schema
 
@@ -165,6 +197,7 @@ New providers (GitHub, Apple, LinkedIn, etc.) can be added by:
   - Login/Signup Page
   - URL Shortening Form
   - Dashboard
+  - Profile/Settings Page (includes account deletion with confirmation dialog)
 
 ## 4. Resource Efficiency (4GB RAM constraint)
 
@@ -387,6 +420,8 @@ A dedicated admin interface will be introduced in a future iteration. It will be
 - Manually resetting monthly quotas for individual users
 
 Admin-only API endpoints must verify `is_admin` on every request. A non-admin user receiving a request to an admin endpoint must get a `403 Forbidden` response, indistinguishable from a `404 Not Found` to avoid leaking the existence of admin routes.
+
+**Super-admin self-deletion is blocked:** `DELETE /user/account` returns `403 Forbidden` when called by the super-admin user. The admin screen (future) will also omit the delete option for the super-admin row.
 
 ### Dev-Mode Seed Data
 

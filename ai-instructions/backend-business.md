@@ -57,6 +57,14 @@ Auth-specific handler conventions are governed by [app-auth.md](app-auth.md). DB
 - All domain-level validation (URL format, shortcode rules, SSRF checks, expiration) must be performed in the handler or in a dedicated validation helper within `business-logic/`.
 - Every log entry must include `user_id` (when authenticated) and all relevant entity IDs. Never log JWT tokens, OAuth secrets, or any sensitive user data.
 
+### 4.1 Account Deletion Handler
+
+- The account deletion handler receives the requesting user's ID (from the JWT middleware context).
+- Before deleting, the handler must verify the user is **not** the super-admin: compare the user's `provider_email` (retrieved from `UserRepository`) against the `SUPER_ADMIN_EMAIL` configuration value. If they match, return `ErrUnauthorized`. The web layer maps this to `403 Forbidden`.
+- Do **not** apply OCC (`LastUpdated`) to account deletion. It is a terminal, irreversible action; there is no stale-version scenario to guard against.
+- After the super-admin guard, call `UserRepository.DeleteUser(ctx, userID)`. The database-level `ON DELETE CASCADE` constraints remove all child records automatically. The handler must not manually delete related records.
+- Log the deletion at `INFO` level with `user_id`. Do not log the user's email or any other PII in the log entry.
+
 ---
 
 ## 5. URL Shortening Logic

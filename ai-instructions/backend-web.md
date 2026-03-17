@@ -100,6 +100,18 @@ huma.Register(api, huma.Operation{
 }, createUrlHandler)
 ```
 
+Account deletion example (returns `204 No Content` with an empty body on success):
+
+```go
+huma.Register(api, huma.Operation{
+    OperationID:  "delete-account",
+    Method:       http.MethodDelete,
+    Path:         "/user/account",
+    Summary:      "Permanently delete the authenticated user's account and all associated data",
+    DefaultStatus: http.StatusNoContent,
+}, deleteAccountHandler)
+```
+
 ### 5.2 Handler Function Structure
 
 Every web handler function must follow this exact pattern — no deviations:
