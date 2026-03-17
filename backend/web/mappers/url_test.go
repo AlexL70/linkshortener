@@ -23,12 +23,13 @@ func TestUrlToViewModel_AllFields(t *testing.T) {
 		LastUpdated: now,
 	}
 
-	vm := mappers.UrlToViewModel(m)
+	vm := mappers.UrlToViewModel(m, "https://s.example.com")
 
 	require.NotNil(t, vm)
 	assert.Equal(t, int64(42), vm.ID)
 	assert.Equal(t, "abc123", vm.Shortcode)
 	assert.Equal(t, "https://example.com", vm.LongUrl)
+	assert.Equal(t, "https://s.example.com/r/abc123", vm.ShortUrl)
 	require.NotNil(t, vm.ExpiresAt)
 	assert.Equal(t, exp, *vm.ExpiresAt)
 	assert.Equal(t, now, vm.LastUpdated)
@@ -43,9 +44,10 @@ func TestUrlToViewModel_NoExpiry(t *testing.T) {
 		LastUpdated: now,
 	}
 
-	vm := mappers.UrlToViewModel(m)
+	vm := mappers.UrlToViewModel(m, "https://s.example.com")
 
 	require.NotNil(t, vm)
+	assert.Equal(t, "https://s.example.com/r/xyz789", vm.ShortUrl)
 	assert.Nil(t, vm.ExpiresAt)
 }
 
@@ -56,7 +58,7 @@ func TestListUrlsToResponse_MultipleItems(t *testing.T) {
 		{ID: 2, Shortcode: "bbb222", LongUrl: "https://b.com", LastUpdated: now},
 	}
 
-	body := mappers.ListUrlsToResponse(urls, 10, 2, 5)
+	body := mappers.ListUrlsToResponse(urls, 10, 2, 5, "https://s.example.com")
 
 	require.NotNil(t, body)
 	assert.Equal(t, 10, body.Total)
@@ -64,11 +66,13 @@ func TestListUrlsToResponse_MultipleItems(t *testing.T) {
 	assert.Equal(t, 5, body.PageSize)
 	assert.Len(t, body.Items, 2)
 	assert.Equal(t, "aaa111", body.Items[0].Shortcode)
+	assert.Equal(t, "https://s.example.com/r/aaa111", body.Items[0].ShortUrl)
 	assert.Equal(t, "bbb222", body.Items[1].Shortcode)
+	assert.Equal(t, "https://s.example.com/r/bbb222", body.Items[1].ShortUrl)
 }
 
 func TestListUrlsToResponse_EmptySlice(t *testing.T) {
-	body := mappers.ListUrlsToResponse([]*bizmodels.ShortenedUrl{}, 0, 1, 20)
+	body := mappers.ListUrlsToResponse([]*bizmodels.ShortenedUrl{}, 0, 1, 20, "")
 
 	require.NotNil(t, body)
 	assert.Equal(t, 0, body.Total)

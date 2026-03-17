@@ -33,8 +33,9 @@ func RegisterUrlRoutes(api huma.API, h *handlers.UrlHandler) {
 			return nil, MapError(err)
 		}
 
+		baseUrl := os.Getenv("APP_BASE_URL")
 		return &viewmodels.ListUrlsResponse{
-			Body: webmappers.ListUrlsToResponse(urls, total, input.Page, pageSize),
+			Body: webmappers.ListUrlsToResponse(urls, total, input.Page, pageSize, baseUrl),
 		}, nil
 	})
 

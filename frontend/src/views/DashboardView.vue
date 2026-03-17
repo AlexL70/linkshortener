@@ -29,11 +29,23 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { ChevronDown, ChevronUp, Pencil, Trash2 } from 'lucide-vue-next'
+import { ChevronDown, ChevronUp, Copy, Check, Pencil, Trash2 } from 'lucide-vue-next'
+import { useClipboard } from '@vueuse/core'
 import { toDatetimeLocalValue } from '@/lib/utils'
 
 const urlsStore = useUrlsStore()
 const expandedId = ref<string | null>(null)
+
+// ── Copy short URL ────────────────────────────────────────────────────────────
+const { copy } = useClipboard()
+const copiedId = ref<number | null>(null)
+
+function copyShortUrl(url: UrlItem) {
+  copy(url.short_url)
+  copiedId.value = url.id
+  setTimeout(() => { copiedId.value = null }, 2000)
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 // ── Create Link dialog ────────────────────────────────────────────────────────
 const dialogOpen = ref(false)
@@ -392,6 +404,9 @@ onMounted(() => {
                 {{ url.expires_at ? formatDate(url.expires_at) : '—' }}
               </TableCell>
               <TableCell class="text-right">
+                <Button variant="ghost" size="sm" @click.stop="copyShortUrl(url)">
+                  {{ copiedId === url.id ? 'Copied!' : 'Copy' }}
+                </Button>
                 <Button variant="ghost" size="sm" :disabled="fetchingEditId !== null || fetchingDeleteId !== null"
                   @click.stop="openEditDialog(url)">
                   {{ fetchingEditId === url.id ? 'Loading…' : 'Edit' }}
@@ -418,6 +433,17 @@ onMounted(() => {
             <span class="flex-1 font-mono font-medium">{{ url.shortcode }}</span>
             <Badge v-if="isExpired(url.expires_at)" variant="destructive">Expired</Badge>
             <Badge v-else variant="secondary">Active</Badge>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger as-child>
+                  <Button variant="ghost" size="icon" aria-label="Copy short link" @click.stop="copyShortUrl(url)">
+                    <Check v-if="copiedId === url.id" class="h-4 w-4 text-green-600" />
+                    <Copy v-else class="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{{ copiedId === url.id ? 'Copied!' : 'Copy link' }}</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger as-child>

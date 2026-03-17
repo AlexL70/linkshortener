@@ -27,6 +27,7 @@ type UrlItem struct {
 	ID          int64      `json:"id"`
 	Shortcode   string     `json:"shortcode"`
 	LongUrl     string     `json:"long_url"`
+	ShortUrl    string     `json:"short_url"`
 	ExpiresAt   *time.Time `json:"expires_at,omitempty"`
 	LastUpdated time.Time  `json:"last_updated"`
 }

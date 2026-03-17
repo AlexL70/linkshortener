@@ -6,21 +6,24 @@ import (
 )
 
 // UrlToViewModel converts a business-layer ShortenedUrl to a UrlItem viewmodel.
-func UrlToViewModel(m *bizmodels.ShortenedUrl) *viewmodels.UrlItem {
+// baseUrl is used to construct the full short URL (e.g. "https://s.example.com").
+func UrlToViewModel(m *bizmodels.ShortenedUrl, baseUrl string) *viewmodels.UrlItem {
 	return &viewmodels.UrlItem{
 		ID:          m.ID,
 		Shortcode:   m.Shortcode,
 		LongUrl:     m.LongUrl,
+		ShortUrl:    baseUrl + "/r/" + m.Shortcode,
 		ExpiresAt:   m.ExpiresAt,
 		LastUpdated: m.LastUpdated,
 	}
 }
 
 // ListUrlsToResponse builds the paginated list response body from a slice of business models.
-func ListUrlsToResponse(urls []*bizmodels.ShortenedUrl, total, page, pageSize int) *viewmodels.ListUrlsResponseBody {
+// baseUrl is forwarded to UrlToViewModel to construct the short_url field on each item.
+func ListUrlsToResponse(urls []*bizmodels.ShortenedUrl, total, page, pageSize int, baseUrl string) *viewmodels.ListUrlsResponseBody {
 	items := make([]*viewmodels.UrlItem, len(urls))
 	for i, u := range urls {
-		items[i] = UrlToViewModel(u)
+		items[i] = UrlToViewModel(u, baseUrl)
 	}
 	return &viewmodels.ListUrlsResponseBody{
 		Items:    items,

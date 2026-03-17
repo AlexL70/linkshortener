@@ -74,6 +74,7 @@ func TestListUserUrls_NoAuth_Returns401(t *testing.T) {
 }
 
 func TestListUserUrls_ValidJWT_ReturnsURLs(t *testing.T) {
+	os.Setenv("APP_BASE_URL", "https://short.example.com")
 	now := time.Now().Truncate(time.Second)
 	user := &bizmodels.User{ID: 1, UserName: "alice"}
 	urls := []*bizmodels.ShortenedUrl{
@@ -107,6 +108,8 @@ func TestListUserUrls_ValidJWT_ReturnsURLs(t *testing.T) {
 	assert.Equal(t, 1, body.Page)
 	assert.Equal(t, 20, body.PageSize)
 	assert.Len(t, body.Items, 2)
+	assert.Equal(t, "https://short.example.com/r/aaa111", body.Items[0]["short_url"])
+	assert.Equal(t, "https://short.example.com/r/bbb222", body.Items[1]["short_url"])
 }
 
 func TestListUserUrls_CustomPageSize_Respected(t *testing.T) {
