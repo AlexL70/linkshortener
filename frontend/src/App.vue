@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { RouterView, useRouter } from 'vue-router'
+import { RouterView, RouterLink, useRouter, useRoute } from 'vue-router'
 import { ref } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'
@@ -22,6 +22,7 @@ import {
 const auth = useAuthStore()
 const themeStore = useThemeStore()
 const router = useRouter()
+const route = useRoute()
 const signInOpen = ref(false)
 
 const providers = [
@@ -44,17 +45,24 @@ async function handleLogout() {
 <template>
   <header
     class="fixed top-0 left-0 right-0 z-50 flex h-14 items-center justify-between border-b bg-background px-6 shadow-sm">
-    <span class="text-lg font-semibold tracking-tight">Link Shortener</span>
+    <div class="flex items-center gap-6">
+      <span class="text-lg font-semibold tracking-tight">Link Shortener</span>
+      <nav v-if="auth.isAuthenticated" class="flex items-center gap-1">
+        <Button as-child variant="ghost" :class="route.name === 'dashboard' ? 'bg-accent' : ''">
+          <RouterLink to="/dashboard">Dashboard</RouterLink>
+        </Button>
+        <Button as-child variant="ghost" :class="route.path.startsWith('/profile') ? 'bg-accent' : ''">
+          <RouterLink to="/profile">Profile</RouterLink>
+        </Button>
+      </nav>
+    </div>
     <div class="flex items-center gap-2">
       <TooltipProvider :delay-duration="300">
         <div class="flex items-center">
           <Tooltip>
             <TooltipTrigger as-child>
-              <Button
-                variant="ghost" size="icon"
-                :class="themeStore.mode === 'light' ? 'bg-accent' : ''"
-                aria-label="Light mode"
-                @click="themeStore.setMode('light')">
+              <Button variant="ghost" size="icon" :class="themeStore.mode === 'light' ? 'bg-accent' : ''"
+                aria-label="Light mode" @click="themeStore.setMode('light')">
                 <Sun />
               </Button>
             </TooltipTrigger>
@@ -62,11 +70,8 @@ async function handleLogout() {
           </Tooltip>
           <Tooltip>
             <TooltipTrigger as-child>
-              <Button
-                variant="ghost" size="icon"
-                :class="themeStore.mode === 'dark' ? 'bg-accent' : ''"
-                aria-label="Dark mode"
-                @click="themeStore.setMode('dark')">
+              <Button variant="ghost" size="icon" :class="themeStore.mode === 'dark' ? 'bg-accent' : ''"
+                aria-label="Dark mode" @click="themeStore.setMode('dark')">
                 <Moon />
               </Button>
             </TooltipTrigger>
@@ -74,11 +79,8 @@ async function handleLogout() {
           </Tooltip>
           <Tooltip>
             <TooltipTrigger as-child>
-              <Button
-                variant="ghost" size="icon"
-                :class="themeStore.mode === 'system' ? 'bg-accent' : ''"
-                aria-label="Follow system settings"
-                @click="themeStore.setMode('system')">
+              <Button variant="ghost" size="icon" :class="themeStore.mode === 'system' ? 'bg-accent' : ''"
+                aria-label="Follow system settings" @click="themeStore.setMode('system')">
                 <Monitor />
               </Button>
             </TooltipTrigger>
