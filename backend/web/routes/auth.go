@@ -122,7 +122,7 @@ func RegisterAuthRoutes(router *gin.Engine, api huma.API, h *handlers.AuthHandle
 
 		if resolveErr == nil {
 			// Existing user — issue a full JWT and redirect to the frontend.
-			token, jwtErr := CreateJWT(user)
+			token, jwtErr := CreateJWT(user, input.Email)
 			if jwtErr != nil {
 				slog.Error("auth: failed to create JWT", "user_id", user.ID, "error", jwtErr)
 				c.Redirect(http.StatusFound, redirectTo+"#error=internal_error")
@@ -170,7 +170,7 @@ func RegisterAuthRoutes(router *gin.Engine, api huma.API, h *handlers.AuthHandle
 			return nil, MapError(err)
 		}
 
-		token, err := CreateJWT(user)
+		token, err := CreateJWT(user, authInput.Email)
 		if err != nil {
 			slog.Error("auth: failed to create JWT after registration", "user_id", user.ID, "error", err)
 			return nil, huma.Error500InternalServerError("internal server error")
@@ -198,7 +198,6 @@ func RegisterAuthRoutes(router *gin.Engine, api huma.API, h *handlers.AuthHandle
 	// JWT validation is enforced by the protectedGroup middleware; claims are
 	// forwarded into the stdlib context by RequireJWT for retrieval here.
 	huma.Register(protectedAPI, huma.Operation{
-		OperationID:   "logout",
 		Method:        http.MethodPost,
 		Path:          "/auth/logout",
 		Summary:       "Log out the authenticated user by blacklisting the JWT",
@@ -213,6 +212,27 @@ func RegisterAuthRoutes(router *gin.Engine, api huma.API, h *handlers.AuthHandle
 		}
 		blacklist.Add(claims.ID, claims.ExpiresAt.Time)
 		slog.Info("auth: user logged out", "user_id", claims.UserID)
+		return nil, nil
+	})
+
+	// DELETE /user/account — permanently deletes the authenticated user's account
+	// and all associated data via DB cascade. Returns 204 No Content on success.
+	// Super-admin is blocked with 403 Forbidden.
+	huma.Register(protectedAPI, huma.Operation{
+		OperationID:   "delete-account",
+		Method:        http.MethodDelete,
+		Path:          "/user/account",
+		Summary:       "Permanently delete the authenticated user's account and all associated data",
+		DefaultStatus: http.StatusNoContent,
+		Security:      []map[string][]string{{"bearer": {}}},
+	}, func(ctx context.Context, _ *struct{}) (*struct{}, error) {
+		claims := GetJWTClaimsFromContext(ctx)
+		if claims == nil {
+			return nil, huma.Error401Unauthorized("unauthorized")
+		}
+		if err := h.DeleteAccount(ctx, claims.UserID); err != nil {
+			return nil, MapError(err)
+		}
 		return nil, nil
 	})
 }

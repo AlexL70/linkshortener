@@ -356,7 +356,6 @@
   "paths": {
     "/auth/logout": {
       "post": {
-        "operationId": "logout",
         "responses": {
           "204": {
             "description": "No Content"
@@ -455,6 +454,32 @@
           }
         },
         "summary": "Redirect to the long URL for a given shortcode"
+      }
+    },
+    "/user/account": {
+      "delete": {
+        "operationId": "delete-account",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Permanently delete the authenticated user's account and all associated data"
       }
     },
     "/user/urls": {

@@ -35,15 +35,24 @@ afterEach(() => {
 // ── handleCallback ────────────────────────────────────────────────────────────
 
 describe('handleCallback', () => {
-  it('decodes a valid JWT and populates token + user', () => {
-    const jwt = makeJwt({ user_id: 42, user_name: 'alice' })
+  it('decodes a valid JWT and populates token + user including email', () => {
+    const jwt = makeJwt({ user_id: 42, user_name: 'alice', email: 'alice@example.com' })
     const store = useAuthStore()
 
     store.handleCallback(jwt)
 
     expect(store.token).toBe(jwt)
-    expect(store.user).toEqual({ id: '42', username: 'alice' })
+    expect(store.user).toEqual({ id: '42', username: 'alice', email: 'alice@example.com' })
     expect(store.isAuthenticated).toBe(true)
+  })
+
+  it('sets email to empty string when JWT has no email claim', () => {
+    const jwt = makeJwt({ user_id: 7, user_name: 'gus' })
+    const store = useAuthStore()
+
+    store.handleCallback(jwt)
+
+    expect(store.user?.email).toBe('')
   })
 
   it('persists the token to localStorage', () => {
@@ -106,8 +115,8 @@ describe('login', () => {
 // ── logout ────────────────────────────────────────────────────────────────────
 
 describe('logout', () => {
-  it('calls DefaultService.logout() when a token is present', async () => {
-    const logoutSpy = vi.spyOn(DefaultService, 'logout').mockResolvedValue({} as never)
+  it('calls DefaultService.postAuthLogout() when a token is present', async () => {
+    const logoutSpy = vi.spyOn(DefaultService, 'postAuthLogout').mockResolvedValue({} as never)
     const jwt = makeJwt({ user_id: 9, user_name: 'dave' })
     const store = useAuthStore()
     store.handleCallback(jwt)
@@ -118,7 +127,7 @@ describe('logout', () => {
   })
 
   it('clears token, user, localStorage, and OpenAPI.TOKEN after logout', async () => {
-    vi.spyOn(DefaultService, 'logout').mockResolvedValue({} as never)
+    vi.spyOn(DefaultService, 'postAuthLogout').mockResolvedValue({} as never)
     const jwt = makeJwt({ user_id: 9, user_name: 'eve' })
     const store = useAuthStore()
     store.handleCallback(jwt)
@@ -133,7 +142,7 @@ describe('logout', () => {
   })
 
   it('still clears local state even if the backend call fails', async () => {
-    vi.spyOn(DefaultService, 'logout').mockRejectedValue(new Error('network error'))
+    vi.spyOn(DefaultService, 'postAuthLogout').mockRejectedValue(new Error('network error'))
     vi.spyOn(console, 'warn').mockImplementation(() => {})
     const jwt = makeJwt({ user_id: 9, user_name: 'frank' })
     const store = useAuthStore()
@@ -146,11 +155,64 @@ describe('logout', () => {
   })
 
   it('skips the backend call when there is no token', async () => {
-    const logoutSpy = vi.spyOn(DefaultService, 'logout')
+    const logoutSpy = vi.spyOn(DefaultService, 'postAuthLogout')
     const store = useAuthStore()
 
     await store.logout()
 
     expect(logoutSpy).not.toHaveBeenCalled()
+  })
+})
+
+// ── deleteAccount ─────────────────────────────────────────────────────────────
+
+describe('deleteAccount', () => {
+  it('calls DefaultService.deleteAccount() and clears auth state on success', async () => {
+    vi.spyOn(DefaultService, 'deleteAccount').mockResolvedValue({} as never)
+    const jwt = makeJwt({ user_id: 5, user_name: 'hank', email: 'hank@example.com' })
+    const store = useAuthStore()
+    store.handleCallback(jwt)
+
+    await store.deleteAccount()
+
+    expect(store.token).toBeNull()
+    expect(store.user).toBeNull()
+    expect(store.isAuthenticated).toBe(false)
+    expect(localStorage.getItem('token')).toBeNull()
+    expect(OpenAPI.TOKEN).toBeUndefined()
+    expect(store.deleteError).toBeNull()
+    expect(store.deleting).toBe(false)
+  })
+
+  it('sets deleteError and keeps auth state when backend returns an error', async () => {
+    vi.spyOn(DefaultService, 'deleteAccount').mockRejectedValue(new Error('forbidden'))
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const jwt = makeJwt({ user_id: 6, user_name: 'ivy', email: 'ivy@example.com' })
+    const store = useAuthStore()
+    store.handleCallback(jwt)
+
+    await store.deleteAccount()
+
+    expect(store.deleteError).toBe('forbidden')
+    expect(store.token).not.toBeNull()
+    expect(store.isAuthenticated).toBe(true)
+    expect(store.deleting).toBe(false)
+  })
+
+  it('sets deleting to true during the call and false after', async () => {
+    let resolveFn!: () => void
+    vi.spyOn(DefaultService, 'deleteAccount').mockImplementation(
+      () => new Promise<never>((resolve) => { resolveFn = resolve as () => void }),
+    )
+    const jwt = makeJwt({ user_id: 7, user_name: 'jan', email: 'jan@example.com' })
+    const store = useAuthStore()
+    store.handleCallback(jwt)
+
+    const promise = store.deleteAccount()
+    expect(store.deleting).toBe(true)
+
+    resolveFn()
+    await promise
+    expect(store.deleting).toBe(false)
   })
 })

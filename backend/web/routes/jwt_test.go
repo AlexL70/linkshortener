@@ -14,7 +14,7 @@ import (
 
 func TestCreateJWT_RoundTrip(t *testing.T) {
 	user := &bizmodels.User{ID: 42, UserName: "testuser"}
-	token, err := routes.CreateJWT(user)
+	token, err := routes.CreateJWT(user, "testuser@example.com")
 	require.NoError(t, err)
 	assert.NotEmpty(t, token)
 }
@@ -22,7 +22,7 @@ func TestCreateJWT_RoundTrip(t *testing.T) {
 func TestCreateJWT_JTIPresent(t *testing.T) {
 	// Every full JWT must carry a non-empty jti claim so it can be blacklisted.
 	user := &bizmodels.User{ID: 99, UserName: "jtiuser"}
-	token, err := routes.CreateJWT(user)
+	token, err := routes.CreateJWT(user, "jtiuser@example.com")
 	require.NoError(t, err)
 
 	claims, err := routes.ParseJWT(token)
@@ -32,9 +32,9 @@ func TestCreateJWT_JTIPresent(t *testing.T) {
 
 func TestCreateJWT_TwoTokensHaveDifferentJTI(t *testing.T) {
 	user := &bizmodels.User{ID: 7, UserName: "uniquejti"}
-	t1, err := routes.CreateJWT(user)
+	t1, err := routes.CreateJWT(user, "uniquejti@example.com")
 	require.NoError(t, err)
-	t2, err := routes.CreateJWT(user)
+	t2, err := routes.CreateJWT(user, "uniquejti@example.com")
 	require.NoError(t, err)
 
 	c1, _ := routes.ParseJWT(t1)
@@ -44,13 +44,14 @@ func TestCreateJWT_TwoTokensHaveDifferentJTI(t *testing.T) {
 
 func TestParseJWT_RoundTrip(t *testing.T) {
 	user := &bizmodels.User{ID: 5, UserName: "parsetest"}
-	tokenStr, err := routes.CreateJWT(user)
+	tokenStr, err := routes.CreateJWT(user, "parsetest@example.com")
 	require.NoError(t, err)
 
 	claims, err := routes.ParseJWT(tokenStr)
 	require.NoError(t, err)
 	assert.Equal(t, int64(5), claims.UserID)
 	assert.Equal(t, "parsetest", claims.UserName)
+	assert.Equal(t, "parsetest@example.com", claims.Email)
 	assert.Equal(t, "5", claims.Subject)
 	assert.NotEmpty(t, claims.ID)
 }
@@ -63,7 +64,7 @@ func TestParseJWT_InvalidToken(t *testing.T) {
 
 func TestParseJWT_WrongSecret(t *testing.T) {
 	user := &bizmodels.User{ID: 3, UserName: "secrettest"}
-	tokenStr, err := routes.CreateJWT(user)
+	tokenStr, err := routes.CreateJWT(user, "secrettest@example.com")
 	require.NoError(t, err)
 
 	originalSecret := os.Getenv("JWT_SECRET")

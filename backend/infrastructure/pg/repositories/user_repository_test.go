@@ -133,3 +133,66 @@ func TestCreateUserWithProvider_DuplicateUserName(t *testing.T) {
 	_, err = repo.CreateUserWithProvider(ctx, "dupuser", up2)
 	assert.ErrorIs(t, err, businesslogic.ErrConflict)
 }
+
+func TestFindProvidersByUserID_SingleProvider(t *testing.T) {
+	db := testutil.OpenTestDB(t)
+
+	repo := repositories.NewUserRepository(db)
+	ctx := context.Background()
+
+	up := &bizmodels.UserProvider{
+		Provider:       bizmodels.ProviderGoogle,
+		ProviderUserID: "single-provider-sub",
+		ProviderEmail:  "single@example.com",
+	}
+	created, err := repo.CreateUserWithProvider(ctx, "singleprovideruser", up)
+	require.NoError(t, err)
+
+	providers, err := repo.FindProvidersByUserID(ctx, created.ID)
+	require.NoError(t, err)
+	require.Len(t, providers, 1)
+	assert.Equal(t, "single-provider-sub", providers[0].ProviderUserID)
+	assert.Equal(t, "single@example.com", providers[0].ProviderEmail)
+}
+
+func TestFindProvidersByUserID_NotFound(t *testing.T) {
+	db := testutil.OpenTestDB(t)
+
+	repo := repositories.NewUserRepository(db)
+	ctx := context.Background()
+
+	_, err := repo.FindProvidersByUserID(ctx, 999999988)
+	assert.ErrorIs(t, err, businesslogic.ErrNotFound)
+}
+
+func TestDeleteUser_Success(t *testing.T) {
+	db := testutil.OpenTestDB(t)
+
+	repo := repositories.NewUserRepository(db)
+	ctx := context.Background()
+
+	up := &bizmodels.UserProvider{
+		Provider:       bizmodels.ProviderGoogle,
+		ProviderUserID: "delete-sub",
+		ProviderEmail:  "todelete@example.com",
+	}
+	created, err := repo.CreateUserWithProvider(ctx, "deletableuser", up)
+	require.NoError(t, err)
+
+	err = repo.DeleteUser(ctx, created.ID)
+	require.NoError(t, err)
+
+	// Verify the user (and its providers via CASCADE) are gone.
+	_, err = repo.FindProvidersByUserID(ctx, created.ID)
+	assert.ErrorIs(t, err, businesslogic.ErrNotFound)
+}
+
+func TestDeleteUser_NotFound(t *testing.T) {
+	db := testutil.OpenTestDB(t)
+
+	repo := repositories.NewUserRepository(db)
+	ctx := context.Background()
+
+	err := repo.DeleteUser(ctx, 999999977)
+	assert.ErrorIs(t, err, businesslogic.ErrNotFound)
+}

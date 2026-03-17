@@ -84,6 +84,14 @@ func (stubUserRepo) CreateUserWithProvider(_ context.Context, _ string, _ *bizmo
 	return nil, nil
 }
 
+func (stubUserRepo) FindProvidersByUserID(_ context.Context, _ int64) ([]*bizmodels.UserProvider, error) {
+	return nil, nil
+}
+
+func (stubUserRepo) DeleteUser(_ context.Context, _ int64) error {
+	return nil
+}
+
 var _ bizinterfaces.UserRepository = stubUserRepo{}
 
 // stubUrlRepo is a no-op implementation of UrlRepository used only during

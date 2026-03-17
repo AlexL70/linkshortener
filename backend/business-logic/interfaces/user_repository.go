@@ -24,4 +24,13 @@ type UserRepository interface {
 	// in a single transaction. Timestamps are managed by the repository.
 	// Returns ErrConflict if the userName is already taken.
 	CreateUserWithProvider(ctx context.Context, userName string, up *models.UserProvider) (*models.User, error)
+
+	// FindProvidersByUserID returns all UserProvider records linked to the given user.
+	// Returns ErrNotFound if the user has no associated providers (or does not exist).
+	FindProvidersByUserID(ctx context.Context, userID int64) ([]*models.UserProvider, error)
+
+	// DeleteUser removes the Users row with the given ID.
+	// All child records are removed automatically via ON DELETE CASCADE.
+	// Returns ErrNotFound if no such user exists.
+	DeleteUser(ctx context.Context, userID int64) error
 }

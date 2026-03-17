@@ -6,6 +6,7 @@ import { DefaultService } from '@/lib/api/services/DefaultService'
 interface User {
   id: string
   username: string
+  email: string
 }
 
 const BACKEND_URL = import.meta.env.APP_BASE_URL as string ?? ''
@@ -16,6 +17,8 @@ OpenAPI.BASE = BACKEND_URL
 export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(localStorage.getItem('token'))
   const user = ref<User | null>(null)
+  const deleting = ref(false)
+  const deleteError = ref<string | null>(null)
 
   const isAuthenticated = computed(() => !!token.value)
 
@@ -42,7 +45,7 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')))
       setToken(jwtToken)
-      setUser({ id: String(payload.user_id ?? ''), username: payload.user_name ?? '' })
+      setUser({ id: String(payload.user_id ?? ''), username: payload.user_name ?? '', email: payload.email ?? '' })
     } catch {
       // Malformed token — silently ignore; caller should check isAuthenticated.
     }
@@ -65,7 +68,7 @@ export const useAuthStore = defineStore('auth', () => {
     if (token.value) {
       OpenAPI.TOKEN = token.value
       try {
-        await DefaultService.logout()
+        await DefaultService.postAuthLogout()
       } catch (err) {
         // Backend rejection (e.g. already-expired token) is non-fatal — we
         // still clear local state so the user is signed out in the browser.
@@ -83,5 +86,28 @@ export const useAuthStore = defineStore('auth', () => {
     OpenAPI.TOKEN = token.value
   }
 
-  return { token, user, isAuthenticated, setToken, setUser, handleCallback, login, logout }
+  /**
+   * Permanently delete the authenticated user's account via the backend API,
+   * then clear all local auth state. Navigation to / is left to the caller.
+   */
+  async function deleteAccount() {
+    deleting.value = true
+    deleteError.value = null
+    try {
+      await DefaultService.deleteAccount()
+      token.value = null
+      user.value = null
+      localStorage.removeItem('token')
+      OpenAPI.TOKEN = undefined
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : 'Failed to delete account. Please try again.'
+      deleteError.value = message
+      console.error('deleteAccount: backend call failed', err)
+    } finally {
+      deleting.value = false
+    }
+  }
+
+  return { token, user, deleting, deleteError, isAuthenticated, setToken, setUser, handleCallback, login, logout, deleteAccount }
 })

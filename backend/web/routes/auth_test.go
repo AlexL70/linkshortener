@@ -260,7 +260,7 @@ func TestRegister_InternalError_Returns500(t *testing.T) {
 func TestLogout_ValidToken_Returns204(t *testing.T) {
 	h := newAuthHandler(t, nil)
 	user := &bizmodels.User{ID: 10, UserName: "logoutuser"}
-	token, err := routes.CreateJWT(user)
+	token, err := routes.CreateJWT(user, "logoutuser@example.com")
 	require.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodPost, "/auth/logout", nil)
@@ -295,7 +295,7 @@ func TestLogout_ReplayAfterLogout_Returns401(t *testing.T) {
 	bl := routes.NewTokenBlacklist()
 	h := newAuthHandler(t, nil)
 	user := &bizmodels.User{ID: 11, UserName: "replayuser"}
-	token, err := routes.CreateJWT(user)
+	token, err := routes.CreateJWT(user, "replayuser@example.com")
 	require.NoError(t, err)
 
 	router := newTestRouter(h, bl)
@@ -313,4 +313,81 @@ func TestLogout_ReplayAfterLogout_Returns401(t *testing.T) {
 	w2 := httptest.NewRecorder()
 	router.ServeHTTP(w2, req2)
 	assert.Equal(t, http.StatusUnauthorized, w2.Code)
+}
+
+// --- DELETE /user/account tests ---
+
+func newAuthHandlerWithAdminEmail(t *testing.T, setupMock func(*mocks.MockUserRepository)) *handlers.AuthHandler {
+	t.Helper()
+	ctrl := gomock.NewController(t)
+	mockRepo := mocks.NewMockUserRepository(ctrl)
+	if setupMock != nil {
+		setupMock(mockRepo)
+	}
+	return handlers.NewAuthHandler(mockRepo, false, "admin@example.com")
+}
+
+func TestDeleteAccount_NoAuth_Returns401(t *testing.T) {
+	h := newAuthHandler(t, nil)
+	req := httptest.NewRequest(http.MethodDelete, "/user/account", nil)
+	w := httptest.NewRecorder()
+	newTestRouter(h).ServeHTTP(w, req)
+	assert.Equal(t, http.StatusUnauthorized, w.Code)
+}
+
+func TestDeleteAccount_Success_Returns204(t *testing.T) {
+	const userID = int64(42)
+	h := newAuthHandlerWithAdminEmail(t, func(m *mocks.MockUserRepository) {
+		m.EXPECT().
+			FindProvidersByUserID(gomock.Any(), userID).
+			Return([]*bizmodels.UserProvider{{ProviderEmail: "regular@example.com"}}, nil)
+		m.EXPECT().
+			DeleteUser(gomock.Any(), userID).
+			Return(nil)
+	})
+	user := &bizmodels.User{ID: userID, UserName: "regularuser"}
+	token, err := routes.CreateJWT(user, "regular@example.com")
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodDelete, "/user/account", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	w := httptest.NewRecorder()
+	newTestRouter(h).ServeHTTP(w, req)
+	assert.Equal(t, http.StatusNoContent, w.Code)
+}
+
+func TestDeleteAccount_AdminForbidden_Returns403(t *testing.T) {
+	const userID = int64(1)
+	h := newAuthHandlerWithAdminEmail(t, func(m *mocks.MockUserRepository) {
+		m.EXPECT().
+			FindProvidersByUserID(gomock.Any(), userID).
+			Return([]*bizmodels.UserProvider{{ProviderEmail: "admin@example.com"}}, nil)
+	})
+	user := &bizmodels.User{ID: userID, UserName: "adminuser"}
+	token, err := routes.CreateJWT(user, "admin@example.com")
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodDelete, "/user/account", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	w := httptest.NewRecorder()
+	newTestRouter(h).ServeHTTP(w, req)
+	assert.Equal(t, http.StatusForbidden, w.Code)
+}
+
+func TestDeleteAccount_NotFound_Returns404(t *testing.T) {
+	const userID = int64(99)
+	h := newAuthHandlerWithAdminEmail(t, func(m *mocks.MockUserRepository) {
+		m.EXPECT().
+			FindProvidersByUserID(gomock.Any(), userID).
+			Return(nil, businesslogic.ErrNotFound)
+	})
+	user := &bizmodels.User{ID: userID, UserName: "ghostuser"}
+	token, err := routes.CreateJWT(user, "ghost@example.com")
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodDelete, "/user/account", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	w := httptest.NewRecorder()
+	newTestRouter(h).ServeHTTP(w, req)
+	assert.Equal(t, http.StatusNotFound, w.Code)
 }

@@ -29,7 +29,7 @@ func newMiddlewareRouter(bl *routes.TokenBlacklist) *gin.Engine {
 func TestRequireJWT_ValidToken_Returns200(t *testing.T) {
 	bl := routes.NewTokenBlacklist()
 	user := &bizmodels.User{ID: 1, UserName: "alice"}
-	token, err := routes.CreateJWT(user)
+	token, err := routes.CreateJWT(user, "testuser@example.com")
 	require.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodGet, "/protected", nil)
@@ -76,7 +76,7 @@ func TestRequireJWT_InvalidToken_Returns401(t *testing.T) {
 func TestRequireJWT_BlacklistedToken_Returns401(t *testing.T) {
 	bl := routes.NewTokenBlacklist()
 	user := &bizmodels.User{ID: 2, UserName: "bob"}
-	token, err := routes.CreateJWT(user)
+	token, err := routes.CreateJWT(user, "testuser@example.com")
 	require.NoError(t, err)
 
 	// Parse the token to extract the jti, then blacklist it.
@@ -96,7 +96,7 @@ func TestRequireJWT_BlacklistedToken_Returns401(t *testing.T) {
 func TestRequireJWT_ClaimsStoredInContext(t *testing.T) {
 	bl := routes.NewTokenBlacklist()
 	user := &bizmodels.User{ID: 7, UserName: "carol"}
-	token, err := routes.CreateJWT(user)
+	token, err := routes.CreateJWT(user, "testuser@example.com")
 	require.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodGet, "/protected", nil)
@@ -148,7 +148,7 @@ func TestRequireJWTGlobal_ProtectedPath_NoToken_Returns401(t *testing.T) {
 func TestRequireJWTGlobal_ProtectedPath_ValidToken_Returns200(t *testing.T) {
 	bl := routes.NewTokenBlacklist()
 	user := &bizmodels.User{ID: 10, UserName: "heidi"}
-	token, err := routes.CreateJWT(user)
+	token, err := routes.CreateJWT(user, "testuser@example.com")
 	require.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodGet, "/protected", nil)
@@ -164,7 +164,7 @@ func TestRequireJWTGlobal_ProtectedPath_ValidToken_Returns200(t *testing.T) {
 func TestRequireJWTGlobal_ProtectedPath_BlacklistedToken_Returns401(t *testing.T) {
 	bl := routes.NewTokenBlacklist()
 	user := &bizmodels.User{ID: 11, UserName: "ivan"}
-	token, err := routes.CreateJWT(user)
+	token, err := routes.CreateJWT(user, "testuser@example.com")
 	require.NoError(t, err)
 
 	claims, err := routes.ParseJWT(token)
@@ -194,7 +194,7 @@ func TestRequireJWTGlobal_ProtectedPath_InvalidToken_Returns401(t *testing.T) {
 func TestRequireJWTGlobal_ClaimsStoredInContext(t *testing.T) {
 	bl := routes.NewTokenBlacklist()
 	user := &bizmodels.User{ID: 12, UserName: "judy"}
-	token, err := routes.CreateJWT(user)
+	token, err := routes.CreateJWT(user, "testuser@example.com")
 	require.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodGet, "/protected", nil)

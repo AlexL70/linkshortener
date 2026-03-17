@@ -19,7 +19,7 @@ export class DefaultService {
      * @returns ErrorModel Error
      * @throws ApiError
      */
-    public static logout(): CancelablePromise<ErrorModel> {
+    public static postAuthLogout(): CancelablePromise<ErrorModel> {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/auth/logout',
@@ -41,6 +41,38 @@ export class DefaultService {
             url: '/auth/register',
             body: requestBody,
             mediaType: 'application/json',
+        });
+    }
+    /**
+     * Redirect to the long URL for a given shortcode
+     * @returns ErrorModel Error
+     * @throws ApiError
+     */
+    public static redirectShortcode({
+        shortcode,
+    }: {
+        shortcode: string,
+    }): CancelablePromise<ErrorModel> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/r/{shortcode}',
+            path: {
+                'shortcode': shortcode,
+            },
+            errors: {
+                302: `Found`,
+            },
+        });
+    }
+    /**
+     * Permanently delete the authenticated user's account and all associated data
+     * @returns ErrorModel Error
+     * @throws ApiError
+     */
+    public static deleteAccount(): CancelablePromise<ErrorModel> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/user/account',
         });
     }
     /**

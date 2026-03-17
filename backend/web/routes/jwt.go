@@ -19,6 +19,7 @@ const preRegTokenDuration = 10 * time.Minute
 type JWTClaims struct {
 	UserID   int64  `json:"user_id"`
 	UserName string `json:"user_name"`
+	Email    string `json:"email"`
 	jwt.RegisteredClaims
 }
 
@@ -42,8 +43,8 @@ func generateJTI() (string, error) {
 }
 
 // CreateJWT creates a signed JWT for the given authenticated user.
-// Claims include user_id, user_name, sub, jti, iat, and exp (24-hour expiry).
-func CreateJWT(user *bizmodels.User) (string, error) {
+// Claims include user_id, user_name, email, sub, jti, iat, and exp (24-hour expiry).
+func CreateJWT(user *bizmodels.User, email string) (string, error) {
 	jti, err := generateJTI()
 	if err != nil {
 		return "", fmt.Errorf("CreateJWT: %w", err)
@@ -53,6 +54,7 @@ func CreateJWT(user *bizmodels.User) (string, error) {
 	claims := JWTClaims{
 		UserID:   user.ID,
 		UserName: user.UserName,
+		Email:    email,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ID:        jti,
 			Subject:   fmt.Sprintf("%d", user.ID),

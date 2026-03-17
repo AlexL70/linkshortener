@@ -143,3 +143,72 @@ func TestCreateUser_DuplicateUserName(t *testing.T) {
 	_, err := h.CreateUser(ctx, "taken", input)
 	assert.ErrorIs(t, err, businesslogic.ErrConflict)
 }
+
+func TestDeleteAccount_Success(t *testing.T) {
+	h, repo := newHandler(t, false)
+	ctx := context.Background()
+	providers := []*models.UserProvider{
+		{ProviderEmail: "regular@example.com"},
+	}
+	repo.EXPECT().FindProvidersByUserID(ctx, int64(5)).Return(providers, nil)
+	repo.EXPECT().DeleteUser(ctx, int64(5)).Return(nil)
+	err := h.DeleteAccount(ctx, 5)
+	require.NoError(t, err)
+}
+
+func TestDeleteAccount_AdminBlocked_SingleProvider(t *testing.T) {
+	h, repo := newHandler(t, false)
+	ctx := context.Background()
+	providers := []*models.UserProvider{
+		{ProviderEmail: adminEmail},
+	}
+	repo.EXPECT().FindProvidersByUserID(ctx, int64(1)).Return(providers, nil)
+	err := h.DeleteAccount(ctx, 1)
+	assert.ErrorIs(t, err, businesslogic.ErrUnauthorized)
+}
+
+func TestDeleteAccount_AdminBlocked_MultipleProviders(t *testing.T) {
+	// Admin email appears on a secondary provider — must still be blocked.
+	h, repo := newHandler(t, false)
+	ctx := context.Background()
+	providers := []*models.UserProvider{
+		{ProviderEmail: "primary@example.com"},
+		{ProviderEmail: adminEmail},
+	}
+	repo.EXPECT().FindProvidersByUserID(ctx, int64(2)).Return(providers, nil)
+	err := h.DeleteAccount(ctx, 2)
+	assert.ErrorIs(t, err, businesslogic.ErrUnauthorized)
+}
+
+func TestDeleteAccount_AdminBlocked_CaseInsensitive(t *testing.T) {
+	h, repo := newHandler(t, false)
+	ctx := context.Background()
+	providers := []*models.UserProvider{
+		{ProviderEmail: "ADMIN@GMAIL.COM"}, // uppercase variant
+	}
+	repo.EXPECT().FindProvidersByUserID(ctx, int64(3)).Return(providers, nil)
+	err := h.DeleteAccount(ctx, 3)
+	assert.ErrorIs(t, err, businesslogic.ErrUnauthorized)
+}
+
+func TestDeleteAccount_UserNotFound(t *testing.T) {
+	h, repo := newHandler(t, false)
+	ctx := context.Background()
+	repo.EXPECT().FindProvidersByUserID(ctx, int64(99)).Return(nil, businesslogic.ErrNotFound)
+	err := h.DeleteAccount(ctx, 99)
+	assert.ErrorIs(t, err, businesslogic.ErrNotFound)
+}
+
+func TestDeleteAccount_DeleteFails(t *testing.T) {
+	h, repo := newHandler(t, false)
+	ctx := context.Background()
+	dbErr := errors.New("db unavailable")
+	providers := []*models.UserProvider{
+		{ProviderEmail: "regular@example.com"},
+	}
+	repo.EXPECT().FindProvidersByUserID(ctx, int64(6)).Return(providers, nil)
+	repo.EXPECT().DeleteUser(ctx, int64(6)).Return(dbErr)
+	err := h.DeleteAccount(ctx, 6)
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "db unavailable")
+}

@@ -95,3 +95,32 @@ func (mr *MockUserRepositoryMockRecorder) UpdateProviderUserID(ctx, userProvider
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateProviderUserID", reflect.TypeOf((*MockUserRepository)(nil).UpdateProviderUserID), ctx, userProviderID, newProviderUserID)
 }
+
+// FindProvidersByUserID mocks base method.
+func (m *MockUserRepository) FindProvidersByUserID(ctx context.Context, userID int64) ([]*models.UserProvider, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindProvidersByUserID", ctx, userID)
+	ret0, _ := ret[0].([]*models.UserProvider)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindProvidersByUserID indicates an expected call of FindProvidersByUserID.
+func (mr *MockUserRepositoryMockRecorder) FindProvidersByUserID(ctx, userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindProvidersByUserID", reflect.TypeOf((*MockUserRepository)(nil).FindProvidersByUserID), ctx, userID)
+}
+
+// DeleteUser mocks base method.
+func (m *MockUserRepository) DeleteUser(ctx context.Context, userID int64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteUser", ctx, userID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteUser indicates an expected call of DeleteUser.
+func (mr *MockUserRepositoryMockRecorder) DeleteUser(ctx, userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteUser", reflect.TypeOf((*MockUserRepository)(nil).DeleteUser), ctx, userID)
+}

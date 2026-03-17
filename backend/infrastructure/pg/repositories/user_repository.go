@@ -137,3 +137,41 @@ func (r *userRepository) findUserByID(ctx context.Context, id int64) (*pgmodels.
 	}
 	return user, nil
 }
+
+func (r *userRepository) FindProvidersByUserID(ctx context.Context, userID int64) ([]*bizmodels.UserProvider, error) {
+	var dbProviders []*pgmodels.UserProvider
+	err := r.db.NewSelect().
+		Model(&dbProviders).
+		Column("up.id", "up.user_id", "up.provider", "up.provider_user_id", "up.provider_email", "up.created_at").
+		Where("up.user_id = ?", userID).
+		Scan(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("UserRepository.FindProvidersByUserID: %w", err)
+	}
+	if len(dbProviders) == 0 {
+		return nil, businesslogic.ErrNotFound
+	}
+	result := make([]*bizmodels.UserProvider, len(dbProviders))
+	for i, p := range dbProviders {
+		result[i] = pgmappings.UserProviderToBusinessModel(p)
+	}
+	return result, nil
+}
+
+func (r *userRepository) DeleteUser(ctx context.Context, userID int64) error {
+	result, err := r.db.NewDelete().
+		Model((*pgmodels.User)(nil)).
+		Where("id = ?", userID).
+		Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("UserRepository.DeleteUser: %w", err)
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("UserRepository.DeleteUser: rows affected: %w", err)
+	}
+	if rows == 0 {
+		return fmt.Errorf("UserRepository.DeleteUser: %w", businesslogic.ErrNotFound)
+	}
+	return nil
+}

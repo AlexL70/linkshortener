@@ -86,7 +86,7 @@ func TestListUserUrls_ValidJWT_ReturnsURLs(t *testing.T) {
 	}, nil)
 	bl := routes.NewTokenBlacklist()
 
-	token, err := routes.CreateJWT(user)
+	token, err := routes.CreateJWT(user, "testuser@example.com")
 	require.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodGet, "/user/urls", nil)
@@ -117,7 +117,7 @@ func TestListUserUrls_CustomPageSize_Respected(t *testing.T) {
 	}, nil)
 	bl := routes.NewTokenBlacklist()
 
-	token, err := routes.CreateJWT(user)
+	token, err := routes.CreateJWT(user, "testuser@example.com")
 	require.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodGet, "/user/urls?page_size=5", nil)
@@ -141,7 +141,7 @@ func TestListUserUrls_PageParam_Respected(t *testing.T) {
 	}, nil)
 	bl := routes.NewTokenBlacklist()
 
-	token, err := routes.CreateJWT(user)
+	token, err := routes.CreateJWT(user, "testuser@example.com")
 	require.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodGet, "/user/urls?page=3", nil)
@@ -160,7 +160,7 @@ func TestListUserUrls_RepoError_Returns500(t *testing.T) {
 	}, nil)
 	bl := routes.NewTokenBlacklist()
 
-	token, err := routes.CreateJWT(user)
+	token, err := routes.CreateJWT(user, "testuser@example.com")
 	require.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodGet, "/user/urls", nil)
@@ -179,7 +179,7 @@ func TestListUserUrls_NotFoundError_Returns404(t *testing.T) {
 	}, nil)
 	bl := routes.NewTokenBlacklist()
 
-	token, err := routes.CreateJWT(user)
+	token, err := routes.CreateJWT(user, "testuser@example.com")
 	require.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodGet, "/user/urls", nil)
@@ -196,7 +196,7 @@ func TestListUserUrls_BlacklistedToken_Returns401(t *testing.T) {
 	bl := routes.NewTokenBlacklist()
 
 	user := &bizmodels.User{ID: 6, UserName: "frank"}
-	token, err := routes.CreateJWT(user)
+	token, err := routes.CreateJWT(user, "testuser@example.com")
 	require.NoError(t, err)
 
 	// Parse and blacklist the token's JTI.
@@ -220,7 +220,7 @@ func TestListUserUrls_EmptyList_Returns200(t *testing.T) {
 	}, nil)
 	bl := routes.NewTokenBlacklist()
 
-	token, err := routes.CreateJWT(user)
+	token, err := routes.CreateJWT(user, "testuser@example.com")
 	require.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodGet, "/user/urls", nil)
@@ -283,7 +283,7 @@ func TestCreateUrl_ValidRequest_Returns201(t *testing.T) {
 		},
 	)
 	bl := routes.NewTokenBlacklist()
-	token, err := routes.CreateJWT(user)
+	token, err := routes.CreateJWT(user, "testuser@example.com")
 	require.NoError(t, err)
 
 	body := bytes.NewBufferString(`{"long_url":"https://example.com"}`)
@@ -314,7 +314,7 @@ func TestCreateUrl_CustomShortcode_Returns201(t *testing.T) {
 		nil,
 	)
 	bl := routes.NewTokenBlacklist()
-	token, err := routes.CreateJWT(user)
+	token, err := routes.CreateJWT(user, "testuser@example.com")
 	require.NoError(t, err)
 
 	body := bytes.NewBufferString(`{"long_url":"https://example.com","shortcode":"my-sc1"}`)
@@ -335,7 +335,7 @@ func TestCreateUrl_InvalidUrl_Returns400(t *testing.T) {
 	user := &bizmodels.User{ID: 12, UserName: "carol"}
 	h := newUrlHandlerForTest(t, nil, nil)
 	bl := routes.NewTokenBlacklist()
-	token, err := routes.CreateJWT(user)
+	token, err := routes.CreateJWT(user, "testuser@example.com")
 	require.NoError(t, err)
 
 	body := bytes.NewBufferString(`{"long_url":"ftp://bad.scheme.com"}`)
@@ -359,7 +359,7 @@ func TestCreateUrl_ConflictShortcode_Returns409(t *testing.T) {
 		nil,
 	)
 	bl := routes.NewTokenBlacklist()
-	token, err := routes.CreateJWT(user)
+	token, err := routes.CreateJWT(user, "testuser@example.com")
 	require.NoError(t, err)
 
 	body := bytes.NewBufferString(`{"long_url":"https://example.com","shortcode":"` + sc + `"}`)
@@ -404,7 +404,7 @@ func TestUpdateUrl_ValidRequest_Returns200(t *testing.T) {
 		nil,
 	)
 	bl := routes.NewTokenBlacklist()
-	token, err := routes.CreateJWT(user)
+	token, err := routes.CreateJWT(user, "testuser@example.com")
 	require.NoError(t, err)
 
 	bodyStr := `{"long_url":"https://new.com","last_updated":"` + now.UTC().Format(time.RFC3339) + `"}`
@@ -432,7 +432,7 @@ func TestUpdateUrl_NotFound_Returns404(t *testing.T) {
 		nil,
 	)
 	bl := routes.NewTokenBlacklist()
-	token, err := routes.CreateJWT(user)
+	token, err := routes.CreateJWT(user, "testuser@example.com")
 	require.NoError(t, err)
 
 	body := bytes.NewBufferString(`{"long_url":"https://example.com","last_updated":"2024-01-01T00:00:00Z"}`)
@@ -458,7 +458,7 @@ func TestUpdateUrl_WrongOwner_Returns403(t *testing.T) {
 		nil,
 	)
 	bl := routes.NewTokenBlacklist()
-	token, err := routes.CreateJWT(user)
+	token, err := routes.CreateJWT(user, "testuser@example.com")
 	require.NoError(t, err)
 
 	body := bytes.NewBufferString(`{"long_url":"https://example.com","last_updated":"2024-01-01T00:00:00Z"}`)
@@ -484,7 +484,7 @@ func TestUpdateUrl_InvalidUrl_Returns400(t *testing.T) {
 		nil,
 	)
 	bl := routes.NewTokenBlacklist()
-	token, err := routes.CreateJWT(user)
+	token, err := routes.CreateJWT(user, "testuser@example.com")
 	require.NoError(t, err)
 
 	body := bytes.NewBufferString(`{"long_url":"ftp://bad-scheme.com","last_updated":"2024-01-01T00:00:00Z"}`)
@@ -524,7 +524,7 @@ func TestUpdateUrl_VersionConflict_Returns409(t *testing.T) {
 		nil,
 	)
 	bl := routes.NewTokenBlacklist()
-	token, err := routes.CreateJWT(user)
+	token, err := routes.CreateJWT(user, "testuser@example.com")
 	require.NoError(t, err)
 
 	// Send a stale last_updated
@@ -564,7 +564,7 @@ func TestDeleteUrl_ValidRequest_Returns204(t *testing.T) {
 		nil,
 	)
 	bl := routes.NewTokenBlacklist()
-	token, err := routes.CreateJWT(user)
+	token, err := routes.CreateJWT(user, "testuser@example.com")
 	require.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodDelete, "/user/urls/10?last_updated="+now.UTC().Format(time.RFC3339), nil)
@@ -586,7 +586,7 @@ func TestDeleteUrl_NotFound_Returns404(t *testing.T) {
 		nil,
 	)
 	bl := routes.NewTokenBlacklist()
-	token, err := routes.CreateJWT(user)
+	token, err := routes.CreateJWT(user, "testuser@example.com")
 	require.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodDelete, "/user/urls/99?last_updated=2024-01-01T00:00:00Z", nil)
@@ -608,7 +608,7 @@ func TestDeleteUrl_VersionConflict_Returns409(t *testing.T) {
 		nil,
 	)
 	bl := routes.NewTokenBlacklist()
-	token, err := routes.CreateJWT(user)
+	token, err := routes.CreateJWT(user, "testuser@example.com")
 	require.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodDelete, "/user/urls/5?last_updated=2024-01-01T00:00:00Z", nil)
@@ -641,7 +641,7 @@ func TestDeleteUrl_RepoError_Returns500(t *testing.T) {
 		nil,
 	)
 	bl := routes.NewTokenBlacklist()
-	token, err := routes.CreateJWT(user)
+	token, err := routes.CreateJWT(user, "testuser@example.com")
 	require.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodDelete, "/user/urls/7?last_updated=2024-01-01T00:00:00Z", nil)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strings"
 
 	businesslogic "github.com/AlexL70/linkshortener/backend/business-logic"
 	"github.com/AlexL70/linkshortener/backend/business-logic/interfaces"
@@ -91,4 +92,29 @@ func (h *AuthHandler) CreateUser(ctx context.Context, userName string, input *mo
 		"provider", input.Provider,
 	)
 	return user, nil
+}
+
+// DeleteAccount permanently removes the authenticated user's account.
+//
+// The request is rejected with ErrUnauthorized if any of the user's linked
+// provider accounts uses the super-admin email, preventing accidental lockout.
+// Database-level ON DELETE CASCADE removes all child records automatically.
+func (h *AuthHandler) DeleteAccount(ctx context.Context, userID int64) error {
+	providers, err := h.users.FindProvidersByUserID(ctx, userID)
+	if err != nil {
+		return fmt.Errorf("AuthHandler.DeleteAccount: %w", err)
+	}
+
+	for _, p := range providers {
+		if strings.EqualFold(p.ProviderEmail, h.adminEmail) {
+			return businesslogic.ErrUnauthorized
+		}
+	}
+
+	if err := h.users.DeleteUser(ctx, userID); err != nil {
+		return fmt.Errorf("AuthHandler.DeleteAccount: %w", err)
+	}
+
+	slog.Info("auth: user account deleted", "user_id", userID)
+	return nil
 }
