@@ -70,6 +70,10 @@ psql "$DATABASE_URL" -f sql/schema.sql
 
 > **Security note:** `sql/` contains no secrets. The scripts are safe to commit to version control and review in pull requests.
 
+## Deployment
+
+See [Deploy.md](Deploy.md) for the full step-by-step guide covering one-time server setup and repeatable deployments.
+
 ## License
 
 MIT License - See [LICENSE](LICENSE) file for details

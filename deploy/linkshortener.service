@@ -1,0 +1,21 @@
+[Unit]
+Description=Link Shortener web application
+After=network.target
+
+[Service]
+Type=simple
+User=linkshortener
+WorkingDirectory=/opt/linkshortener
+ExecStart=/opt/linkshortener/server
+EnvironmentFile=/etc/linkshortener/environment
+Restart=on-failure
+RestartSec=5s
+
+# Security hardening
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ReadWritePaths=/opt/linkshortener
+
+[Install]
+WantedBy=multi-user.target

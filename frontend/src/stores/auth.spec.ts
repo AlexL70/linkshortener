@@ -202,7 +202,7 @@ describe('deleteAccount', () => {
   it('sets deleting to true during the call and false after', async () => {
     let resolveFn!: () => void
     vi.spyOn(DefaultService, 'deleteAccount').mockImplementation(
-      () => new Promise<never>((resolve) => { resolveFn = resolve as () => void }),
+      () => new Promise<never>((resolve) => { resolveFn = resolve as () => void }) as never,
     )
     const jwt = makeJwt({ user_id: 7, user_name: 'jan', email: 'jan@example.com' })
     const store = useAuthStore()

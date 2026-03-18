@@ -1,0 +1,65 @@
+# ============================================================
+# Link Shortener — production environment configuration
+# ============================================================
+# Copy this file to /etc/linkshortener/environment and fill in
+# every CHANGE_ME value before starting the service.
+#
+# File permissions must be:  chmod 640 /etc/linkshortener/environment
+# File ownership must be:    chown root:linkshortener /etc/linkshortener/environment
+#
+# The server-setup.sh script sets both automatically.
+# ============================================================
+
+# ---- Mode selector (required — do not change this value) ---
+LINKSHORTENER_ENV=prod
+
+# ---- Database (required) -----------------------------------
+# Format: postgres://user:password@host:port/dbname
+DATABASE_URL=postgres://linkshortener:CHANGE_ME@localhost:5432/linkshortener
+
+# ---- JWT & session secrets (required) ----------------------
+# Both must be cryptographically strong random values of at least 32 bytes.
+# Generate with:  openssl rand -hex 32
+JWT_SECRET=CHANGE_ME
+SESSION_SECRET=CHANGE_ME
+
+# ---- Google OAuth2 (required) ------------------------------
+# Register your app at https://console.cloud.google.com/
+GOOGLE_CLIENT_ID=CHANGE_ME
+GOOGLE_CLIENT_SECRET=CHANGE_ME
+
+# ---- Microsoft OAuth2 (required) ---------------------------
+# Register your app at https://portal.azure.com/
+MICROSOFT_CLIENT_ID=CHANGE_ME
+MICROSOFT_CLIENT_SECRET=CHANGE_ME
+
+# ---- Facebook OAuth2 (required) ----------------------------
+# Register your app at https://developers.facebook.com/
+FACEBOOK_CLIENT_ID=CHANGE_ME
+FACEBOOK_CLIENT_SECRET=CHANGE_ME
+
+# ---- Application URL (required) ----------------------------
+# The externally-accessible base URL of this instance.
+# Must match the domain in your Caddyfile; used as the OAuth callback base.
+APP_BASE_URL=https://CHANGE_ME
+
+# ---- Super-admin (required) --------------------------------
+# Must be a valid email address. This account receives admin privileges.
+SUPER_ADMIN_EMAIL=CHANGE_ME
+
+# ---- Optional: uncomment and change only if the defaults do not suit you ---
+# PORT=8080
+# GIN_MODE=release
+# REQUEST_TIMEOUT_SECONDS=30
+# MAX_CONCURRENT_REQUESTS=100
+# DB_MAX_OPEN_CONNS=25
+# DB_MAX_IDLE_CONNS=5
+# DB_CONN_MAX_LIFETIME=3600
+# DB_CONN_MAX_IDLE_TIME=600
+# CLICK_BATCH_SIZE=1000
+# CLICK_BATCH_TIMEOUT_SECONDS=5
+# DEFAULT_PAGE_SIZE=20
+# MAX_URL_LENGTH=2048
+# MIN_SHORTCODE_LENGTH=6
+# MAX_SHORTCODE_LENGTH=6
+# MAX_SHORTCODE_RETRIES=10

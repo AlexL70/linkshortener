@@ -1,0 +1,28 @@
+# Replace "yourdomain.com" with your actual domain name.
+# Caddy will automatically obtain and renew a TLS certificate via Let's Encrypt.
+# Ports 80 and 443 must be reachable from the internet for ACME HTTP challenge to succeed.
+
+yourdomain.com {
+    encode zstd gzip
+
+    # Proxy all backend routes to the Go server.
+    handle /auth/* {
+        reverse_proxy localhost:8080
+    }
+
+    handle /user/* {
+        reverse_proxy localhost:8080
+    }
+
+    handle /r/* {
+        reverse_proxy localhost:8080
+    }
+
+    # Serve the Vue SPA for every other path.
+    # try_files ensures deep-links and browser refreshes return index.html.
+    handle {
+        root * /opt/linkshortener/frontend
+        try_files {path} /index.html
+        file_server
+    }
+}

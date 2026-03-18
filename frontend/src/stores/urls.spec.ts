@@ -13,6 +13,7 @@ function makeUrlItem(overrides: Partial<UrlItem> = {}): UrlItem {
     id: 1,
     shortcode: 'abc123',
     long_url: 'https://example.com',
+    short_url: 'https://short.example.com/r/abc123',
     last_updated: '2024-01-01T00:00:00Z',
     ...overrides,
   }
@@ -500,7 +501,7 @@ describe('refreshItems', () => {
     await store.refreshItems()
 
     expect(store.items).toHaveLength(1)
-    expect(store.items[0].long_url).toBe('https://fresh.example.com')
+    expect(store.items[0]!.long_url).toBe('https://fresh.example.com')
     expect(store.loading).toBe(false)
   })
 

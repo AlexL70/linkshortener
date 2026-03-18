@@ -29,6 +29,10 @@ import (
 	"github.com/AlexL70/linkshortener/backend/web/routes"
 )
 
+// appVersion is set at build time via -ldflags "-X main.appVersion=<version>".
+// The default "dev" is used when the spec is generated without the flag.
+var appVersion = "dev"
+
 func main() {
 	// Stub env vars so route registration (which reads them at startup) doesn't panic.
 	os.Setenv("SESSION_SECRET", "stub-session-secret-for-spec-generation")
@@ -41,6 +45,7 @@ func main() {
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
 	humaConfig := huma.DefaultConfig("Link Shortener API", "0.1.0")
+	humaConfig.Info.Description = "App version: " + appVersion
 	api := humagin.New(router, humaConfig)
 
 	authHandler := handlers.NewAuthHandler(stubUserRepo{}, false, "")

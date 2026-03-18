@@ -21,6 +21,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// appVersion is set at build time via -ldflags "-X main.appVersion=<version>".
+// The default "dev" is used for local / test builds without the flag.
+var appVersion = "dev"
+
 func main() {
 	// Set up the JSON logger first so all startup errors are captured via slog.
 	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
@@ -63,6 +67,7 @@ func main() {
 	router := gin.Default()
 
 	humaConfig := huma.DefaultConfig("Link Shortener API", "0.1.0")
+	humaConfig.Info.Description = "App version: " + appVersion
 	api := humagin.New(router, humaConfig)
 
 	userRepo := pgrepositories.NewUserRepository(db)

@@ -11,6 +11,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { Moon, Sun, Monitor } from 'lucide-vue-next'
+import { Badge } from '@/components/ui/badge'
 import {
   Dialog,
   DialogContent,
@@ -24,6 +25,7 @@ const themeStore = useThemeStore()
 const router = useRouter()
 const route = useRoute()
 const signInOpen = ref(false)
+const appVersion = (import.meta.env.APP_VERSION as string | undefined) ?? 'dev'
 
 const providers = [
   { id: 'google', label: 'Sign in with Google' },
@@ -47,6 +49,7 @@ async function handleLogout() {
     class="fixed top-0 left-0 right-0 z-50 flex h-14 items-center justify-between border-b bg-background px-6 shadow-sm">
     <div class="flex items-center gap-6">
       <span class="text-lg font-semibold tracking-tight">Link Shortener</span>
+      <Badge variant="secondary" class="ml-1 text-xs">v{{ appVersion }}</Badge>
       <nav v-if="auth.isAuthenticated" class="flex items-center gap-1">
         <Button as-child variant="ghost" :class="route.name === 'dashboard' ? 'bg-accent' : ''">
           <RouterLink to="/dashboard">Dashboard</RouterLink>
