@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { RouterView, RouterLink, useRouter, useRoute } from 'vue-router'
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'
 import { Button } from '@/components/ui/button'
@@ -25,6 +25,7 @@ const themeStore = useThemeStore()
 const router = useRouter()
 const route = useRoute()
 const signInOpen = ref(false)
+const unavailableNotice = ref(false)
 const appVersion = (import.meta.env.APP_VERSION as string | undefined) ?? 'dev'
 
 const providers = [
@@ -33,7 +34,16 @@ const providers = [
   { id: 'facebook', label: 'Sign in with Facebook' },
 ] as const
 
+// Clear the notice whenever the dialog is reopened.
+watch(signInOpen, (open) => {
+  if (!open) unavailableNotice.value = false
+})
+
 function signInWith(provider: string) {
+  if (provider !== 'google') {
+    unavailableNotice.value = true
+    return
+  }
   signInOpen.value = false
   auth.login(provider)
 }
@@ -112,6 +122,19 @@ async function handleLogout() {
           {{ provider.label }}
         </Button>
       </div>
+      <p v-if="unavailableNotice" role="status"
+        class="rounded-md border bg-muted px-4 py-3 text-sm text-muted-foreground">
+        Sorry, this sign-in method isn't available yet. Please use
+        <strong class="text-foreground">Sign in with Google</strong> for now.
+      </p>
+      <p class="text-center text-xs text-muted-foreground pt-1">
+        By signing in, you agree to our
+        <a href="/terms-of-service" target="_blank" rel="noopener noreferrer"
+          class="underline underline-offset-4 hover:text-foreground transition-colors">Terms of Service</a>
+        and
+        <a href="/privacy-policy" target="_blank" rel="noopener noreferrer"
+          class="underline underline-offset-4 hover:text-foreground transition-colors">Privacy Policy</a>.
+      </p>
     </DialogContent>
   </Dialog>
 
