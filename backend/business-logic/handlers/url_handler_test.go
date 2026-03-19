@@ -21,7 +21,15 @@ func newUrlHandler(t *testing.T) (*handlers.UrlHandler, *mocks.MockUrlRepository
 	ctrl := gomock.NewController(t)
 	repo := mocks.NewMockUrlRepository(ctrl)
 	gen := mocks.NewMockShortcodeGenerator(ctrl)
-	return handlers.NewUrlHandler(repo, gen, 2048, 6, 6, 10), repo, gen
+	return handlers.NewUrlHandler(repo, gen, 2048, 6, 6, 10, nil, false), repo, gen
+}
+
+func newProdUrlHandler(t *testing.T, lookupHost func(string) ([]string, error), dnsFailOpen bool) (*handlers.UrlHandler, *mocks.MockUrlRepository, *mocks.MockShortcodeGenerator) {
+	t.Helper()
+	ctrl := gomock.NewController(t)
+	repo := mocks.NewMockUrlRepository(ctrl)
+	gen := mocks.NewMockShortcodeGenerator(ctrl)
+	return handlers.NewUrlHandler(repo, gen, 2048, 6, 6, 10, lookupHost, dnsFailOpen), repo, gen
 }
 
 func TestListUrls_Success(t *testing.T) {
@@ -452,4 +460,53 @@ func TestResolveShortcode_RepoError_Wraps(t *testing.T) {
 	_, err := h.ResolveShortcode(ctx, "abc123")
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "db connection lost")
+}
+
+// ── DNS-based SSRF Prevention (prod mode) ─────────────────────────────────────
+
+func TestCreateUrl_DnsPrivateHostname_Rejected(t *testing.T) {
+	stub := func(_ string) ([]string, error) { return []string{"192.168.1.1"}, nil }
+	h, _, _ := newProdUrlHandler(t, stub, false)
+
+	_, err := h.CreateUrl(context.Background(), 1, "https://internal.evil.com", nil, nil)
+	require.Error(t, err)
+	assert.ErrorIs(t, err, businesslogic.ErrValidation)
+}
+
+func TestCreateUrl_DnsLookupError_FailClosed(t *testing.T) {
+	stub := func(_ string) ([]string, error) { return nil, errors.New("DNS failure") }
+	h, _, _ := newProdUrlHandler(t, stub, false)
+
+	_, err := h.CreateUrl(context.Background(), 1, "https://unknown.internal", nil, nil)
+	require.Error(t, err)
+	assert.ErrorIs(t, err, businesslogic.ErrValidation)
+}
+
+func TestCreateUrl_DnsLookupError_FailOpen(t *testing.T) {
+	stub := func(_ string) ([]string, error) { return nil, errors.New("DNS failure") }
+	h, repo, gen := newProdUrlHandler(t, stub, true)
+	ctx := context.Background()
+	now := time.Now()
+	want := &bizmodels.ShortenedUrl{ID: 50, UserID: 1, Shortcode: "abc999", LongUrl: "https://unknown.internal", LastUpdated: now}
+
+	gen.EXPECT().GenerateShortcode().Return("abc999", nil)
+	repo.EXPECT().Create(ctx, gomock.Any()).Return(want, nil)
+
+	got, err := h.CreateUrl(ctx, 1, "https://unknown.internal", nil, nil)
+	require.NoError(t, err)
+	assert.Equal(t, want, got)
+}
+
+func TestUpdateUrl_DnsPrivateHostname_Rejected(t *testing.T) {
+	stub := func(_ string) ([]string, error) { return []string{"10.0.0.1"}, nil }
+	h, repo, _ := newProdUrlHandler(t, stub, false)
+	ctx := context.Background()
+	now := time.Now()
+	existing := &bizmodels.ShortenedUrl{ID: 1, UserID: 10, Shortcode: "abc123", LongUrl: "https://example.com", LastUpdated: now}
+
+	repo.EXPECT().FindByID(ctx, int64(1)).Return(existing, nil)
+
+	_, err := h.UpdateUrl(ctx, 1, 10, "https://internal.evil.com", nil, nil, now)
+	require.Error(t, err)
+	assert.ErrorIs(t, err, businesslogic.ErrValidation)
 }

@@ -20,13 +20,20 @@ type UrlHandler struct {
 	minShortcodeLen     int
 	maxShortcodeLen     int
 	maxShortcodeRetries int
+	// lookupHost resolves a hostname to IP addresses for SSRF prevention.
+	// Nil in dev mode — DNS validation is skipped entirely in dev.
+	lookupHost  func(string) ([]string, error)
+	dnsFailOpen bool
 }
 
 // NewUrlHandler constructs a UrlHandler.
 // maxUrlLen, minShortcodeLen, maxShortcodeLen, and maxShortcodeRetries are read from
 // configuration (MAX_URL_LENGTH, MIN_SHORTCODE_LENGTH, MAX_SHORTCODE_LENGTH,
 // MAX_SHORTCODE_RETRIES) and applied during validation and shortcode generation.
-func NewUrlHandler(urls interfaces.UrlRepository, generator interfaces.ShortcodeGenerator, maxUrlLen, minShortcodeLen, maxShortcodeLen, maxShortcodeRetries int) *UrlHandler {
+// lookupHost is used in prod mode to resolve hostnames for SSRF prevention;
+// pass nil to disable DNS resolution (dev mode). dnsFailOpen controls whether
+// DNS resolution errors are fatal (false = fail-closed) or non-fatal (true = fail-open).
+func NewUrlHandler(urls interfaces.UrlRepository, generator interfaces.ShortcodeGenerator, maxUrlLen, minShortcodeLen, maxShortcodeLen, maxShortcodeRetries int, lookupHost func(string) ([]string, error), dnsFailOpen bool) *UrlHandler {
 	return &UrlHandler{
 		urls:                urls,
 		generator:           generator,
@@ -34,6 +41,8 @@ func NewUrlHandler(urls interfaces.UrlRepository, generator interfaces.Shortcode
 		minShortcodeLen:     minShortcodeLen,
 		maxShortcodeLen:     maxShortcodeLen,
 		maxShortcodeRetries: maxShortcodeRetries,
+		lookupHost:          lookupHost,
+		dnsFailOpen:         dnsFailOpen,
 	}
 }
 
@@ -53,7 +62,7 @@ func (h *UrlHandler) ListUrls(ctx context.Context, userID int64, page, pageSize 
 // Long URL validation and, when provided, custom shortcode validation are applied
 // before any DB operation.
 func (h *UrlHandler) CreateUrl(ctx context.Context, userID int64, longUrl string, customShortcode *string, expiresAt *time.Time) (*bizmodels.ShortenedUrl, error) {
-	if err := businesslogic.ValidateLongUrl(longUrl, h.maxUrlLen); err != nil {
+	if err := businesslogic.ValidateLongUrl(longUrl, h.maxUrlLen, h.lookupHost, h.dnsFailOpen); err != nil {
 		return nil, err
 	}
 
@@ -113,7 +122,7 @@ func (h *UrlHandler) UpdateUrl(ctx context.Context, urlID, userID int64, longUrl
 		return nil, fmt.Errorf("UrlHandler.UpdateUrl: %w", businesslogic.ErrUnauthorized)
 	}
 
-	if err := businesslogic.ValidateLongUrl(longUrl, h.maxUrlLen); err != nil {
+	if err := businesslogic.ValidateLongUrl(longUrl, h.maxUrlLen, h.lookupHost, h.dnsFailOpen); err != nil {
 		return nil, err
 	}
 

@@ -5,6 +5,7 @@ package main
 import (
 	"context"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"strconv"
@@ -124,7 +125,15 @@ func main() {
 	maxShortcodeLen, _ := strconv.Atoi(os.Getenv("MAX_SHORTCODE_LENGTH"))
 	maxShortcodeRetries, _ := strconv.Atoi(os.Getenv("MAX_SHORTCODE_RETRIES"))
 	shortcodeGen := businesslogic.NewShortcodeGenerator(maxShortcodeLen)
-	urlHandler := handlers.NewUrlHandler(urlRepo, shortcodeGen, maxUrlLen, minShortcodeLen, maxShortcodeLen, maxShortcodeRetries)
+
+	// DNS-based SSRF prevention is enabled only in prod mode.
+	var lookupHost func(string) ([]string, error)
+	dnsFailOpen := false
+	if !isDevMode {
+		lookupHost = net.LookupHost
+		dnsFailOpen = os.Getenv("DNS_LOOKUP_FAIL_OPEN") == "true"
+	}
+	urlHandler := handlers.NewUrlHandler(urlRepo, shortcodeGen, maxUrlLen, minShortcodeLen, maxShortcodeLen, maxShortcodeRetries, lookupHost, dnsFailOpen)
 
 	blacklist := routes.NewTokenBlacklist()
 	router.Use(routes.RateLimitMiddleware(rateLimitTiers))

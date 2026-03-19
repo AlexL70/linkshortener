@@ -58,7 +58,7 @@ func newUrlHandlerForTest(t *testing.T, setupRepo func(*mocks.MockUrlRepository)
 	if setupGen != nil {
 		setupGen(mockGen)
 	}
-	return handlers.NewUrlHandler(mockRepo, mockGen, 2048, 6, 6, 10)
+	return handlers.NewUrlHandler(mockRepo, mockGen, 2048, 6, 6, 10, nil, false)
 }
 
 func TestListUserUrls_NoAuth_Returns401(t *testing.T) {

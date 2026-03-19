@@ -67,3 +67,8 @@ SUPER_ADMIN_EMAIL=CHANGE_ME
 # RATE_LIMIT_API_RPM=60
 # RATE_LIMIT_REDIRECT_RPM=120
 # TRUSTED_PROXIES=127.0.0.1
+# DNS SSRF protection (prod only): resolves hostnames to catch DNS-rebinding attacks.
+# When true, DNS lookup failures allow the URL through (fail-open).
+# Default: false (fail-closed — URL is rejected if hostname cannot be resolved).
+# Must be "true" or "false".
+# DNS_LOOKUP_FAIL_OPEN=false

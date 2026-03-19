@@ -343,6 +343,25 @@ func TestValidate_InvalidNumericOptional(t *testing.T) {
 	}
 }
 
+func TestValidate_InvalidBoolOptional(t *testing.T) {
+	allOptional := make([]string, 0, len(optionalDefaults))
+	for k := range optionalDefaults {
+		allOptional = append(allOptional, k)
+	}
+	restore := saveEnv(append(allRequiredKeys(), allOptional...)...)
+	defer restore()
+
+	setRequiredVars()
+	for k := range optionalDefaults {
+		os.Unsetenv(k) //nolint:errcheck
+	}
+	os.Setenv("DNS_LOOKUP_FAIL_OPEN", "yes") // invalid: must be "true" or "false"
+
+	if err := Validate(); err == nil {
+		t.Error("expected error for invalid DNS_LOOKUP_FAIL_OPEN, got nil")
+	}
+}
+
 func TestValidate_OSValueNotOverriddenByDefault(t *testing.T) {
 	allOptional := make([]string, 0, len(optionalDefaults))
 	for k := range optionalDefaults {

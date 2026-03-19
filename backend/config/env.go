@@ -61,6 +61,12 @@ var optionalDefaults = map[string]string{
 	"RATE_LIMIT_API_RPM":          "60",
 	"RATE_LIMIT_REDIRECT_RPM":     "120",
 	"TRUSTED_PROXIES":             "127.0.0.1",
+	"DNS_LOOKUP_FAIL_OPEN":        "false",
+}
+
+// boolOptional is the subset of optionalDefaults whose values must be "true" or "false".
+var boolOptional = map[string]bool{
+	"DNS_LOOKUP_FAIL_OPEN": true,
 }
 
 // numericOptional is the subset of optionalDefaults whose values must be valid integers.
@@ -173,6 +179,13 @@ func Validate() error {
 		val := os.Getenv(key)
 		if _, err := strconv.Atoi(val); err != nil {
 			return fmt.Errorf("environment variable %s must be an integer, got %q", key, val)
+		}
+	}
+
+	for key := range boolOptional {
+		val := os.Getenv(key)
+		if val != "true" && val != "false" {
+			return fmt.Errorf("environment variable %s must be \"true\" or \"false\", got %q", key, val)
 		}
 	}
 

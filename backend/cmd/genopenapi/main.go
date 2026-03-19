@@ -49,7 +49,7 @@ func main() {
 	api := humagin.New(router, humaConfig)
 
 	authHandler := handlers.NewAuthHandler(stubUserRepo{}, false, "")
-	urlHandler := handlers.NewUrlHandler(stubUrlRepo{}, stubShortcodeGenerator{}, 2048, 6, 6, 10)
+	urlHandler := handlers.NewUrlHandler(stubUrlRepo{}, stubShortcodeGenerator{}, 2048, 6, 6, 10, nil, false)
 	routes.RegisterAuthRoutes(router, api, authHandler, routes.NewTokenBlacklist())
 	routes.RegisterUrlRoutes(api, urlHandler)
 	routes.RegisterRedirectRoute(router, api, urlHandler)

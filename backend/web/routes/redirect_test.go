@@ -42,7 +42,7 @@ func newRedirectHandlerForTest(t *testing.T, setup func(*mocks.MockUrlRepository
 	if setup != nil {
 		setup(mockRepo)
 	}
-	return handlers.NewUrlHandler(mockRepo, mockGen, 2048, 6, 6, 10)
+	return handlers.NewUrlHandler(mockRepo, mockGen, 2048, 6, 6, 10, nil, false)
 }
 
 func TestRedirect_Success(t *testing.T) {
