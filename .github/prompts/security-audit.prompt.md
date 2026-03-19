@@ -10,3 +10,5 @@ Perform a security audit of the codebase to detect any potential security vulner
 Output your findings in as a markdown formatted table with the following columns: "ID", "Severity", "Issue", "File Path", "Line Number(s)" and "Recommendation". The "ID" should start at 1 and increment for each issue found. The "File Path" should be relative to the repository root and it should be an actual link to the file on disk.
 
 Limit your output to the top 10 most critical issues found, sorted by severity (Critical, High, Medium, Low). If more than 10 issues are found, provide a summary of the additional issues at the end of the table. If no issues are found, output "No security vulnerabilities detected."
+
+Immediately when the report is ready, save it to the repository root as "security-issues.md". Override existing file if necessary.
