@@ -20,7 +20,7 @@ Run these steps once when provisioning a new server.
 
 ### Step 1 — Create the PostgreSQL database and user
 
-SSH into the server and run:
+SSH into the server and run **_(do not forget to replace `your-strong-password` with a secure password)_**:
 
 ```bash
 sudo -u postgres psql -c "CREATE USER linkshortener WITH PASSWORD 'your-strong-password';"
@@ -48,7 +48,7 @@ The script (idempotent — safe to re-run):
 SSH into the server:
 
 ```bash
-ssh user@your-server "sudo nano /etc/linkshortener/environment"
+ssh user@your-server "sudo -t vim /etc/linkshortener/environment"
 ```
 
 Replace every `CHANGE_ME` placeholder. Generate cryptographically strong secrets (at least 32 bytes) with:
@@ -68,6 +68,12 @@ Required values to set:
 - `APP_BASE_URL` — e.g. `https://yourdomain.com`
 - `SUPER_ADMIN_EMAIL`
 
+> **Note:** If you update the credentials for a third-party OAuth provider (client ID, client secret, or any related setting), repeat this step for that provider's variables only, leaving all other values unchanged, then restart the service:
+>
+> ```bash
+> ssh user@your-server "sudo systemctl restart linkshortener"
+> ```
+
 ### Step 4 — Apply the database schema
 
 From your **local machine**:
@@ -78,7 +84,7 @@ cat sql/schema.sql | ssh user@your-server "sudo -u postgres psql linkshortener"
 
 ### Step 5 — Install the Caddyfile
 
-Edit `deploy/Caddyfile` on your local machine: replace `yourdomain.com` with your actual domain, then copy it to the server:
+Edit `deploy/Caddyfile` on your local machine: replace `yourdomain.com` with your actual domain. **_Do not forget to remove `tls internal` string from the file_**. Then copy it to the server:
 
 ```bash
 scp deploy/Caddyfile user@your-server:/tmp/Caddyfile

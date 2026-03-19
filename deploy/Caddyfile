@@ -1,8 +1,14 @@
 # Replace "yourdomain.com" with your actual domain name.
-# Caddy will automatically obtain and renew a TLS certificate via Let's Encrypt.
-# Ports 80 and 443 must be reachable from the internet for ACME HTTP challenge to succeed.
+# For production: remove the "tls internal" line — Caddy will automatically obtain
+# and renew a TLS certificate via Let's Encrypt. Ports 80 and 443 must be reachable
+# from the internet for the ACME HTTP challenge to succeed.
+# For local/test servers without a public DNS record: keep "tls internal" to use
+# Caddy's built-in CA (self-signed). You will need to trust Caddy's root CA on your
+# machine or use curl -k to skip verification.
 
 yourdomain.com {
+    tls internal
+
     encode zstd gzip
 
     # Proxy all backend routes to the Go server.
