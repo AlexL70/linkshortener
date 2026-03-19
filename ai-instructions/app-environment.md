@@ -64,42 +64,46 @@ After the loading algorithm has run, validate the resolved configuration:
 
 ### 4.1 Required variables (no default — abort if absent after loading)
 
-| Variable                  | Description                                                                                        |
-| ------------------------- | -------------------------------------------------------------------------------------------------- |
-| `LINKSHORTENER_ENV`       | Mode selector — must be `dev` or `prod` (see §2)                                                   |
-| `DATABASE_URL`            | PostgreSQL connection string (DSN), e.g. `postgres://user:pass@host/db`                            |
-| `JWT_SECRET`              | Secret key used to sign and verify JWT tokens                                                      |
-| `SESSION_SECRET`          | Secret key used by the Gorilla sessions cookie store                                               |
-| `GOOGLE_CLIENT_ID`        | Google OAuth2 application client ID                                                                |
-| `GOOGLE_CLIENT_SECRET`    | Google OAuth2 application client secret                                                            |
-| `MICROSOFT_CLIENT_ID`     | Microsoft OAuth2 application client ID                                                             |
-| `MICROSOFT_CLIENT_SECRET` | Microsoft OAuth2 application client secret                                                         |
-| `FACEBOOK_CLIENT_ID`      | Facebook OAuth2 application client ID                                                              |
-| `FACEBOOK_CLIENT_SECRET`  | Facebook OAuth2 application client secret                                                          |
-| `APP_BASE_URL`            | The application's externally-accessible base URL, e.g. `http://localhost:8080`. Used by the backend to construct the OAuth provider callback URL and by the frontend as the API base URL. |
+| Variable                  | Description                                                                                                                                                                                                                  |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `LINKSHORTENER_ENV`       | Mode selector — must be `dev` or `prod` (see §2)                                                                                                                                                                             |
+| `DATABASE_URL`            | PostgreSQL connection string (DSN), e.g. `postgres://user:pass@host/db`                                                                                                                                                      |
+| `JWT_SECRET`              | Secret key used to sign and verify JWT tokens                                                                                                                                                                                |
+| `SESSION_SECRET`          | Secret key used by the Gorilla sessions cookie store                                                                                                                                                                         |
+| `GOOGLE_CLIENT_ID`        | Google OAuth2 application client ID                                                                                                                                                                                          |
+| `GOOGLE_CLIENT_SECRET`    | Google OAuth2 application client secret                                                                                                                                                                                      |
+| `MICROSOFT_CLIENT_ID`     | Microsoft OAuth2 application client ID                                                                                                                                                                                       |
+| `MICROSOFT_CLIENT_SECRET` | Microsoft OAuth2 application client secret                                                                                                                                                                                   |
+| `FACEBOOK_CLIENT_ID`      | Facebook OAuth2 application client ID                                                                                                                                                                                        |
+| `FACEBOOK_CLIENT_SECRET`  | Facebook OAuth2 application client secret                                                                                                                                                                                    |
+| `APP_BASE_URL`            | The application's externally-accessible base URL, e.g. `http://localhost:8080`. Used by the backend to construct the OAuth provider callback URL and by the frontend as the API base URL.                                    |
 | `SUPER_ADMIN_EMAIL`       | Email address of the super-admin user. Must be a syntactically valid email address. Used to grant admin privileges and, in `dev` mode with an empty database, to seed an initial user record (see `backend-dblayer.md §14`). |
 
 If any of these is absent (resolved to an empty string) after the loading algorithm has run, the application **must not start**.
 
 ### 4.2 Optional variables with defaults
 
-| Variable                      | Default   | Description                                                    |
-| ----------------------------- | --------- | -------------------------------------------------------------- |
-| `PORT`                        | `8080`    | TCP port the HTTP server listens on                            |
-| `GIN_MODE`                    | `release` | Gin engine mode (`release` or `debug`)                         |
-| `REQUEST_TIMEOUT_SECONDS`     | `30`      | Per-request timeout in seconds                                 |
-| `MAX_CONCURRENT_REQUESTS`     | `100`     | Maximum simultaneous in-flight HTTP requests                   |
-| `DB_MAX_OPEN_CONNS`           | `25`      | Database connection pool — maximum open connections            |
-| `DB_MAX_IDLE_CONNS`           | `5`       | Database connection pool — maximum idle connections            |
-| `DB_CONN_MAX_LIFETIME`        | `3600`    | Maximum connection lifetime in seconds (1 hour)                |
-| `DB_CONN_MAX_IDLE_TIME`       | `600`     | Maximum connection idle time in seconds (10 minutes)           |
-| `CLICK_BATCH_SIZE`            | `1000`    | Number of click events buffered before a flush to the database |
-| `CLICK_BATCH_TIMEOUT_SECONDS` | `5`       | Maximum seconds between automatic click-batch flushes          |
-| `DEFAULT_PAGE_SIZE`           | `20`      | Default number of items returned by paginated list endpoints   |
-| `MAX_URL_LENGTH`              | `2048`    | Maximum allowed length (in characters) for a submitted long URL |
-| `MIN_SHORTCODE_LENGTH`        | `6`       | Minimum length for a user-supplied custom shortcode             |
-| `MAX_SHORTCODE_LENGTH`        | `6`       | Maximum length for both custom and auto-generated shortcodes    |
-| `MAX_SHORTCODE_RETRIES`       | `10`      | Maximum number of retry attempts when a generated shortcode collides with an existing one |
+| Variable                      | Default     | Description                                                                                                                 |
+| ----------------------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `PORT`                        | `8080`      | TCP port the HTTP server listens on                                                                                         |
+| `GIN_MODE`                    | `release`   | Gin engine mode (`release` or `debug`)                                                                                      |
+| `REQUEST_TIMEOUT_SECONDS`     | `30`        | Per-request timeout in seconds                                                                                              |
+| `MAX_CONCURRENT_REQUESTS`     | `100`       | Maximum simultaneous in-flight HTTP requests                                                                                |
+| `DB_MAX_OPEN_CONNS`           | `25`        | Database connection pool — maximum open connections                                                                         |
+| `DB_MAX_IDLE_CONNS`           | `5`         | Database connection pool — maximum idle connections                                                                         |
+| `DB_CONN_MAX_LIFETIME`        | `3600`      | Maximum connection lifetime in seconds (1 hour)                                                                             |
+| `DB_CONN_MAX_IDLE_TIME`       | `600`       | Maximum connection idle time in seconds (10 minutes)                                                                        |
+| `CLICK_BATCH_SIZE`            | `1000`      | Number of click events buffered before a flush to the database                                                              |
+| `CLICK_BATCH_TIMEOUT_SECONDS` | `5`         | Maximum seconds between automatic click-batch flushes                                                                       |
+| `DEFAULT_PAGE_SIZE`           | `20`        | Default number of items returned by paginated list endpoints                                                                |
+| `MAX_URL_LENGTH`              | `2048`      | Maximum allowed length (in characters) for a submitted long URL                                                             |
+| `MIN_SHORTCODE_LENGTH`        | `6`         | Minimum length for a user-supplied custom shortcode                                                                         |
+| `MAX_SHORTCODE_LENGTH`        | `6`         | Maximum length for both custom and auto-generated shortcodes                                                                |
+| `MAX_SHORTCODE_RETRIES`       | `10`        | Maximum number of retry attempts when a generated shortcode collides with an existing one                                   |
+| `RATE_LIMIT_AUTH_RPM`         | `5`         | Max requests per minute per IP on auth endpoints (`/auth/login`, `/auth/register`)                                          |
+| `RATE_LIMIT_API_RPM`          | `60`        | Max requests per minute per IP on authenticated API endpoints (`/user/`)                                                    |
+| `RATE_LIMIT_REDIRECT_RPM`     | `120`       | Max requests per minute per IP on the public redirect endpoint (`/r/`)                                                      |
+| `TRUSTED_PROXIES`             | `127.0.0.1` | Comma-separated list of trusted reverse-proxy IP addresses used by Gin to extract the real client IP from `X-Forwarded-For` |
 
 ---
 

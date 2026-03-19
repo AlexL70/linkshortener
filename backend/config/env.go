@@ -57,6 +57,10 @@ var optionalDefaults = map[string]string{
 	"MIN_SHORTCODE_LENGTH":        "6",
 	"MAX_SHORTCODE_LENGTH":        "6",
 	"MAX_SHORTCODE_RETRIES":       "10",
+	"RATE_LIMIT_AUTH_RPM":         "5",
+	"RATE_LIMIT_API_RPM":          "60",
+	"RATE_LIMIT_REDIRECT_RPM":     "120",
+	"TRUSTED_PROXIES":             "127.0.0.1",
 }
 
 // numericOptional is the subset of optionalDefaults whose values must be valid integers.
@@ -75,6 +79,9 @@ var numericOptional = map[string]bool{
 	"MIN_SHORTCODE_LENGTH":        true,
 	"MAX_SHORTCODE_LENGTH":        true,
 	"MAX_SHORTCODE_RETRIES":       true,
+	"RATE_LIMIT_AUTH_RPM":         true,
+	"RATE_LIMIT_API_RPM":          true,
+	"RATE_LIMIT_REDIRECT_RPM":     true,
 }
 
 // secretVars lists variables whose values must be masked in prod mode logs.
