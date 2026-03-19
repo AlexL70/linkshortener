@@ -91,7 +91,7 @@ func TestListUserUrls_ValidJWT_ReturnsURLs(t *testing.T) {
 	require.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodGet, "/user/urls", nil)
-	req.Header.Set("Authorization", "Bearer "+token)
+	req.AddCookie(&http.Cookie{Name: routes.SessionCookieName, Value: token})
 	w := httptest.NewRecorder()
 
 	newUrlTestRouter(h, bl).ServeHTTP(w, req)
@@ -124,7 +124,7 @@ func TestListUserUrls_CustomPageSize_Respected(t *testing.T) {
 	require.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodGet, "/user/urls?page_size=5", nil)
-	req.Header.Set("Authorization", "Bearer "+token)
+	req.AddCookie(&http.Cookie{Name: routes.SessionCookieName, Value: token})
 	w := httptest.NewRecorder()
 
 	newUrlTestRouter(h, bl).ServeHTTP(w, req)
@@ -148,7 +148,7 @@ func TestListUserUrls_PageParam_Respected(t *testing.T) {
 	require.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodGet, "/user/urls?page=3", nil)
-	req.Header.Set("Authorization", "Bearer "+token)
+	req.AddCookie(&http.Cookie{Name: routes.SessionCookieName, Value: token})
 	w := httptest.NewRecorder()
 
 	newUrlTestRouter(h, bl).ServeHTTP(w, req)
@@ -167,7 +167,7 @@ func TestListUserUrls_RepoError_Returns500(t *testing.T) {
 	require.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodGet, "/user/urls", nil)
-	req.Header.Set("Authorization", "Bearer "+token)
+	req.AddCookie(&http.Cookie{Name: routes.SessionCookieName, Value: token})
 	w := httptest.NewRecorder()
 
 	newUrlTestRouter(h, bl).ServeHTTP(w, req)
@@ -186,7 +186,7 @@ func TestListUserUrls_NotFoundError_Returns404(t *testing.T) {
 	require.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodGet, "/user/urls", nil)
-	req.Header.Set("Authorization", "Bearer "+token)
+	req.AddCookie(&http.Cookie{Name: routes.SessionCookieName, Value: token})
 	w := httptest.NewRecorder()
 
 	newUrlTestRouter(h, bl).ServeHTTP(w, req)
@@ -208,7 +208,7 @@ func TestListUserUrls_BlacklistedToken_Returns401(t *testing.T) {
 	bl.Add(claims.ID, time.Now().Add(time.Hour))
 
 	req := httptest.NewRequest(http.MethodGet, "/user/urls", nil)
-	req.Header.Set("Authorization", "Bearer "+token)
+	req.AddCookie(&http.Cookie{Name: routes.SessionCookieName, Value: token})
 	w := httptest.NewRecorder()
 
 	newUrlTestRouter(h, bl).ServeHTTP(w, req)
@@ -227,7 +227,7 @@ func TestListUserUrls_EmptyList_Returns200(t *testing.T) {
 	require.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodGet, "/user/urls", nil)
-	req.Header.Set("Authorization", "Bearer "+token)
+	req.AddCookie(&http.Cookie{Name: routes.SessionCookieName, Value: token})
 	w := httptest.NewRecorder()
 
 	newUrlTestRouter(h, bl).ServeHTTP(w, req)
@@ -291,7 +291,7 @@ func TestCreateUrl_ValidRequest_Returns201(t *testing.T) {
 
 	body := bytes.NewBufferString(`{"long_url":"https://example.com"}`)
 	req := httptest.NewRequest(http.MethodPost, "/user/urls", body)
-	req.Header.Set("Authorization", "Bearer "+token)
+	req.AddCookie(&http.Cookie{Name: routes.SessionCookieName, Value: token})
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
@@ -322,7 +322,7 @@ func TestCreateUrl_CustomShortcode_Returns201(t *testing.T) {
 
 	body := bytes.NewBufferString(`{"long_url":"https://example.com","shortcode":"my-sc1"}`)
 	req := httptest.NewRequest(http.MethodPost, "/user/urls", body)
-	req.Header.Set("Authorization", "Bearer "+token)
+	req.AddCookie(&http.Cookie{Name: routes.SessionCookieName, Value: token})
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
@@ -343,7 +343,7 @@ func TestCreateUrl_InvalidUrl_Returns400(t *testing.T) {
 
 	body := bytes.NewBufferString(`{"long_url":"ftp://bad.scheme.com"}`)
 	req := httptest.NewRequest(http.MethodPost, "/user/urls", body)
-	req.Header.Set("Authorization", "Bearer "+token)
+	req.AddCookie(&http.Cookie{Name: routes.SessionCookieName, Value: token})
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
@@ -367,7 +367,7 @@ func TestCreateUrl_ConflictShortcode_Returns409(t *testing.T) {
 
 	body := bytes.NewBufferString(`{"long_url":"https://example.com","shortcode":"` + sc + `"}`)
 	req := httptest.NewRequest(http.MethodPost, "/user/urls", body)
-	req.Header.Set("Authorization", "Bearer "+token)
+	req.AddCookie(&http.Cookie{Name: routes.SessionCookieName, Value: token})
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
@@ -412,7 +412,7 @@ func TestUpdateUrl_ValidRequest_Returns200(t *testing.T) {
 
 	bodyStr := `{"long_url":"https://new.com","last_updated":"` + now.UTC().Format(time.RFC3339) + `"}`
 	req := httptest.NewRequest(http.MethodPatch, "/user/urls/5", bytes.NewBufferString(bodyStr))
-	req.Header.Set("Authorization", "Bearer "+token)
+	req.AddCookie(&http.Cookie{Name: routes.SessionCookieName, Value: token})
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
@@ -440,7 +440,7 @@ func TestUpdateUrl_NotFound_Returns404(t *testing.T) {
 
 	body := bytes.NewBufferString(`{"long_url":"https://example.com","last_updated":"2024-01-01T00:00:00Z"}`)
 	req := httptest.NewRequest(http.MethodPatch, "/user/urls/99", body)
-	req.Header.Set("Authorization", "Bearer "+token)
+	req.AddCookie(&http.Cookie{Name: routes.SessionCookieName, Value: token})
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
@@ -466,7 +466,7 @@ func TestUpdateUrl_WrongOwner_Returns403(t *testing.T) {
 
 	body := bytes.NewBufferString(`{"long_url":"https://example.com","last_updated":"2024-01-01T00:00:00Z"}`)
 	req := httptest.NewRequest(http.MethodPatch, "/user/urls/6", body)
-	req.Header.Set("Authorization", "Bearer "+token)
+	req.AddCookie(&http.Cookie{Name: routes.SessionCookieName, Value: token})
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
@@ -492,7 +492,7 @@ func TestUpdateUrl_InvalidUrl_Returns400(t *testing.T) {
 
 	body := bytes.NewBufferString(`{"long_url":"ftp://bad-scheme.com","last_updated":"2024-01-01T00:00:00Z"}`)
 	req := httptest.NewRequest(http.MethodPatch, "/user/urls/7", body)
-	req.Header.Set("Authorization", "Bearer "+token)
+	req.AddCookie(&http.Cookie{Name: routes.SessionCookieName, Value: token})
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
@@ -533,7 +533,7 @@ func TestUpdateUrl_VersionConflict_Returns409(t *testing.T) {
 	// Send a stale last_updated
 	body := bytes.NewBufferString(`{"long_url":"https://example.com","last_updated":"2024-01-01T00:00:00Z"}`)
 	req := httptest.NewRequest(http.MethodPatch, "/user/urls/8", body)
-	req.Header.Set("Authorization", "Bearer "+token)
+	req.AddCookie(&http.Cookie{Name: routes.SessionCookieName, Value: token})
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
@@ -571,7 +571,7 @@ func TestDeleteUrl_ValidRequest_Returns204(t *testing.T) {
 	require.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodDelete, "/user/urls/10?last_updated="+now.UTC().Format(time.RFC3339), nil)
-	req.Header.Set("Authorization", "Bearer "+token)
+	req.AddCookie(&http.Cookie{Name: routes.SessionCookieName, Value: token})
 	w := httptest.NewRecorder()
 
 	newUrlTestRouter(h, bl).ServeHTTP(w, req)
@@ -593,7 +593,7 @@ func TestDeleteUrl_NotFound_Returns404(t *testing.T) {
 	require.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodDelete, "/user/urls/99?last_updated=2024-01-01T00:00:00Z", nil)
-	req.Header.Set("Authorization", "Bearer "+token)
+	req.AddCookie(&http.Cookie{Name: routes.SessionCookieName, Value: token})
 	w := httptest.NewRecorder()
 
 	newUrlTestRouter(h, bl).ServeHTTP(w, req)
@@ -615,7 +615,7 @@ func TestDeleteUrl_VersionConflict_Returns409(t *testing.T) {
 	require.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodDelete, "/user/urls/5?last_updated=2024-01-01T00:00:00Z", nil)
-	req.Header.Set("Authorization", "Bearer "+token)
+	req.AddCookie(&http.Cookie{Name: routes.SessionCookieName, Value: token})
 	w := httptest.NewRecorder()
 
 	newUrlTestRouter(h, bl).ServeHTTP(w, req)
@@ -648,7 +648,7 @@ func TestDeleteUrl_RepoError_Returns500(t *testing.T) {
 	require.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodDelete, "/user/urls/7?last_updated=2024-01-01T00:00:00Z", nil)
-	req.Header.Set("Authorization", "Bearer "+token)
+	req.AddCookie(&http.Cookie{Name: routes.SessionCookieName, Value: token})
 	w := httptest.NewRecorder()
 
 	newUrlTestRouter(h, bl).ServeHTTP(w, req)

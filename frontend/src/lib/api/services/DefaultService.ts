@@ -2,11 +2,11 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { AuthTokenBody } from '../models/AuthTokenBody';
 import type { CreateUrlRequestBody } from '../models/CreateUrlRequestBody';
 import type { CreateUrlResponseBody } from '../models/CreateUrlResponseBody';
 import type { ErrorModel } from '../models/ErrorModel';
 import type { ListUrlsResponseBody } from '../models/ListUrlsResponseBody';
+import type { MeBody } from '../models/MeBody';
 import type { RegisterRequestBody } from '../models/RegisterRequestBody';
 import type { UpdateUrlRequestBody } from '../models/UpdateUrlRequestBody';
 import type { UpdateUrlResponseBody } from '../models/UpdateUrlResponseBody';
@@ -26,8 +26,19 @@ export class DefaultService {
         });
     }
     /**
+     * Return the authenticated user's profile info
+     * @returns MeBody OK
+     * @returns ErrorModel Error
+     * @throws ApiError
+     */
+    public static getMe(): CancelablePromise<MeBody | ErrorModel> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/auth/me',
+        });
+    }
+    /**
      * Complete new-user registration after OAuth callback
-     * @returns AuthTokenBody OK
      * @returns ErrorModel Error
      * @throws ApiError
      */
@@ -35,7 +46,7 @@ export class DefaultService {
         requestBody,
     }: {
         requestBody?: RegisterRequestBody,
-    }): CancelablePromise<AuthTokenBody | ErrorModel> {
+    }): CancelablePromise<ErrorModel> {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/auth/register',

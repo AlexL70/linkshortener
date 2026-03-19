@@ -37,16 +37,19 @@ Do not replace or supplement any of these with alternative libraries without exp
 
 - JWT tokens are **stateless** — do not store server-side session state after the OAuth callback completes.
 - Required claims: `user_id`, `user_name`, `provider_email`, `sub`, `iat`, `exp`.
-  - `provider_email` is the email address returned by the OAuth provider at the time of login. It is included so the frontend can display it in the account deletion confirmation dialog without a separate API round-trip.
-- All protected endpoints must be guarded by JWT middleware validating the `Authorization: Bearer <token>` header.
+  - `provider_email` is the email address returned by the OAuth provider at the time of login. It is included so the frontend `/auth/me` endpoint can return it without a separate DB look-up.
+- **JWT tokens are delivered exclusively as `HttpOnly` cookies** — never in the response body, URL fragments, or `Authorization` headers.
+- All protected endpoints must be guarded by JWT middleware that reads the session cookie (`linkshortener_session`) from the incoming request. The middleware must **not** accept `Authorization: Bearer` headers.
 - JWT secret must be read from the `JWT_SECRET` environment variable at startup. Never hardcode it.
 
 ### 2.4 OAuth Endpoints
 
 - `GET /auth/login/{provider}` — public; initiates the OAuth2 flow.
-- `GET /auth/callback` — public; completes the OAuth2 flow and returns a JWT.
-- `POST /auth/logout` — JWT-protected; invalidates (blacklists if needed) the token.
-- These endpoints have non-standard response shapes and **may** be registered as bare Gin routes (bypassing Huma), as permitted by `AGENTS.md` §4.6.
+- `GET /auth/callback` — public; completes the OAuth2 flow, sets the session cookie, then redirects to the frontend `/auth/callback` page (no `#token=` fragment). For new users, redirects with `#pre_registration_token=...&suggested_user_name=...`.
+- `POST /auth/register` — public (pre-registration token required); creates user, sets session cookie, returns 204.
+- `POST /auth/logout` — session-cookie-protected; blacklists the JTI and clears the session cookie (Max-Age=0).
+- `GET /auth/me` — session-cookie-protected; returns current user info (user_id, user_name, provider_email). Used by the frontend to restore auth state on page load.
+- These endpoints have non-standard response shapes and **may** be registered as bare Gin routes (bypassing Huma), as permitted by `AGENTS.md` §4.6, **except for `GET /auth/me`**, `POST /auth/register`, and `POST /auth/logout`, which have standard JSON response shapes and must be registered as Huma operations.
 
 ### 2.5 Account Management Endpoints
 
@@ -64,10 +67,11 @@ Do not replace or supplement any of these with alternative libraries without exp
 
 ### 3.1 Auth Store (`src/stores/auth.ts`)
 
-- All auth state (JWT token, logged-in user info) must live in the Pinia auth store.
-- The JWT token may be persisted to `localStorage` **only** through the auth store's actions. No component may access `localStorage` directly.
-- Expose actions: `login(provider)`, `logout()`, `handleCallback()`, `deleteAccount()`, `isAuthenticated` (computed getter).
-- The store must expose the `providerEmail` (decoded from the `provider_email` JWT claim) as a readable getter. This value is used by the account deletion confirmation dialog.
+- All auth state (logged-in user info) must live in the Pinia auth store.
+- **JWT tokens must never be stored in `localStorage`, `sessionStorage`, or any JavaScript-readable location.** The token lives exclusively in the `HttpOnly` session cookie managed by the browser and server.
+- Expose actions: `login(provider)`, `logout()`, `fetchMe()`, `deleteAccount()`, `isAuthenticated` (computed getter).
+- `fetchMe()` calls `GET /auth/me` to restore user state from the session cookie. It must be called on application startup (before mounting) and after successful registration.
+- The store must expose `user.email` (returned by `/auth/me` as `provider_email`) as a readable property. This value is used by the account deletion confirmation dialog.
 
 ### 3.2 Sign-In / Sign-Up UX
 
@@ -97,6 +101,8 @@ Guards must be implemented using Vue Router's `beforeEach` global navigation gua
 ## 4. Security Checklist
 
 - OAuth state cookie must be `HttpOnly` and `SameSite=Lax` (or `Strict`).
+- **Session cookie containing the JWT must be `HttpOnly`, `SameSite=Strict`, `Secure` (in non-development environments), `Path=/`, and `MaxAge=86400`.** The cookie name is `linkshortener_session`.
+- The frontend **must** send all API requests with `credentials: 'include'` so that the session cookie is transmitted cross-origin. The generated API client `OpenAPI.WITH_CREDENTIALS` must be `true`.
 - Never log JWT tokens, OAuth secrets, or raw authorization codes — not even at DEBUG level.
 - Never expose internal auth errors (e.g., OAuth exchange failures) in API responses. Log server-side, return a generic error to the client.
 - Provider client IDs and secrets must be read from environment variables; never hardcode them.

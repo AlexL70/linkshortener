@@ -68,6 +68,16 @@ func main() {
 
 	humaConfig := huma.DefaultConfig("Link Shortener API", "0.1.0")
 	humaConfig.Info.Description = "App version: " + appVersion
+	// Add the session-cookie security scheme used by all protected endpoints.
+	// The JWT is delivered as an HttpOnly cookie rather than a Bearer token.
+	humaConfig.OpenAPI.Components.SecuritySchemes = map[string]*huma.SecurityScheme{
+		"session": {
+			Type:        "apiKey",
+			In:          "cookie",
+			Name:        routes.SessionCookieName,
+			Description: "HttpOnly session cookie carrying a signed JWT",
+		},
+	}
 	api := humagin.New(router, humaConfig)
 
 	userRepo := pgrepositories.NewUserRepository(db)

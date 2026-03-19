@@ -33,7 +33,7 @@ func TestRequireJWT_ValidToken_Returns200(t *testing.T) {
 	require.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodGet, "/protected", nil)
-	req.Header.Set("Authorization", "Bearer "+token)
+	req.AddCookie(&http.Cookie{Name: routes.SessionCookieName, Value: token})
 	w := httptest.NewRecorder()
 
 	newMiddlewareRouter(bl).ServeHTTP(w, req)
@@ -41,9 +41,10 @@ func TestRequireJWT_ValidToken_Returns200(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 }
 
-func TestRequireJWT_MissingHeader_Returns401(t *testing.T) {
+func TestRequireJWT_MissingCookie_Returns401(t *testing.T) {
 	bl := routes.NewTokenBlacklist()
 	req := httptest.NewRequest(http.MethodGet, "/protected", nil)
+	// No session cookie — must be rejected.
 	w := httptest.NewRecorder()
 
 	newMiddlewareRouter(bl).ServeHTTP(w, req)
@@ -51,21 +52,10 @@ func TestRequireJWT_MissingHeader_Returns401(t *testing.T) {
 	assert.Equal(t, http.StatusUnauthorized, w.Code)
 }
 
-func TestRequireJWT_MalformedHeader_Returns401(t *testing.T) {
+func TestRequireJWT_InvalidCookieValue_Returns401(t *testing.T) {
 	bl := routes.NewTokenBlacklist()
 	req := httptest.NewRequest(http.MethodGet, "/protected", nil)
-	req.Header.Set("Authorization", "Token not-a-bearer")
-	w := httptest.NewRecorder()
-
-	newMiddlewareRouter(bl).ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusUnauthorized, w.Code)
-}
-
-func TestRequireJWT_InvalidToken_Returns401(t *testing.T) {
-	bl := routes.NewTokenBlacklist()
-	req := httptest.NewRequest(http.MethodGet, "/protected", nil)
-	req.Header.Set("Authorization", "Bearer this.is.not.valid")
+	req.AddCookie(&http.Cookie{Name: routes.SessionCookieName, Value: "this.is.not.valid"})
 	w := httptest.NewRecorder()
 
 	newMiddlewareRouter(bl).ServeHTTP(w, req)
@@ -85,7 +75,7 @@ func TestRequireJWT_BlacklistedToken_Returns401(t *testing.T) {
 	bl.Add(claims.ID, time.Now().Add(time.Hour))
 
 	req := httptest.NewRequest(http.MethodGet, "/protected", nil)
-	req.Header.Set("Authorization", "Bearer "+token)
+	req.AddCookie(&http.Cookie{Name: routes.SessionCookieName, Value: token})
 	w := httptest.NewRecorder()
 
 	newMiddlewareRouter(bl).ServeHTTP(w, req)
@@ -100,7 +90,7 @@ func TestRequireJWT_ClaimsStoredInContext(t *testing.T) {
 	require.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodGet, "/protected", nil)
-	req.Header.Set("Authorization", "Bearer "+token)
+	req.AddCookie(&http.Cookie{Name: routes.SessionCookieName, Value: token})
 	w := httptest.NewRecorder()
 
 	newMiddlewareRouter(bl).ServeHTTP(w, req)
@@ -152,7 +142,7 @@ func TestRequireJWTGlobal_ProtectedPath_ValidToken_Returns200(t *testing.T) {
 	require.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodGet, "/protected", nil)
-	req.Header.Set("Authorization", "Bearer "+token)
+	req.AddCookie(&http.Cookie{Name: routes.SessionCookieName, Value: token})
 	w := httptest.NewRecorder()
 
 	newGlobalMiddlewareRouter(bl).ServeHTTP(w, req)
@@ -172,7 +162,7 @@ func TestRequireJWTGlobal_ProtectedPath_BlacklistedToken_Returns401(t *testing.T
 	bl.Add(claims.ID, time.Now().Add(time.Hour))
 
 	req := httptest.NewRequest(http.MethodGet, "/protected", nil)
-	req.Header.Set("Authorization", "Bearer "+token)
+	req.AddCookie(&http.Cookie{Name: routes.SessionCookieName, Value: token})
 	w := httptest.NewRecorder()
 
 	newGlobalMiddlewareRouter(bl).ServeHTTP(w, req)
@@ -183,7 +173,7 @@ func TestRequireJWTGlobal_ProtectedPath_BlacklistedToken_Returns401(t *testing.T
 func TestRequireJWTGlobal_ProtectedPath_InvalidToken_Returns401(t *testing.T) {
 	bl := routes.NewTokenBlacklist()
 	req := httptest.NewRequest(http.MethodGet, "/protected", nil)
-	req.Header.Set("Authorization", "Bearer this.is.invalid")
+	req.AddCookie(&http.Cookie{Name: routes.SessionCookieName, Value: "this.is.invalid"})
 	w := httptest.NewRecorder()
 
 	newGlobalMiddlewareRouter(bl).ServeHTTP(w, req)
@@ -198,7 +188,7 @@ func TestRequireJWTGlobal_ClaimsStoredInContext(t *testing.T) {
 	require.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodGet, "/protected", nil)
-	req.Header.Set("Authorization", "Bearer "+token)
+	req.AddCookie(&http.Cookie{Name: routes.SessionCookieName, Value: token})
 	w := httptest.NewRecorder()
 
 	newGlobalMiddlewareRouter(bl).ServeHTTP(w, req)

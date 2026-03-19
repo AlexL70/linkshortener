@@ -32,15 +32,14 @@ func RequireJWTGlobal(blacklist *TokenBlacklist, publicPaths []string) gin.Handl
 			}
 		}
 
-		authHeader := c.GetHeader("Authorization")
-		if !strings.HasPrefix(authHeader, "Bearer ") {
+		tokenStr, err := c.Cookie(SessionCookieName)
+		if err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 			return
 		}
 
-		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
-		claims, err := ParseJWT(tokenStr)
-		if err != nil {
+		claims, parseErr := ParseJWT(tokenStr)
+		if parseErr != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 			return
 		}
@@ -81,9 +80,9 @@ type contextKey string
 //	claims, _ := c.MustGet(string(routes.CtxKeyJWTClaims)).(*routes.JWTClaims)
 const CtxKeyJWTClaims contextKey = "jwt_claims"
 
-// RequireJWT returns a Gin middleware that validates the Bearer token from the
-// Authorization header and rejects the request with 401 Unauthorized if:
-//   - the header is absent or malformed,
+// RequireJWT returns a Gin middleware that validates the JWT from the
+// session cookie and rejects the request with 401 Unauthorized if:
+//   - the cookie is absent,
 //   - the token signature is invalid or the token is expired, or
 //   - the token's jti is on the blacklist.
 //
@@ -91,15 +90,14 @@ const CtxKeyJWTClaims contextKey = "jwt_claims"
 // calls c.Next().
 func RequireJWT(blacklist *TokenBlacklist) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		authHeader := c.GetHeader("Authorization")
-		if !strings.HasPrefix(authHeader, "Bearer ") {
+		tokenStr, err := c.Cookie(SessionCookieName)
+		if err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 			return
 		}
 
-		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
-		claims, err := ParseJWT(tokenStr)
-		if err != nil {
+		claims, parseErr := ParseJWT(tokenStr)
+		if parseErr != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 			return
 		}

@@ -28,10 +28,12 @@ import (
 // Bare Gin routes (permitted exceptions per app-auth.md §2.4):
 //   - GET /auth/login/:provider
 //   - GET /auth/callback
-//   - POST /auth/logout
 //
 // Huma-registered routes:
 //   - POST /auth/register
+//   - POST /auth/logout
+//   - GET  /auth/me
+
 func RegisterAuthRoutes(router *gin.Engine, api huma.API, h *handlers.AuthHandler, blacklist *TokenBlacklist) {
 	// Configure the gorilla/sessions cookie store for transient OAuth state.
 	// HttpOnly and SameSite=Lax per the security checklist in app-auth.md §4.
@@ -148,14 +150,16 @@ func RegisterAuthRoutes(router *gin.Engine, api huma.API, h *handlers.AuthHandle
 		user, resolveErr := h.ResolveUserByProvider(c.Request.Context(), input)
 
 		if resolveErr == nil {
-			// Existing user — issue a full JWT and redirect to the frontend.
+			// Existing user — issue a full JWT, set it as an HttpOnly session cookie,
+			// and redirect to the frontend without exposing the token in the URL.
 			token, jwtErr := CreateJWT(user, input.Email)
 			if jwtErr != nil {
 				slog.Error("auth: failed to create JWT", "user_id", user.ID, "error", jwtErr)
 				c.Redirect(http.StatusFound, redirectTo+"#error=internal_error")
 				return
 			}
-			c.Redirect(http.StatusFound, redirectTo+"#token="+token)
+			setSessionCookie(c.Writer, token)
+			c.Redirect(http.StatusFound, redirectTo)
 			return
 		}
 
@@ -179,11 +183,12 @@ func RegisterAuthRoutes(router *gin.Engine, api huma.API, h *handlers.AuthHandle
 	})
 
 	huma.Register(api, huma.Operation{
-		OperationID: "register-user",
-		Method:      http.MethodPost,
-		Path:        "/auth/register",
-		Summary:     "Complete new-user registration after OAuth callback",
-	}, func(ctx context.Context, input *viewmodels.RegisterRequest) (*viewmodels.AuthTokenResponse, error) {
+		OperationID:   "register-user",
+		Method:        http.MethodPost,
+		Path:          "/auth/register",
+		Summary:       "Complete new-user registration after OAuth callback",
+		DefaultStatus: http.StatusNoContent,
+	}, func(ctx context.Context, input *viewmodels.RegisterRequest) (*viewmodels.RegisterResponse, error) {
 		if input.Body == nil {
 			return nil, huma.Error422UnprocessableEntity("request body is required")
 		}
@@ -203,7 +208,7 @@ func RegisterAuthRoutes(router *gin.Engine, api huma.API, h *handlers.AuthHandle
 			return nil, huma.Error500InternalServerError("internal server error")
 		}
 
-		return webmappers.UserToAuthTokenResponse(token), nil
+		return &viewmodels.RegisterResponse{SetCookie: buildSessionCookieHeader(token)}, nil
 	})
 
 	// Protected Huma API: shares the main OpenAPI spec but registers routes on a
@@ -221,7 +226,7 @@ func RegisterAuthRoutes(router *gin.Engine, api huma.API, h *handlers.AuthHandle
 	})
 
 	// POST /auth/logout — invalidates the caller's JWT by adding its jti to the
-	// blacklist. Returns 204 No Content on success.
+	// blacklist, and clears the session cookie. Returns 204 No Content on success.
 	// JWT validation is enforced by the protectedGroup middleware; claims are
 	// forwarded into the stdlib context by RequireJWT for retrieval here.
 	huma.Register(protectedAPI, huma.Operation{
@@ -229,8 +234,8 @@ func RegisterAuthRoutes(router *gin.Engine, api huma.API, h *handlers.AuthHandle
 		Path:          "/auth/logout",
 		Summary:       "Log out the authenticated user by blacklisting the JWT",
 		DefaultStatus: http.StatusNoContent,
-		Security:      []map[string][]string{{"bearer": {}}},
-	}, func(ctx context.Context, _ *struct{}) (*struct{}, error) {
+		Security:      []map[string][]string{{"session": {}}},
+	}, func(ctx context.Context, _ *struct{}) (*viewmodels.LogoutResponse, error) {
 		claims := GetJWTClaimsFromContext(ctx)
 		if claims == nil {
 			// Should never happen — RequireJWT middleware always sets claims before
@@ -239,7 +244,7 @@ func RegisterAuthRoutes(router *gin.Engine, api huma.API, h *handlers.AuthHandle
 		}
 		blacklist.Add(claims.ID, claims.ExpiresAt.Time)
 		slog.Info("auth: user logged out", "user_id", claims.UserID)
-		return nil, nil
+		return &viewmodels.LogoutResponse{SetCookie: buildClearCookieHeader()}, nil
 	})
 
 	// DELETE /user/account — permanently deletes the authenticated user's account
@@ -251,7 +256,7 @@ func RegisterAuthRoutes(router *gin.Engine, api huma.API, h *handlers.AuthHandle
 		Path:          "/user/account",
 		Summary:       "Permanently delete the authenticated user's account and all associated data",
 		DefaultStatus: http.StatusNoContent,
-		Security:      []map[string][]string{{"bearer": {}}},
+		Security:      []map[string][]string{{"session": {}}},
 	}, func(ctx context.Context, _ *struct{}) (*struct{}, error) {
 		claims := GetJWTClaimsFromContext(ctx)
 		if claims == nil {
@@ -261,5 +266,27 @@ func RegisterAuthRoutes(router *gin.Engine, api huma.API, h *handlers.AuthHandle
 			return nil, MapError(err)
 		}
 		return nil, nil
+	})
+
+	// GET /auth/me — returns the currently authenticated user's info decoded from
+	// the session cookie JWT. Used by the frontend to restore auth state on load.
+	huma.Register(protectedAPI, huma.Operation{
+		OperationID: "get-me",
+		Method:      http.MethodGet,
+		Path:        "/auth/me",
+		Summary:     "Return the authenticated user's profile info",
+		Security:    []map[string][]string{{"session": {}}},
+	}, func(ctx context.Context, _ *struct{}) (*viewmodels.MeResponse, error) {
+		claims := GetJWTClaimsFromContext(ctx)
+		if claims == nil {
+			return nil, huma.Error401Unauthorized("unauthorized")
+		}
+		return &viewmodels.MeResponse{
+			Body: &viewmodels.MeBody{
+				UserID:        claims.UserID,
+				UserName:      claims.UserName,
+				ProviderEmail: claims.Email,
+			},
+		}, nil
 	})
 }

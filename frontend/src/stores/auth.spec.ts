@@ -1,20 +1,18 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useAuthStore } from './auth'
-import { OpenAPI } from '@/lib/api/core/OpenAPI'
 import { DefaultService } from '@/lib/api/services/DefaultService'
+import type { MeBody } from '@/lib/api/models/MeBody'
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
-/**
- * Build a minimal well-formed JWT string whose payload contains the given
- * fields. This does NOT produce a cryptographically valid signature — only the
- * structure matters for client-side decoding.
- */
-function makeJwt(payload: Record<string, unknown>): string {
-  const encode = (obj: object) =>
-    btoa(JSON.stringify(obj)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
-  return `${encode({ alg: 'HS256', typ: 'JWT' })}.${encode(payload)}.signature`
+function makeMeBody(overrides: Partial<MeBody> = {}): MeBody {
+  return {
+    user_id: 1,
+    user_name: 'alice',
+    provider_email: 'alice@example.com',
+    ...overrides,
+  }
 }
 
 // ── setup / teardown ──────────────────────────────────────────────────────────
@@ -22,65 +20,52 @@ function makeJwt(payload: Record<string, unknown>): string {
 beforeEach(() => {
   // Fresh Pinia instance for each test to avoid state bleed.
   setActivePinia(createPinia())
-  // Wipe localStorage so token restoration doesn't interfere.
-  localStorage.clear()
-  // Reset OpenAPI state.
-  OpenAPI.TOKEN = undefined
 })
 
 afterEach(() => {
   vi.restoreAllMocks()
 })
 
-// ── handleCallback ────────────────────────────────────────────────────────────
+// ── fetchMe ───────────────────────────────────────────────────────────────────
 
-describe('handleCallback', () => {
-  it('decodes a valid JWT and populates token + user including email', () => {
-    const jwt = makeJwt({ user_id: 42, user_name: 'alice', email: 'alice@example.com' })
+describe('fetchMe', () => {
+  it('populates user when the backend returns user data', async () => {
+    vi.spyOn(DefaultService, 'getMe').mockResolvedValue(makeMeBody())
     const store = useAuthStore()
 
-    store.handleCallback(jwt)
+    await store.fetchMe()
 
-    expect(store.token).toBe(jwt)
-    expect(store.user).toEqual({ id: '42', username: 'alice', email: 'alice@example.com' })
+    expect(store.user).toEqual({ id: '1', username: 'alice', email: 'alice@example.com' })
     expect(store.isAuthenticated).toBe(true)
   })
 
-  it('sets email to empty string when JWT has no email claim', () => {
-    const jwt = makeJwt({ user_id: 7, user_name: 'gus' })
+  it('converts user_id to a string', async () => {
+    vi.spyOn(DefaultService, 'getMe').mockResolvedValue(makeMeBody({ user_id: 42 }))
     const store = useAuthStore()
 
-    store.handleCallback(jwt)
+    await store.fetchMe()
 
-    expect(store.user?.email).toBe('')
+    expect(store.user?.id).toBe('42')
   })
 
-  it('persists the token to localStorage', () => {
-    const jwt = makeJwt({ user_id: 1, user_name: 'bob' })
+  it('clears user when the request fails (not authenticated)', async () => {
+    vi.spyOn(DefaultService, 'getMe').mockRejectedValue(new Error('401'))
     const store = useAuthStore()
 
-    store.handleCallback(jwt)
+    await store.fetchMe()
 
-    expect(localStorage.getItem('token')).toBe(jwt)
-  })
-
-  it('sets OpenAPI.TOKEN so subsequent API calls are authenticated', () => {
-    const jwt = makeJwt({ user_id: 1, user_name: 'charlie' })
-    const store = useAuthStore()
-
-    store.handleCallback(jwt)
-
-    expect(OpenAPI.TOKEN).toBe(jwt)
-  })
-
-  it('does nothing for a malformed JWT', () => {
-    const store = useAuthStore()
-
-    store.handleCallback('not-a-jwt')
-
-    expect(store.token).toBeNull()
     expect(store.user).toBeNull()
     expect(store.isAuthenticated).toBe(false)
+  })
+
+  it('clears user when the response lacks user_id (ErrorModel shape)', async () => {
+    // Simulate a response that looks like an ErrorModel (no user_id).
+    vi.spyOn(DefaultService, 'getMe').mockResolvedValue({ status: 401, title: 'Unauthorized' } as never)
+    const store = useAuthStore()
+
+    await store.fetchMe()
+
+    expect(store.user).toBeNull()
   })
 })
 
@@ -115,52 +100,39 @@ describe('login', () => {
 // ── logout ────────────────────────────────────────────────────────────────────
 
 describe('logout', () => {
-  it('calls DefaultService.postAuthLogout() when a token is present', async () => {
+  it('always calls DefaultService.postAuthLogout()', async () => {
     const logoutSpy = vi.spyOn(DefaultService, 'postAuthLogout').mockResolvedValue({} as never)
-    const jwt = makeJwt({ user_id: 9, user_name: 'dave' })
     const store = useAuthStore()
-    store.handleCallback(jwt)
 
     await store.logout()
 
     expect(logoutSpy).toHaveBeenCalledOnce()
   })
 
-  it('clears token, user, localStorage, and OpenAPI.TOKEN after logout', async () => {
+  it('clears user after logout', async () => {
+    vi.spyOn(DefaultService, 'getMe').mockResolvedValue(makeMeBody())
     vi.spyOn(DefaultService, 'postAuthLogout').mockResolvedValue({} as never)
-    const jwt = makeJwt({ user_id: 9, user_name: 'eve' })
     const store = useAuthStore()
-    store.handleCallback(jwt)
+    await store.fetchMe()
+    expect(store.isAuthenticated).toBe(true)
 
     await store.logout()
 
-    expect(store.token).toBeNull()
     expect(store.user).toBeNull()
     expect(store.isAuthenticated).toBe(false)
-    expect(localStorage.getItem('token')).toBeNull()
-    expect(OpenAPI.TOKEN).toBeUndefined()
   })
 
   it('still clears local state even if the backend call fails', async () => {
+    vi.spyOn(DefaultService, 'getMe').mockResolvedValue(makeMeBody())
     vi.spyOn(DefaultService, 'postAuthLogout').mockRejectedValue(new Error('network error'))
     vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const jwt = makeJwt({ user_id: 9, user_name: 'frank' })
     const store = useAuthStore()
-    store.handleCallback(jwt)
+    await store.fetchMe()
 
     await store.logout()
 
-    expect(store.token).toBeNull()
+    expect(store.user).toBeNull()
     expect(store.isAuthenticated).toBe(false)
-  })
-
-  it('skips the backend call when there is no token', async () => {
-    const logoutSpy = vi.spyOn(DefaultService, 'postAuthLogout')
-    const store = useAuthStore()
-
-    await store.logout()
-
-    expect(logoutSpy).not.toHaveBeenCalled()
   })
 })
 
@@ -168,45 +140,42 @@ describe('logout', () => {
 
 describe('deleteAccount', () => {
   it('calls DefaultService.deleteAccount() and clears auth state on success', async () => {
+    vi.spyOn(DefaultService, 'getMe').mockResolvedValue(makeMeBody({ user_id: 5, user_name: 'hank', provider_email: 'hank@example.com' }))
     vi.spyOn(DefaultService, 'deleteAccount').mockResolvedValue({} as never)
-    const jwt = makeJwt({ user_id: 5, user_name: 'hank', email: 'hank@example.com' })
     const store = useAuthStore()
-    store.handleCallback(jwt)
+    await store.fetchMe()
 
     await store.deleteAccount()
 
-    expect(store.token).toBeNull()
     expect(store.user).toBeNull()
     expect(store.isAuthenticated).toBe(false)
-    expect(localStorage.getItem('token')).toBeNull()
-    expect(OpenAPI.TOKEN).toBeUndefined()
     expect(store.deleteError).toBeNull()
     expect(store.deleting).toBe(false)
   })
 
   it('sets deleteError and keeps auth state when backend returns an error', async () => {
+    vi.spyOn(DefaultService, 'getMe').mockResolvedValue(makeMeBody({ user_id: 6, user_name: 'ivy', provider_email: 'ivy@example.com' }))
     vi.spyOn(DefaultService, 'deleteAccount').mockRejectedValue(new Error('forbidden'))
     vi.spyOn(console, 'error').mockImplementation(() => {})
-    const jwt = makeJwt({ user_id: 6, user_name: 'ivy', email: 'ivy@example.com' })
     const store = useAuthStore()
-    store.handleCallback(jwt)
+    await store.fetchMe()
 
     await store.deleteAccount()
 
     expect(store.deleteError).toBe('forbidden')
-    expect(store.token).not.toBeNull()
+    expect(store.user).not.toBeNull()
     expect(store.isAuthenticated).toBe(true)
     expect(store.deleting).toBe(false)
   })
 
   it('sets deleting to true during the call and false after', async () => {
+    vi.spyOn(DefaultService, 'getMe').mockResolvedValue(makeMeBody({ user_id: 7, user_name: 'jan', provider_email: 'jan@example.com' }))
     let resolveFn!: () => void
     vi.spyOn(DefaultService, 'deleteAccount').mockImplementation(
       () => new Promise<never>((resolve) => { resolveFn = resolve as () => void }) as never,
     )
-    const jwt = makeJwt({ user_id: 7, user_name: 'jan', email: 'jan@example.com' })
     const store = useAuthStore()
-    store.handleCallback(jwt)
+    await store.fetchMe()
 
     const promise = store.deleteAccount()
     expect(store.deleting).toBe(true)

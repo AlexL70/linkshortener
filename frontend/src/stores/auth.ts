@@ -11,43 +11,37 @@ interface User {
 
 const BACKEND_URL = import.meta.env.APP_BASE_URL as string ?? ''
 
-// Configure the generated API client with the backend base URL.
+// Configure the generated API client. WITH_CREDENTIALS must be true so the
+// browser sends the HttpOnly session cookie on cross-origin API requests.
+// This is set here (not in the generated OpenAPI.ts) so it survives re-generation.
 OpenAPI.BASE = BACKEND_URL
+OpenAPI.WITH_CREDENTIALS = true
 
 export const useAuthStore = defineStore('auth', () => {
-  const token = ref<string | null>(localStorage.getItem('token'))
   const user = ref<User | null>(null)
   const deleting = ref(false)
   const deleteError = ref<string | null>(null)
 
-  const isAuthenticated = computed(() => !!token.value)
-
-  function setToken(newToken: string) {
-    token.value = newToken
-    localStorage.setItem('token', newToken)
-    // Keep the generated API client in sync so authenticated calls include the
-    // Bearer token automatically.
-    OpenAPI.TOKEN = newToken
-  }
-
-  function setUser(newUser: User) {
-    user.value = newUser
-  }
+  const isAuthenticated = computed(() => user.value !== null)
 
   /**
-   * Decode the JWT payload (base64url) and populate the store state.
-   * Called after a successful OAuth callback or registration.
+   * Fetch the current user from the backend using the HttpOnly session cookie.
+   * Populates `user` on success; clears it if the request fails (not authenticated).
    */
-  function handleCallback(jwtToken: string) {
-    const parts = jwtToken.split('.')
-    if (parts.length !== 3 || typeof parts[1] === 'undefined') return
-
+  async function fetchMe() {
     try {
-      const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')))
-      setToken(jwtToken)
-      setUser({ id: String(payload.user_id ?? ''), username: payload.user_name ?? '', email: payload.email ?? '' })
+      const result = await DefaultService.getMe()
+      if ('user_id' in result) {
+        user.value = {
+          id: String(result.user_id),
+          username: result.user_name,
+          email: result.provider_email,
+        }
+      } else {
+        user.value = null
+      }
     } catch {
-      // Malformed token — silently ignore; caller should check isAuthenticated.
+      user.value = null
     }
   }
 
@@ -61,29 +55,18 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   /**
-   * Invalidate the JWT on the backend, then clear all local auth state.
+   * Invalidate the session cookie on the backend, then clear local auth state.
    * Navigation to / is left to the caller (router guards handle it).
    */
   async function logout() {
-    if (token.value) {
-      OpenAPI.TOKEN = token.value
-      try {
-        await DefaultService.postAuthLogout()
-      } catch (err) {
-        // Backend rejection (e.g. already-expired token) is non-fatal — we
-        // still clear local state so the user is signed out in the browser.
-        console.warn('logout: backend call failed', err)
-      }
+    try {
+      await DefaultService.postAuthLogout()
+    } catch (err) {
+      // Backend rejection is non-fatal — we still clear local state so the
+      // user is signed out in the browser.
+      console.warn('logout: backend call failed', err)
     }
-    token.value = null
     user.value = null
-    localStorage.removeItem('token')
-    OpenAPI.TOKEN = undefined
-  }
-
-  // Restore the API client token if we already have one in localStorage.
-  if (token.value) {
-    OpenAPI.TOKEN = token.value
   }
 
   /**
@@ -95,10 +78,7 @@ export const useAuthStore = defineStore('auth', () => {
     deleteError.value = null
     try {
       await DefaultService.deleteAccount()
-      token.value = null
       user.value = null
-      localStorage.removeItem('token')
-      OpenAPI.TOKEN = undefined
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : 'Failed to delete account. Please try again.'
@@ -109,5 +89,5 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  return { token, user, deleting, deleteError, isAuthenticated, setToken, setUser, handleCallback, login, logout, deleteAccount }
+  return { user, deleting, deleteError, isAuthenticated, fetchMe, login, logout, deleteAccount }
 })

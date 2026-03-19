@@ -1,27 +1,6 @@
 {
   "components": {
     "schemas": {
-      "AuthTokenBody": {
-        "additionalProperties": false,
-        "properties": {
-          "$schema": {
-            "description": "A URL to the JSON Schema for this object.",
-            "examples": [
-              "https://example.com/schemas/AuthTokenBody.json"
-            ],
-            "format": "uri",
-            "readOnly": true,
-            "type": "string"
-          },
-          "token": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "token"
-        ],
-        "type": "object"
-      },
       "CreateUrlRequestBody": {
         "additionalProperties": false,
         "properties": {
@@ -212,6 +191,36 @@
         ],
         "type": "object"
       },
+      "MeBody": {
+        "additionalProperties": false,
+        "properties": {
+          "$schema": {
+            "description": "A URL to the JSON Schema for this object.",
+            "examples": [
+              "https://example.com/schemas/MeBody.json"
+            ],
+            "format": "uri",
+            "readOnly": true,
+            "type": "string"
+          },
+          "provider_email": {
+            "type": "string"
+          },
+          "user_id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "user_name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "user_name",
+          "provider_email"
+        ],
+        "type": "object"
+      },
       "RegisterRequestBody": {
         "additionalProperties": false,
         "properties": {
@@ -334,6 +343,9 @@
           "long_url": {
             "type": "string"
           },
+          "short_url": {
+            "type": "string"
+          },
           "shortcode": {
             "type": "string"
           }
@@ -342,6 +354,7 @@
           "id",
           "shortcode",
           "long_url",
+          "short_url",
           "last_updated"
         ],
         "type": "object"
@@ -349,6 +362,7 @@
     }
   },
   "info": {
+    "description": "App version: dev",
     "title": "Link Shortener API",
     "version": "0.1.0"
   },
@@ -358,7 +372,14 @@
       "post": {
         "responses": {
           "204": {
-            "description": "No Content"
+            "description": "No Content",
+            "headers": {
+              "Set-Cookie": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           },
           "default": {
             "content": {
@@ -373,10 +394,43 @@
         },
         "security": [
           {
-            "bearer": []
+            "session": []
           }
         ],
         "summary": "Log out the authenticated user by blacklisting the JWT"
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "operationId": "get-me",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeBody"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Return the authenticated user's profile info"
       }
     },
     "/auth/register": {
@@ -392,15 +446,15 @@
           }
         },
         "responses": {
-          "200": {
-            "content": {
-              "application/json": {
+          "204": {
+            "description": "No Content",
+            "headers": {
+              "Set-Cookie": {
                 "schema": {
-                  "$ref": "#/components/schemas/AuthTokenBody"
+                  "type": "string"
                 }
               }
-            },
-            "description": "OK"
+            }
           },
           "default": {
             "content": {
@@ -476,7 +530,7 @@
         },
         "security": [
           {
-            "bearer": []
+            "session": []
           }
         ],
         "summary": "Permanently delete the authenticated user's account and all associated data"

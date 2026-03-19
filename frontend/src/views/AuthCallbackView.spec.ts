@@ -6,6 +6,7 @@ import AuthCallbackView from './AuthCallbackView.vue'
 import { useAuthStore } from '@/stores/auth'
 import { DefaultService } from '@/lib/api/services/DefaultService'
 import { ApiError } from '@/lib/api/core/ApiError'
+import type { MeBody } from '@/lib/api/models/MeBody'
 
 // ── router stub ───────────────────────────────────────────────────────────────
 
@@ -22,10 +23,13 @@ function makeRouter() {
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
-function makeJwt(payload: Record<string, unknown>): string {
-  const encode = (obj: object) =>
-    btoa(JSON.stringify(obj)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
-  return `${encode({ alg: 'HS256', typ: 'JWT' })}.${encode(payload)}.sig`
+function makeMeBody(overrides: Partial<MeBody> = {}): MeBody {
+  return {
+    user_id: 1,
+    user_name: 'alice',
+    provider_email: 'alice@example.com',
+    ...overrides,
+  }
 }
 
 function setHash(hash: string) {
@@ -54,7 +58,6 @@ let mountTarget: HTMLDivElement
 
 beforeEach(() => {
   setActivePinia(createPinia())
-  localStorage.clear()
   mountTarget = document.createElement('div')
   document.body.appendChild(mountTarget)
 })
@@ -64,34 +67,32 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-// ── token in hash ─────────────────────────────────────────────────────────────
+// ── successful OAuth callback (no hash params) ────────────────────────────────
 
-describe('when #token= is present', () => {
-  it('calls handleCallback with the token', async () => {
-    const jwt = makeJwt({ user_id: 1, user_name: 'alice' })
-    setHash(`#token=${jwt}`)
-    const router = makeRouter()
-    await router.push('/auth/callback')
-
-    await mount(AuthCallbackView, { global: { plugins: [createPinia(), router] } })
-    await flushPromises()
-
-    const store = useAuthStore()
-    expect(store.token).toBe(jwt)
-    expect(store.isAuthenticated).toBe(true)
-  })
-
-  it('redirects to /dashboard', async () => {
-    const jwt = makeJwt({ user_id: 1, user_name: 'alice' })
-    setHash(`#token=${jwt}`)
+describe('when the backend redirects without hash params (existing user)', () => {
+  it('calls fetchMe and redirects to /dashboard on success', async () => {
+    setHash('')
+    vi.spyOn(DefaultService, 'getMe').mockResolvedValue(makeMeBody())
     const router = makeRouter()
     await router.push('/auth/callback')
     vi.spyOn(router, 'replace')
 
-    await mount(AuthCallbackView, { global: { plugins: [createPinia(), router] } })
-    await flushPromises()
+    await mountView(router)
 
+    const store = useAuthStore()
+    expect(store.isAuthenticated).toBe(true)
     expect(router.replace).toHaveBeenCalledWith('/dashboard')
+  })
+
+  it('shows an error when fetchMe fails (session not set)', async () => {
+    setHash('')
+    vi.spyOn(DefaultService, 'getMe').mockRejectedValue(new Error('401'))
+    const router = makeRouter()
+    await router.push('/auth/callback')
+
+    const wrapper = await mountView(router)
+
+    expect(wrapper.text()).toContain('Authentication failed.')
   })
 })
 
@@ -114,8 +115,8 @@ describe('when #pre_registration_token= is present', () => {
 
   it('redirects to /dashboard after successful registration', async () => {
     setHash('#pre_registration_token=tok123&suggested_user_name=jane')
-    const jwt = makeJwt({ user_id: 2, user_name: 'jane' })
-    vi.spyOn(DefaultService, 'registerUser').mockResolvedValue({ token: jwt })
+    vi.spyOn(DefaultService, 'registerUser').mockResolvedValue({} as never)
+    vi.spyOn(DefaultService, 'getMe').mockResolvedValue(makeMeBody({ user_id: 2, user_name: 'jane', provider_email: 'jane@example.com' }))
     const router = makeRouter()
     await router.push('/auth/callback')
     vi.spyOn(router, 'replace')
@@ -169,6 +170,7 @@ describe('when #pre_registration_token= is present', () => {
 describe('when #error= is present', () => {
   it('shows the error message', async () => {
     setHash('#error=authentication_failed')
+    vi.spyOn(DefaultService, 'getMe').mockRejectedValue(new Error('401'))
     const router = makeRouter()
     await router.push('/auth/callback')
 
@@ -179,6 +181,7 @@ describe('when #error= is present', () => {
 
   it('provides a "Go home" button that navigates to /', async () => {
     setHash('#error=authentication_failed')
+    vi.spyOn(DefaultService, 'getMe').mockRejectedValue(new Error('401'))
     const router = makeRouter()
     await router.push('/auth/callback')
     vi.spyOn(router, 'replace')

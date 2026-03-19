@@ -5,13 +5,17 @@ import { createRouter, createMemoryHistory } from 'vue-router'
 import ProfileSettingsView from './ProfileSettingsView.vue'
 import { useAuthStore } from '@/stores/auth'
 import { DefaultService } from '@/lib/api/services/DefaultService'
+import type { MeBody } from '@/lib/api/models/MeBody'
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
-function makeJwt(payload: Record<string, unknown>): string {
-  const encode = (obj: object) =>
-    btoa(JSON.stringify(obj)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
-  return `${encode({ alg: 'HS256', typ: 'JWT' })}.${encode(payload)}.sig`
+function makeMeBody(overrides: Partial<MeBody> = {}): MeBody {
+  return {
+    user_id: 1,
+    user_name: 'alice',
+    provider_email: 'alice@example.com',
+    ...overrides,
+  }
 }
 
 function makeRouter() {
@@ -30,7 +34,6 @@ let mountTarget: HTMLDivElement
 
 beforeEach(() => {
   setActivePinia(createPinia())
-  localStorage.clear()
   mountTarget = document.createElement('div')
   document.body.appendChild(mountTarget)
 })
@@ -43,8 +46,8 @@ afterEach(() => {
 // ── mount helper ──────────────────────────────────────────────────────────────
 
 async function mountView(auth: ReturnType<typeof useAuthStore>) {
-  const jwt = makeJwt({ user_id: 1, user_name: 'alice', email: 'alice@example.com' })
-  auth.handleCallback(jwt)
+  vi.spyOn(DefaultService, 'getMe').mockResolvedValue(makeMeBody())
+  await auth.fetchMe()
   const router = makeRouter()
   await router.push('/profile/settings')
   const wrapper = mount(ProfileSettingsView, {
@@ -178,10 +181,10 @@ describe('email confirmation guard', () => {
 describe('successful deletion', () => {
   it('calls deleteAccount, closes the dialog, and navigates to home', async () => {
     vi.spyOn(DefaultService, 'deleteAccount').mockResolvedValue({} as never)
+    vi.spyOn(DefaultService, 'getMe').mockResolvedValue(makeMeBody())
     const store = useAuthStore()
+    await store.fetchMe()
     const router = makeRouter()
-    const jwt = makeJwt({ user_id: 1, user_name: 'alice', email: 'alice@example.com' })
-    store.handleCallback(jwt)
     await router.push('/profile/settings')
     mount(ProfileSettingsView, {
       attachTo: mountTarget,

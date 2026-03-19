@@ -2,11 +2,13 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type AuthTokenBody = {
+export type MeBody = {
     /**
      * A URL to the JSON Schema for this object.
      */
     readonly $schema?: string;
-    token: string;
+    provider_email: string;
+    user_id: number;
+    user_name: string;
 };
 

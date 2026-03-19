@@ -62,7 +62,7 @@ func newAuthHandler(t *testing.T, setupMock func(*mocks.MockUserRepository)) *ha
 
 // --- POST /auth/register tests ---
 
-func TestRegister_ValidPreRegToken_ReturnsJWT(t *testing.T) {
+func TestRegister_ValidPreRegToken_SetsSessionCookie(t *testing.T) {
 	input := &bizmodels.AuthInput{
 		Provider:       bizmodels.ProviderGoogle,
 		ProviderUserID: "google-sub-123",
@@ -89,10 +89,8 @@ func TestRegister_ValidPreRegToken_ReturnsJWT(t *testing.T) {
 
 	newTestRouter(h).ServeHTTP(w, req)
 
-	assert.Equal(t, http.StatusOK, w.Code)
-	var resp map[string]string
-	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
-	assert.NotEmpty(t, resp["token"])
+	assert.Equal(t, http.StatusNoContent, w.Code)
+	assert.NotEmpty(t, w.Header().Get("Set-Cookie"))
 }
 
 func TestRegister_InvalidPreRegToken_Returns400(t *testing.T) {
@@ -316,16 +314,19 @@ func TestLogout_ValidToken_Returns204(t *testing.T) {
 	require.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodPost, "/auth/logout", nil)
-	req.Header.Set("Authorization", "Bearer "+token)
+	req.AddCookie(&http.Cookie{Name: routes.SessionCookieName, Value: token})
 	w := httptest.NewRecorder()
 	newTestRouter(h).ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusNoContent, w.Code)
+	// The session cookie must be cleared in the response.
+	assert.Contains(t, w.Header().Get("Set-Cookie"), "Max-Age=0")
 }
 
 func TestLogout_MissingToken_Returns401(t *testing.T) {
 	h := newAuthHandler(t, nil)
 	req := httptest.NewRequest(http.MethodPost, "/auth/logout", nil)
+	// No session cookie — must be rejected.
 	w := httptest.NewRecorder()
 	newTestRouter(h).ServeHTTP(w, req)
 
@@ -335,7 +336,7 @@ func TestLogout_MissingToken_Returns401(t *testing.T) {
 func TestLogout_InvalidToken_Returns401(t *testing.T) {
 	h := newAuthHandler(t, nil)
 	req := httptest.NewRequest(http.MethodPost, "/auth/logout", nil)
-	req.Header.Set("Authorization", "Bearer not.a.real.token")
+	req.AddCookie(&http.Cookie{Name: routes.SessionCookieName, Value: "not.a.real.token"})
 	w := httptest.NewRecorder()
 	newTestRouter(h).ServeHTTP(w, req)
 
@@ -354,14 +355,14 @@ func TestLogout_ReplayAfterLogout_Returns401(t *testing.T) {
 
 	// First logout — must succeed.
 	req1 := httptest.NewRequest(http.MethodPost, "/auth/logout", nil)
-	req1.Header.Set("Authorization", "Bearer "+token)
+	req1.AddCookie(&http.Cookie{Name: routes.SessionCookieName, Value: token})
 	w1 := httptest.NewRecorder()
 	router.ServeHTTP(w1, req1)
 	require.Equal(t, http.StatusNoContent, w1.Code)
 
 	// Replay the same token — must be rejected.
 	req2 := httptest.NewRequest(http.MethodPost, "/auth/logout", nil)
-	req2.Header.Set("Authorization", "Bearer "+token)
+	req2.AddCookie(&http.Cookie{Name: routes.SessionCookieName, Value: token})
 	w2 := httptest.NewRecorder()
 	router.ServeHTTP(w2, req2)
 	assert.Equal(t, http.StatusUnauthorized, w2.Code)
@@ -382,6 +383,7 @@ func newAuthHandlerWithAdminEmail(t *testing.T, setupMock func(*mocks.MockUserRe
 func TestDeleteAccount_NoAuth_Returns401(t *testing.T) {
 	h := newAuthHandler(t, nil)
 	req := httptest.NewRequest(http.MethodDelete, "/user/account", nil)
+	// No session cookie — must be rejected.
 	w := httptest.NewRecorder()
 	newTestRouter(h).ServeHTTP(w, req)
 	assert.Equal(t, http.StatusUnauthorized, w.Code)
@@ -402,7 +404,7 @@ func TestDeleteAccount_Success_Returns204(t *testing.T) {
 	require.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodDelete, "/user/account", nil)
-	req.Header.Set("Authorization", "Bearer "+token)
+	req.AddCookie(&http.Cookie{Name: routes.SessionCookieName, Value: token})
 	w := httptest.NewRecorder()
 	newTestRouter(h).ServeHTTP(w, req)
 	assert.Equal(t, http.StatusNoContent, w.Code)
@@ -420,7 +422,7 @@ func TestDeleteAccount_AdminForbidden_Returns403(t *testing.T) {
 	require.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodDelete, "/user/account", nil)
-	req.Header.Set("Authorization", "Bearer "+token)
+	req.AddCookie(&http.Cookie{Name: routes.SessionCookieName, Value: token})
 	w := httptest.NewRecorder()
 	newTestRouter(h).ServeHTTP(w, req)
 	assert.Equal(t, http.StatusForbidden, w.Code)
@@ -438,7 +440,7 @@ func TestDeleteAccount_NotFound_Returns404(t *testing.T) {
 	require.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodDelete, "/user/account", nil)
-	req.Header.Set("Authorization", "Bearer "+token)
+	req.AddCookie(&http.Cookie{Name: routes.SessionCookieName, Value: token})
 	w := httptest.NewRecorder()
 	newTestRouter(h).ServeHTTP(w, req)
 	assert.Equal(t, http.StatusNotFound, w.Code)

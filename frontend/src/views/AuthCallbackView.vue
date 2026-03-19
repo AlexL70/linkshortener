@@ -39,20 +39,15 @@ async function submitRegistration() {
   registrationError.value = ''
   registrationLoading.value = true
   try {
-    const result = await DefaultService.registerUser({
+    await DefaultService.registerUser({
       requestBody: {
         pre_registration_token: preRegistrationToken.value,
         user_name: userName.value.trim(),
       },
     })
-    // The generated union return type includes ErrorModel, but on success the
-    // service returns AuthTokenBody (which has a `token` field).
-    if ('token' in result) {
-      auth.handleCallback(result.token)
-      router.replace('/dashboard')
-    } else {
-      registrationError.value = 'Registration failed. Please try again.'
-    }
+    // Backend sets the session cookie on 204; fetch user state now.
+    await auth.fetchMe()
+    router.replace('/dashboard')
   } catch (err) {
     if (err instanceof ApiError && err.status === 409) {
       registrationError.value = 'Username already taken. Please choose another.'
@@ -65,15 +60,8 @@ async function submitRegistration() {
 }
 
 // ── lifecycle ────────────────────────────────────────────────────────────────
-onMounted(() => {
+onMounted(async () => {
   const params = parseHash()
-
-  const token = params.get('token')
-  if (token) {
-    auth.handleCallback(token)
-    router.replace('/dashboard')
-    return
-  }
 
   const preRegToken = params.get('pre_registration_token')
   if (preRegToken) {
@@ -81,6 +69,14 @@ onMounted(() => {
     userName.value = params.get('suggested_user_name') ?? ''
     registrationOpen.value = true
     loading.value = false
+    return
+  }
+
+  // No pre-registration token — the backend redirected here after setting the
+  // session cookie. Fetch the user to confirm the session is active.
+  await auth.fetchMe()
+  if (auth.isAuthenticated) {
+    router.replace('/dashboard')
     return
   }
 
@@ -112,12 +108,7 @@ onMounted(() => {
         </DialogHeader>
 
         <form class="space-y-4" @submit.prevent="submitRegistration">
-          <Input
-            v-model="userName"
-            placeholder="Username"
-            :disabled="registrationLoading"
-            autocomplete="username"
-          />
+          <Input v-model="userName" placeholder="Username" :disabled="registrationLoading" autocomplete="username" />
           <p v-if="registrationError" class="text-sm text-destructive">
             {{ registrationError }}
           </p>

@@ -14,14 +14,29 @@ type RegisterRequest struct {
 	Body *RegisterRequestBody
 }
 
-// AuthTokenBody is the response body returned after a successful login or registration.
-type AuthTokenBody struct {
-	Token string `json:"token"`
+// RegisterResponse is the Huma output for POST /auth/register.
+// The JWT is delivered as an HttpOnly session cookie via the Set-Cookie header;
+// no token is exposed in the response body.
+type RegisterResponse struct {
+	SetCookie string `header:"Set-Cookie"`
 }
 
-// AuthTokenResponse is the Huma output wrapper for a successful auth response.
-type AuthTokenResponse struct {
-	Body *AuthTokenBody
+// LogoutResponse is the Huma output for POST /auth/logout.
+// It carries a Set-Cookie header that clears the session cookie.
+type LogoutResponse struct {
+	SetCookie string `header:"Set-Cookie"`
+}
+
+// MeBody is the response body for GET /auth/me.
+type MeBody struct {
+	UserID        int64  `json:"user_id"`
+	UserName      string `json:"user_name"`
+	ProviderEmail string `json:"provider_email"`
+}
+
+// MeResponse is the Huma output wrapper for GET /auth/me.
+type MeResponse struct {
+	Body *MeBody
 }
 
 // PreRegistrationTokenBody is returned from the OAuth callback when a new user
