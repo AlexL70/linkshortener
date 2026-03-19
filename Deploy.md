@@ -91,6 +91,21 @@ scp deploy/Caddyfile user@your-server:/tmp/Caddyfile
 ssh user@your-server "sudo cp /tmp/Caddyfile /etc/caddy/Caddyfile && sudo systemctl reload caddy"
 ```
 
+> **Note:** If the target server already has `/etc/caddy/Caddyfile` and you do not want to overwrite it, first check whether it contains `import conf.d/*.conf`.
+>
+> - If it does not, add this line at the end of `/etc/caddy/Caddyfile`:
+>
+> ```caddy
+> import conf.d/*.conf
+> ```
+>
+> - Then copy this project's Caddy config as an included file instead of replacing the main file:
+>
+> ```bash
+> scp deploy/Caddyfile user@your-server:/tmp/linkshortener.conf
+> ssh user@your-server "sudo mkdir -p /etc/caddy/conf.d && sudo cp /tmp/linkshortener.conf /etc/caddy/conf.d/linkshortener.conf && sudo systemctl reload caddy"
+> ```
+
 ### Step 6 — First deployment
 
 ```bash

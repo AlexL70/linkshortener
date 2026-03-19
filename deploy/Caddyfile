@@ -13,15 +13,15 @@ yourdomain.com {
 
     # Proxy all backend routes to the Go server.
     handle /auth/* {
-        reverse_proxy localhost:8080
+        reverse_proxy localhost:8010
     }
 
     handle /user/* {
-        reverse_proxy localhost:8080
+        reverse_proxy localhost:8010
     }
 
     handle /r/* {
-        reverse_proxy localhost:8080
+        reverse_proxy localhost:8010
     }
 
     # Serve the Vue SPA for every other path.

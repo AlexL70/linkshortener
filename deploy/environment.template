@@ -48,7 +48,7 @@ APP_BASE_URL=https://CHANGE_ME
 SUPER_ADMIN_EMAIL=CHANGE_ME
 
 # ---- Optional: uncomment and change only if the defaults do not suit you ---
-# PORT=8080
+# PORT=8010
 # GIN_MODE=release
 # REQUEST_TIMEOUT_SECONDS=30
 # MAX_CONCURRENT_REQUESTS=100
