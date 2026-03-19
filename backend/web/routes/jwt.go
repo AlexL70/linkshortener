@@ -15,11 +15,21 @@ import (
 
 const preRegTokenDuration = 10 * time.Minute
 
+// tokenTypeSession and tokenTypePreReg are the values embedded in the "typ"
+// payload claim to distinguish session JWTs from pre-registration tokens.
+// Both are signed with the same secret, so explicit type validation is required
+// to prevent a pre-reg token from being accepted as a session JWT and vice-versa.
+const (
+	tokenTypeSession = "session"
+	tokenTypePreReg  = "pre_reg"
+)
+
 // JWTClaims holds the claims embedded in every full session JWT.
 type JWTClaims struct {
 	UserID   int64  `json:"user_id"`
 	UserName string `json:"user_name"`
 	Email    string `json:"email"`
+	Typ      string `json:"typ"`
 	jwt.RegisteredClaims
 }
 
@@ -29,6 +39,7 @@ type preRegClaims struct {
 	ProviderUserID string             `json:"provider_user_id"`
 	Email          string             `json:"email"`
 	DisplayName    string             `json:"display_name"`
+	Typ            string             `json:"typ"`
 	jwt.RegisteredClaims
 }
 
@@ -55,6 +66,7 @@ func CreateJWT(user *bizmodels.User, email string) (string, error) {
 		UserID:   user.ID,
 		UserName: user.UserName,
 		Email:    email,
+		Typ:      tokenTypeSession,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ID:        jti,
 			Subject:   fmt.Sprintf("%d", user.ID),
@@ -88,6 +100,9 @@ func ParseJWT(tokenStr string) (*JWTClaims, error) {
 	if !ok || !token.Valid {
 		return nil, fmt.Errorf("%w: invalid token claims", businesslogic.ErrValidation)
 	}
+	if claims.Typ != tokenTypeSession {
+		return nil, fmt.Errorf("%w: wrong token type", businesslogic.ErrValidation)
+	}
 
 	return claims, nil
 }
@@ -101,6 +116,7 @@ func CreatePreRegToken(input *bizmodels.AuthInput) (string, error) {
 		ProviderUserID: input.ProviderUserID,
 		Email:          input.Email,
 		DisplayName:    input.DisplayName,
+		Typ:            tokenTypePreReg,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(preRegTokenDuration)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -131,6 +147,9 @@ func ParsePreRegToken(tokenStr string) (*bizmodels.AuthInput, error) {
 	claims, ok := token.Claims.(*preRegClaims)
 	if !ok || !token.Valid {
 		return nil, fmt.Errorf("%w: invalid token claims", businesslogic.ErrValidation)
+	}
+	if claims.Typ != tokenTypePreReg {
+		return nil, fmt.Errorf("%w: wrong token type", businesslogic.ErrValidation)
 	}
 
 	return &bizmodels.AuthInput{

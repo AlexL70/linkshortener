@@ -54,6 +54,7 @@ func TestParseJWT_RoundTrip(t *testing.T) {
 	assert.Equal(t, "parsetest@example.com", claims.Email)
 	assert.Equal(t, "5", claims.Subject)
 	assert.NotEmpty(t, claims.ID)
+	assert.Equal(t, "session", claims.Typ)
 }
 
 func TestParseJWT_InvalidToken(t *testing.T) {
@@ -117,6 +118,34 @@ func TestParsePreRegToken_WrongSecret(t *testing.T) {
 	defer os.Setenv("JWT_SECRET", originalSecret)
 
 	_, err = routes.ParsePreRegToken(token)
+	require.Error(t, err)
+	assert.ErrorIs(t, err, businesslogic.ErrValidation)
+}
+
+// TestParseJWT_RejectsPreRegToken is the regression test for issue #4:
+// a pre-registration token must not be accepted as a session JWT.
+func TestParseJWT_RejectsPreRegToken(t *testing.T) {
+	input := &bizmodels.AuthInput{
+		Provider:       bizmodels.ProviderGoogle,
+		ProviderUserID: "sub-123",
+		Email:          "attacker@example.com",
+	}
+	preRegToken, err := routes.CreatePreRegToken(input)
+	require.NoError(t, err)
+
+	_, err = routes.ParseJWT(preRegToken)
+	require.Error(t, err)
+	assert.ErrorIs(t, err, businesslogic.ErrValidation)
+}
+
+// TestParsePreRegToken_RejectsSessionJWT is the regression test for issue #4:
+// a full session JWT must not be accepted as a pre-registration token.
+func TestParsePreRegToken_RejectsSessionJWT(t *testing.T) {
+	user := &bizmodels.User{ID: 42, UserName: "someuser"}
+	sessionToken, err := routes.CreateJWT(user, "someuser@example.com")
+	require.NoError(t, err)
+
+	_, err = routes.ParsePreRegToken(sessionToken)
 	require.Error(t, err)
 	assert.ErrorIs(t, err, businesslogic.ErrValidation)
 }
