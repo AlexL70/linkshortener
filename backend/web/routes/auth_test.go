@@ -214,6 +214,58 @@ func TestLogin_ValidRedirectTo_StartsOAuthFlow(t *testing.T) {
 		"expected redirect for Google login with valid redirect_to, got %d", w.Code)
 }
 
+// TestLogin_ForeignOriginRedirectTo_Returns400InProdMode is a regression test
+// for the open-redirect / JWT-exfiltration vulnerability (security report #1).
+//
+// In production, redirect_to must start with APP_BASE_URL. A URL on any other
+// domain must be rejected with 400 before the OAuth flow starts, so the backend
+// never has a chance to append the JWT fragment to an attacker-controlled URL.
+func TestLogin_ForeignOriginRedirectTo_Returns400InProdMode(t *testing.T) {
+	t.Setenv("LINKSHORTENER_ENV", "prod")
+	// APP_BASE_URL is already set to "http://localhost:8080" by TestMain; here we
+	// set it explicitly to make the test self-documenting and independent of TestMain.
+	t.Setenv("APP_BASE_URL", "http://localhost:8080")
+
+	for _, foreign := range []string{
+		// Different domain — the classic open-redirect attack vector.
+		"https://evil.com/steal",
+		// Different subdomain — also attacker-controlled.
+		"http://sub.localhost:8080/auth/callback",
+		// Looks similar but is a distinct host.
+		"http://localhost:80801/auth/callback",
+	} {
+		t.Run(foreign, func(t *testing.T) {
+			h := newAuthHandler(t, nil)
+			req := httptest.NewRequest(http.MethodGet, "/auth/login/google?redirect_to="+foreign, nil)
+			w := httptest.NewRecorder()
+			newTestRouter(h).ServeHTTP(w, req)
+			assert.Equal(t, http.StatusBadRequest, w.Code,
+				"prod mode must reject foreign-origin redirect_to=%q", foreign)
+			var resp map[string]string
+			_ = json.Unmarshal(w.Body.Bytes(), &resp)
+			assert.Equal(t, "redirect_to URL not allowed", resp["error"])
+		})
+	}
+}
+
+// TestLogin_SameOriginRedirectTo_AllowedInProdMode verifies that a redirect_to
+// starting with APP_BASE_URL is accepted in production (the happy path).
+func TestLogin_SameOriginRedirectTo_AllowedInProdMode(t *testing.T) {
+	t.Setenv("LINKSHORTENER_ENV", "prod")
+	t.Setenv("APP_BASE_URL", "http://localhost:8080")
+
+	h := newAuthHandler(t, nil)
+	// URL-encode http://localhost:8080/auth/callback
+	req := httptest.NewRequest(http.MethodGet,
+		"/auth/login/google?redirect_to=http%3A%2F%2Flocalhost%3A8080%2Fauth%2Fcallback", nil)
+	w := httptest.NewRecorder()
+	newTestRouter(h).ServeHTTP(w, req)
+
+	// Same-origin redirect_to must not block the OAuth flow.
+	assert.True(t, w.Code >= 300 && w.Code < 400,
+		"expected redirect for same-origin redirect_to in prod mode, got %d", w.Code)
+}
+
 func TestCallback_NoSessionRedirectTo_Returns400(t *testing.T) {
 	// Without a redirect_to stored in the session the callback returns 400.
 	h := newAuthHandler(t, nil)

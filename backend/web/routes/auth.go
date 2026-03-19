@@ -70,6 +70,33 @@ func RegisterAuthRoutes(router *gin.Engine, api huma.API, h *handlers.AuthHandle
 				c.JSON(http.StatusBadRequest, gin.H{"error": "invalid redirect_to URL"})
 				return
 			}
+
+			// SECURITY: Enforce same-origin constraint on redirect_to in production.
+			//
+			// Without this check, any syntactically valid http/https URL passes the
+			// format guard above. After OAuth completes, the backend appends the
+			// user's JWT to that URL as a fragment (#token=…) and redirects the
+			// browser there — effectively exfiltrating the token to an arbitrary
+			// attacker-controlled domain (open redirect + credential leak).
+			//
+			// In production, Caddy routes both the frontend and the backend under the
+			// same domain (APP_BASE_URL), so every legitimate redirect_to must
+			// originate from that domain. We compare scheme and host exactly so that
+			// look-alike hostnames (e.g. localhost:80801 ≠ localhost:8080) are rejected.
+			//
+			// In dev mode the frontend runs on a different port (e.g. :5173) while
+			// the backend runs on :8080, so APP_BASE_URL does not match the frontend
+			// origin. We skip the check in dev — this mirrors the same carve-out in
+			// CORSMiddleware (cors.go) and is acceptable because dev is not publicly
+			// reachable.
+			if os.Getenv("LINKSHORTENER_ENV") != "dev" {
+				appBase, appBaseErr := url.ParseRequestURI(os.Getenv("APP_BASE_URL"))
+				if appBaseErr != nil || parsed.Scheme != appBase.Scheme || parsed.Host != appBase.Host {
+					c.JSON(http.StatusBadRequest, gin.H{"error": "redirect_to URL not allowed"})
+					return
+				}
+			}
+
 			session, err := store.Get(c.Request, "linkshortener_state")
 			if err != nil {
 				slog.Error("auth: failed to get session for login", "error", err)
