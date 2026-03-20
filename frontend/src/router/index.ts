@@ -29,7 +29,9 @@ const routes: RouteRecordRaw[] = [
   {
     // Public route: receives the OAuth redirect from the backend and processes
     // the hash fragment (#token=…, #pre_registration_token=…, or #error=…).
-    path: '/auth/callback',
+    // Uses /callback (not /auth/callback) so Caddy does not proxy it to the backend;
+    // the backend's own OAuth receiver occupies GET /auth/callback.
+    path: '/callback',
     name: 'auth-callback',
     component: () => import('@/views/AuthCallbackView.vue'),
   },

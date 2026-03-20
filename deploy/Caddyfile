@@ -8,11 +8,30 @@
 
 yourdomain.com {
     tls internal
-
     encode zstd gzip
 
-    # Proxy all backend routes to the Go server.
-    handle /auth/* {
+    # Proxy backend API routes to the Go server.
+    # Each path is listed explicitly so that /callback (the frontend post-auth
+    # route) is NOT proxied — it must be served by the SPA catch-all below.
+    handle /auth/login/* {
+        reverse_proxy localhost:8010
+    }
+
+    # /auth/callback is the OAuth provider's redirect target (Go handles it).
+    # The frontend post-auth route is /callback, which falls through to the SPA.
+    handle /auth/callback {
+        reverse_proxy localhost:8010
+    }
+
+    handle /auth/register {
+        reverse_proxy localhost:8010
+    }
+
+    handle /auth/logout {
+        reverse_proxy localhost:8010
+    }
+
+    handle /auth/me {
         reverse_proxy localhost:8010
     }
 

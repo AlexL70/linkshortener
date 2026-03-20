@@ -91,7 +91,7 @@ describe('login', () => {
 
     expect(assignedHref).toContain('/auth/login/google')
     expect(assignedHref).toContain('redirect_to=')
-    expect(assignedHref).toContain(encodeURIComponent('http://localhost:5173/auth/callback'))
+    expect(assignedHref).toContain(encodeURIComponent('http://localhost:5173/callback'))
 
     locationSpy.mockRestore()
   })

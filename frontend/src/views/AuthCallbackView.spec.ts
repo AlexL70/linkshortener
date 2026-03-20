@@ -16,7 +16,7 @@ function makeRouter() {
     routes: [
       { path: '/', name: 'home', component: { template: '<div>Home</div>' } },
       { path: '/dashboard', name: 'dashboard', component: { template: '<div>Dashboard</div>' } },
-      { path: '/auth/callback', name: 'auth-callback', component: AuthCallbackView },
+      { path: '/callback', name: 'auth-callback', component: AuthCallbackView },
     ],
   })
 }
@@ -74,7 +74,7 @@ describe('when the backend redirects without hash params (existing user)', () =>
     setHash('')
     vi.spyOn(DefaultService, 'getMe').mockResolvedValue(makeMeBody())
     const router = makeRouter()
-    await router.push('/auth/callback')
+    await router.push('/callback')
     vi.spyOn(router, 'replace')
 
     await mountView(router)
@@ -88,7 +88,7 @@ describe('when the backend redirects without hash params (existing user)', () =>
     setHash('')
     vi.spyOn(DefaultService, 'getMe').mockRejectedValue(new Error('401'))
     const router = makeRouter()
-    await router.push('/auth/callback')
+    await router.push('/callback')
 
     const wrapper = await mountView(router)
 
@@ -102,7 +102,7 @@ describe('when #pre_registration_token= is present', () => {
   it('shows the registration dialog with pre-filled username', async () => {
     setHash('#pre_registration_token=abc&suggested_user_name=newuser')
     const router = makeRouter()
-    await router.push('/auth/callback')
+    await router.push('/callback')
 
     await mountView(router)
 
@@ -118,7 +118,7 @@ describe('when #pre_registration_token= is present', () => {
     vi.spyOn(DefaultService, 'registerUser').mockResolvedValue({} as never)
     vi.spyOn(DefaultService, 'getMe').mockResolvedValue(makeMeBody({ user_id: 2, user_name: 'jane', provider_email: 'jane@example.com' }))
     const router = makeRouter()
-    await router.push('/auth/callback')
+    await router.push('/callback')
     vi.spyOn(router, 'replace')
 
     await mountView(router)
@@ -140,7 +140,7 @@ describe('when #pre_registration_token= is present', () => {
     )
     vi.spyOn(DefaultService, 'registerUser').mockRejectedValue(apiError)
     const router = makeRouter()
-    await router.push('/auth/callback')
+    await router.push('/callback')
 
     await mountView(router)
     const form = document.querySelector('form')!
@@ -154,7 +154,7 @@ describe('when #pre_registration_token= is present', () => {
     setHash('#pre_registration_token=tok123&suggested_user_name=err')
     vi.spyOn(DefaultService, 'registerUser').mockRejectedValue(new Error('Network error'))
     const router = makeRouter()
-    await router.push('/auth/callback')
+    await router.push('/callback')
 
     await mountView(router)
     const form = document.querySelector('form')!
@@ -172,7 +172,7 @@ describe('when #error= is present', () => {
     setHash('#error=authentication_failed')
     vi.spyOn(DefaultService, 'getMe').mockRejectedValue(new Error('401'))
     const router = makeRouter()
-    await router.push('/auth/callback')
+    await router.push('/callback')
 
     const wrapper = await mountView(router)
 
@@ -183,7 +183,7 @@ describe('when #error= is present', () => {
     setHash('#error=authentication_failed')
     vi.spyOn(DefaultService, 'getMe').mockRejectedValue(new Error('401'))
     const router = makeRouter()
-    await router.push('/auth/callback')
+    await router.push('/callback')
     vi.spyOn(router, 'replace')
 
     const wrapper = await mountView(router)

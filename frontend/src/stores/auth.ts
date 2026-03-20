@@ -47,10 +47,12 @@ export const useAuthStore = defineStore('auth', () => {
 
   /**
    * Redirect the browser to the backend OAuth login endpoint, passing the
-   * current origin's /auth/callback as the post-auth redirect target.
+   * current origin's /callback as the post-auth redirect target.
+   * Note: /callback is used (not /auth/callback) so Caddy does not proxy it to
+   * the backend — the backend's own OAuth receiver lives at GET /auth/callback.
    */
   function login(provider: string) {
-    const redirectTo = encodeURIComponent(window.location.origin + '/auth/callback')
+    const redirectTo = encodeURIComponent(window.location.origin + '/callback')
     window.location.href = `${BACKEND_URL}/auth/login/${provider}?redirect_to=${redirectTo}`
   }
 
